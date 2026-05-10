@@ -1,0 +1,57 @@
+{
+  "name": "megumi-desktop-pet",
+  "version": "1.0.0",
+  "description": "二次元AI桌宠 - 支持多角色切换的桌面宠物",
+  "main": "程序主入口.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "keywords": [
+    "electron",
+    "live2d",
+    "ai",
+    "desktop-pet",
+    "mimo"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.ai-desktop-pet",
+    "productName": "AI桌宠",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "程序主入口.js",
+      "安全桥接.js",
+      "核心通用代码/**/*",
+      "角色-加藤惠/**/*",
+      "角色-蕾姆/**/*",
+      "角色-零二/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

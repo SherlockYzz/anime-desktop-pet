@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>桌宠</title>
+  <link rel="stylesheet" href="样式.css">
+  <!-- 本地加载 CDN 资源，标记 defer 避免阻塞解析 -->
+  <script defer src="../第三方库/marked.min.js"></script>
+  <script defer src="../第三方库/highlight.min.js"></script>
+  <link rel="stylesheet" href="../第三方库/代码主题.css">
+</head>
+<body>
+  <!-- 标题栏 -->
+  <div class="titlebar" id="titlebar">
+    <div class="titlebar-drag">
+      <span class="pet-name">桌宠</span>
+    </div>
+    <div class="titlebar-buttons">
+      <button class="btn-character-select" id="btn-character-select" title="切换角色">&#x1f464;</button>
+      <button class="btn-settings" id="btn-settings" title="settings">&#x2699;</button>
+      <button class="btn-minimize" id="btn-minimize" title="minimize">_</button>
+      <button class="btn-close" id="btn-close" title="close">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- Live2D模型容器 -->
+  <div class="live2d-container" id="live2d-container">
+    <canvas id="live2d-canvas"></canvas>
+    <div class="mood-indicator" id="mood-indicator"></div>
+  </div>
+
+  <!-- 聊天面板 -->
+  <div class="chat-panel" id="chat-panel">
+    <!-- 梦幻星星装饰 -->
+    <div class="dream-stars" id="dream-stars"></div>
+    <div class="tab-bar">
+      <button class="tab active" data-tab="chat">聊天</button>
+      <button class="tab" data-tab="code">写代码</button>
+    </div>
+
+    <!-- 聊天模式 -->
+    <div class="tab-content active" id="tab-chat">
+      <div class="messages" id="chat-messages">
+        <div class="message ai">
+          <div class="message-avatar"><img src="../../角色-加藤惠/图片素材/头像.png" alt=""></div>
+          <div class="message-content">
+            <div class="message-text">你好，我是加藤惠。请多指教。</div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <button class="btn-clear-chat" id="btn-clear-chat" title="清除聊天记录">清除</button>
+        <textarea id="chat-input" placeholder="输入消息..." rows="2"></textarea>
+        <button class="btn-send" id="btn-chat-send">发送</button>
+      </div>
+    </div>
+
+    <!-- 代码模式 -->
+    <div class="tab-content" id="tab-code">
+      <div class="code-header">
+        <select id="language-select">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="java">Java</option>
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+          <option value="csharp">C#</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+          <option value="sql">SQL</option>
+          <option value="php">PHP</option>
+          <option value="ruby">Ruby</option>
+          <option value="swift">Swift</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="shell">Shell</option>
+        </select>
+        <button class="btn-copy" id="btn-copy">复制</button>
+        <button class="btn-run" id="btn-run">运行</button>
+      </div>
+      <div class="code-editor">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea id="code-input" placeholder="在这里写代码，或让她帮你写..." spellcheck="false"></textarea>
+      </div>
+      <div class="code-output" id="code-output">
+        <div class="output-header">输出结果</div>
+        <pre id="output-content">等待运行...</pre>
+      </div>
+      <div class="code-ai-area">
+        <textarea id="code-ai-input" placeholder="描述你想要的代码功能..." rows="2"></textarea>
+        <button class="btn-ai-code" id="btn-ai-code">帮忙写代码</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 角色选择面板 -->
+  <div class="character-panel" id="character-panel">
+    <div class="character-header">
+      <h3>选择你的桌宠</h3>
+      <button class="btn-close-panel" id="btn-close-character">&#x2715;</button>
+    </div>
+    <div class="character-grid" id="character-grid"></div>
+  </div>
+
+  <!-- 设置面板 -->
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-header">
+      <h3>设置</h3>
+      <button class="btn-close-settings" id="btn-close-settings">&#x2715;</button>
+    </div>
+    <div class="settings-content">
+
+      <!-- API 提供商选择 -->
+      <div class="setting-item">
+        <label>API 提供商</label>
+        <select id="api-provider">
+          <!-- 由 renderer.js 动态生成 -->
+        </select>
+        <div class="setting-item-description" id="provider-description"></div>
+      </div>
+
+      <!-- API 地址 -->
+      <div class="setting-item" id="setting-base-url">
+        <label>API 地址</label>
+        <input type="text" id="api-base-url" placeholder="https://api.example.com/v1">
+      </div>
+
+      <!-- API Key -->
+      <div class="setting-item" id="setting-api-key">
+        <label>API Key</label>
+        <input type="password" id="api-key" placeholder="输入你的API Key">
+      </div>
+
+      <!-- 模型选择 -->
+      <div class="setting-item" id="setting-model">
+        <label>模型选择</label>
+        <div class="setting-item-row">
+          <select id="model-select">
+            <!-- 由 renderer.js 动态生成 -->
+          </select>
+        </div>
+      </div>
+
+      <!-- 自定义模型名（仅自定义提供商时显示） -->
+      <div class="setting-item" id="setting-custom-model" style="display:none;">
+        <label>自定义模型名</label>
+        <input type="text" id="custom-model-input" placeholder="输入模型名称">
+      </div>
+
+      <!-- 测试连接 -->
+      <div class="setting-item">
+        <button class="btn-test-connection" id="btn-test-connection">测试连接</button>
+        <div class="test-result" id="test-result"></div>
+      </div>
+
+      <!-- 窗口设置 -->
+      <div class="setting-item">
+        <label>窗口置顶</label>
+        <input type="checkbox" id="always-on-top" checked>
+      </div>
+      <div class="setting-item">
+        <label>透明度</label>
+        <input type="range" id="opacity-slider" min="50" max="100" value="95">
+        <span id="opacity-value">95%</span>
+      </div>
+
+      <button class="btn-save-settings" id="btn-save-settings">保存设置</button>
+    </div>
+  </div>
+
+  <!-- 加载动画 -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">稍微等一下...</div>
+  </div>
+
+  <!-- GIF桌宠模式容器 -->
+  <div class="gif-pet-mode" id="gif-pet-mode" style="display:none;">
+    <div class="gif-pet-drag-area" id="gif-pet-drag-area"></div>
+    <div class="gif-pet-container" id="gif-pet-container">
+      <img id="gif-pet-image" class="gif-pet-image" src="" alt="桌宠">
+    </div>
+    <div class="gif-pet-chat" id="gif-pet-chat">
+      <div class="gif-pet-messages" id="gif-pet-messages"></div>
+      <div class="gif-pet-input-area">
+        <textarea id="gif-pet-input" placeholder="说点什么..." rows="1"></textarea>
+        <button id="gif-pet-send">发送</button>
+      </div>
+    </div>
+    <button class="btn-switch-web-mode" id="btn-switch-web-mode" title="切换到完整网页模式">网页模式</button>
+  </div>
+
+  <script src="角色注册表.js"></script>
+  <script src="../../角色-加藤惠/角色设定.js"></script>
+  <script src="../../角色-蕾姆/角色设定.js"></script>
+  <script src="../../角色-零二/角色设定.js"></script>
+  <script src="API服务商.js"></script>
+  <script src="角色管理器.js"></script>
+  <script src="Live2D引擎.js"></script>
+  <script src="AI接口.js"></script>
+  <script src="主界面.js"></script>
+</body>
+</html>
