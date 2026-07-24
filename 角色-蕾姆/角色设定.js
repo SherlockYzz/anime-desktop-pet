@@ -63,6 +63,11 @@ CHARACTER_REGISTRY.rem = {
     modelPath: '../../角色-蕾姆/Live2D模型/model.model3.json',
   },
 
+  // VRM 配置
+  vrm: {
+    modelPath: '../../角色-蕾姆/蕾姆vrm.vrm',
+  },
+
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,
   lines: {}

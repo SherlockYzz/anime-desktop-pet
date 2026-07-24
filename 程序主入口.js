@@ -7,7 +7,7 @@ let isQuitting = false;
 let currentTrayLabel = '桌宠';
 let currentTrayAvatar = '角色-加藤惠/图片素材/头像.png';
 
-// 单实例锁：防止重复启动，再次点击快捷方式时聚焦已有窗口
+// 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
@@ -35,7 +35,7 @@ function createWindow() {
     resizable: true,
     skipTaskbar: false,
     hasShadow: false,
-    show: false,
+    show: true,                       // ← ★ 立即显示，不等 ready-to-show
     paintWhenInitiallyHidden: false,
     webPreferences: {
       preload: path.join(__dirname, '安全桥接.js'),
@@ -43,28 +43,18 @@ function createWindow() {
       nodeIntegration: false,
       backgroundThrottling: false,
       v8CacheOptions: 'code',
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      webSecurity: true,
+      allowRunningInsecureContent: false
     }
-  });
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
   });
 
   mainWindow.loadFile('核心通用代码/核心/index.html');
 
-  // 总是打开开发者工具以便调试
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (process.argv.includes('--dev')) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
-  mainWindow.on('close', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      mainWindow.hide();
-    }
-  });
-
+  // ★ 不再拦截 close 事件：让关闭行为直达
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -74,9 +64,7 @@ function createTray(label, avatarPath) {
   currentTrayLabel = label || currentTrayLabel;
   if (avatarPath) currentTrayAvatar = avatarPath;
 
-  if (tray) {
-    tray.destroy();
-  }
+  if (tray) tray.destroy();
 
   tray = new Tray(path.join(__dirname, currentTrayAvatar));
 
@@ -84,22 +72,17 @@ function createTray(label, avatarPath) {
     {
       label: `显示${currentTrayLabel}`,
       click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
+        if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
       }
     },
     {
       label: '设置',
       click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.webContents.send('show-settings');
-        }
+        if (mainWindow) { mainWindow.show(); mainWindow.webContents.send('show-settings'); }
       }
     },
     { type: 'separator' },
+    { label: '隐藏到托盘', click: () => { if (mainWindow) mainWindow.hide(); } },
     {
       label: '告别并退出',
       click: () => {
@@ -111,12 +94,8 @@ function createTray(label, avatarPath) {
 
   tray.setToolTip(currentTrayLabel);
   tray.setContextMenu(contextMenu);
-
   tray.on('double-click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
   });
 }
 
@@ -126,59 +105,44 @@ app.whenReady().then(() => {
 
   globalShortcut.register('CommandOrControl+Shift+P', () => {
     if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
-      }
+      if (mainWindow.isVisible()) { mainWindow.hide(); }
+      else { mainWindow.show(); mainWindow.focus(); }
     }
   });
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
+app.on('will-quit', () => { globalShortcut.unregisterAll(); });
 
-// IPC通信处理
+// IPC
 ipcMain.handle('get-screen-size', () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   return { width, height };
 });
 
 ipcMain.handle('set-always-on-top', (event, flag) => {
-  if (mainWindow) {
-    mainWindow.setAlwaysOnTop(flag);
-  }
+  if (mainWindow) mainWindow.setAlwaysOnTop(flag);
 });
 
 ipcMain.handle('minimize-window', () => {
-  if (mainWindow) {
-    mainWindow.minimize();
-  }
+  if (mainWindow) mainWindow.minimize();
 });
 
+// ★ 直接 destroy 窗口，跳过 close 事件链，立即退出
 ipcMain.handle('close-window', () => {
-  if (mainWindow) {
-    mainWindow.hide();
-  }
+  isQuitting = true;
+  if (mainWindow) mainWindow.destroy();
+  app.quit();
 });
 
 ipcMain.handle('update-tray-label', (event, label, avatarPath) => {
-  // avatarPath 是相对于 HTML 的路径（如 ../../角色-xxx/图片素材/头像.png）
-  // 需要去掉 ../../ 前缀转换为相对于项目根目录的路径
   const relPath = avatarPath ? avatarPath.replace(/^(\.\.\/)+/, '') : null;
   createTray(label, relPath);
 });

@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>桌宠</title>
   <link rel="stylesheet" href="样式.css">
-  <!-- 本地加载 CDN 资源，标记 defer 避免阻塞解析 -->
-  <script defer src="../第三方库/marked.min.js"></script>
-  <script defer src="../第三方库/highlight.min.js"></script>
-  <link rel="stylesheet" href="../第三方库/代码主题.css">
 </head>
 <body>
   <!-- 标题栏 -->
@@ -17,6 +13,7 @@
       <span class="pet-name">桌宠</span>
     </div>
     <div class="titlebar-buttons">
+      <button class="btn-back-pet" id="btn-back-pet" title="返回桌宠模式">桌宠</button>
       <button class="btn-character-select" id="btn-character-select" title="切换角色">&#x1f464;</button>
       <button class="btn-settings" id="btn-settings" title="settings">&#x2699;</button>
       <button class="btn-minimize" id="btn-minimize" title="minimize">_</button>
@@ -156,6 +153,32 @@
         <div class="test-result" id="test-result"></div>
       </div>
 
+      <!-- ★ 响应模式 -->
+      <div class="setting-item">
+        <label>响应速度</label>
+        <div class="setting-item-row">
+          <select id="response-mode">
+            <option value="instant">秒回模式（最快，推荐本地模型）</option>
+            <option value="balanced">平衡模式</option>
+            <option value="deep">深度模式（回复更完整）</option>
+          </select>
+        </div>
+        <div class="setting-item-description">秒回模式 = 低token数+低温度+提前结束，适合本地小模型</div>
+      </div>
+
+      <!-- ★ 提示词模式 -->
+      <div class="setting-item">
+        <label>AI提示词模式</label>
+        <div class="setting-item-row">
+          <select id="prompt-mode">
+            <option value="auto">智能模式（推荐）</option>
+            <option value="full">完整模式（性格更生动）</option>
+            <option value="compact">极速模式（响应最快）</option>
+          </select>
+        </div>
+        <div class="setting-item-description">智能模式：简短问题用精简提示词，复杂问题用完整设定</div>
+      </div>
+
       <!-- 窗口设置 -->
       <div class="setting-item">
         <label>窗口置顶</label>
@@ -165,6 +188,27 @@
         <label>透明度</label>
         <input type="range" id="opacity-slider" min="50" max="100" value="95">
         <span id="opacity-value">95%</span>
+      </div>
+
+      <!-- ★ 角色提示词编辑 -->
+      <div class="setting-section-divider"><span>角色提示词设定</span></div>
+      <div class="setting-item">
+        <label>选择角色</label>
+        <select id="prompt-character-select">
+          <option value="megumi">加藤惠</option>
+          <option value="rem">蕾姆</option>
+          <option value="zerotwo">零二</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <label>系统提示词</label>
+        <div class="setting-item-description">在这里编辑角色的系统提示词，保存后立即生效。留空则使用默认设定。</div>
+        <textarea id="prompt-editor" class="prompt-editor" placeholder="在此输入角色提示词..." spellcheck="false"></textarea>
+      </div>
+      <div class="setting-item setting-item-actions">
+        <button class="btn-prompt-save" id="btn-prompt-save">保存此角色提示词</button>
+        <button class="btn-prompt-reset" id="btn-prompt-reset">恢复默认</button>
+        <span class="prompt-status" id="prompt-status"></span>
       </div>
 
       <button class="btn-save-settings" id="btn-save-settings">保存设置</button>
@@ -177,30 +221,31 @@
     <div class="loading-text">稍微等一下...</div>
   </div>
 
-  <!-- GIF桌宠模式容器 -->
-  <div class="gif-pet-mode" id="gif-pet-mode" style="display:none;">
-    <div class="gif-pet-drag-area" id="gif-pet-drag-area"></div>
-    <div class="gif-pet-container" id="gif-pet-container">
-      <img id="gif-pet-image" class="gif-pet-image" src="" alt="桌宠">
+  <!-- 形态一（默认）：极简悬浮桌宠 -->
+  <div class="pet-overlay" id="pet-overlay">
+    <div class="pet-character-area" id="pet-character-area">
+      <canvas id="pet-canvas"></canvas>
+      <img id="pet-gif" class="pet-gif-img" src="" alt="">
     </div>
-    <div class="gif-pet-chat" id="gif-pet-chat">
-      <div class="gif-pet-messages" id="gif-pet-messages"></div>
-      <div class="gif-pet-input-area">
-        <textarea id="gif-pet-input" placeholder="说点什么..." rows="1"></textarea>
-        <button id="gif-pet-send">发送</button>
-      </div>
-    </div>
-    <button class="btn-switch-web-mode" id="btn-switch-web-mode" title="切换到完整网页模式">网页模式</button>
+    <div class="pet-bubble-container" id="pet-bubble-container"></div>
+    <button class="btn-switch-web" id="btn-switch-web" title="切换到网页模式"></button>
   </div>
 
+  <script src="CDN配置.js"></script>
   <script src="角色注册表.js"></script>
   <script src="../../角色-加藤惠/角色设定.js"></script>
   <script src="../../角色-蕾姆/角色设定.js"></script>
   <script src="../../角色-零二/角色设定.js"></script>
   <script src="API服务商.js"></script>
   <script src="角色管理器.js"></script>
+  <script src="情绪分析.js"></script>
   <script src="Live2D引擎.js"></script>
+  <script src="VRM管理器.js"></script>
   <script src="AI接口.js"></script>
+  <script src="聊天管理器.js"></script>
+  <script src="代码编辑器.js"></script>
+  <script src="设置管理器.js"></script>
+  <script src="桌宠模式.js"></script>
   <script src="主界面.js"></script>
 </body>
 </html>

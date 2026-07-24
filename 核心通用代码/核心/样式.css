@@ -1,9 +1,8 @@
-/* 二次元桌宠 - 动态主题系统（美化版） */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* 二次元桌宠 - 动态主题系统（优化版）
+   优化：减少重复radial-gradient、合并伪元素、移除body::after条纹动画
+   主题变量由角色管理器.js动态注入，:root仅保留默认值
+*/
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
   --primary-color: #f8b4c8;
@@ -17,43 +16,37 @@
   --hover-color: rgba(248, 180, 200, 0.18);
   --shadow-color: rgba(200, 150, 170, 0.15);
   --glow-color: rgba(248, 180, 200, 0.35);
-  --bubble-1: rgba(248, 180, 200, 0.12);
-  --bubble-2: rgba(180, 200, 240, 0.1);
-  --bubble-3: rgba(200, 230, 210, 0.08);
   --gradient-main: linear-gradient(135deg, #f8b4c8, #e8a0b8);
   --gradient-soft: linear-gradient(135deg, #f0c6d6, #f8b4c8);
-  --gradient-bg: linear-gradient(180deg, rgba(255, 248, 250, 0.97), rgba(255, 240, 245, 0.95));
+  --gradient-bg: linear-gradient(180deg, rgba(255,248,250,0.97), rgba(255,240,245,0.95));
   --titlebar-bg: linear-gradient(135deg, #fde8ee, #f0d8e6, #e8daf0);
   --title-text: #8a6578;
-  --tab-active-bg: linear-gradient(135deg, rgba(248,180,200,0.3), rgba(220,190,240,0.2));
-  --tab-active-color: #7a5568;
   --scrollbar-thumb: rgba(248, 180, 200, 0.25);
   --scrollbar-hover: rgba(248, 180, 200, 0.4);
+  --btn-send-shadow: rgba(248, 180, 200, 0.3);
+  --btn-send-hover-shadow: rgba(248, 180, 200, 0.45);
+  --toast-bg: linear-gradient(135deg, rgba(248,180,200,0.9), rgba(220,190,240,0.85));
+  --toast-shadow: rgba(248, 180, 200, 0.35);
+  --code-bg: rgba(55, 42, 50, 0.95);
+  --code-text: #e0ccd5;
+  --code-line-num: rgba(248, 180, 200, 0.3);
+  --code-placeholder: rgba(248, 180, 200, 0.25);
+  --settings-bg: rgba(248, 230, 238, 0.35);
+  --input-bg: rgba(255, 255, 255, 0.55);
+  --input-border: rgba(248, 180, 200, 0.2);
   --input-focus-shadow: rgba(248, 180, 200, 0.15);
+  --live2d-bg-start: rgba(255, 245, 248, 0.6);
+  --live2d-bg-end: rgba(255, 240, 245, 0.3);
+  --live2d-fade: rgba(255, 248, 250, 0.8);
+  --mood-color: rgba(90, 69, 80, 0.4);
+  --tab-active-bg: linear-gradient(135deg, rgba(248,180,200,0.3), rgba(220,190,240,0.2));
+  --tab-active-color: #7a5568;
   --message-ai-bg: rgba(255, 255, 255, 0.65);
   --message-user-bg: linear-gradient(135deg, rgba(248,220,230,0.5), rgba(230,210,240,0.4));
   --avatar-ai-border: rgba(248, 180, 200, 0.3);
   --avatar-ai-bg: rgba(248, 180, 200, 0.15);
   --avatar-user-bg: rgba(180, 200, 230, 0.2);
   --avatar-user-border: rgba(180, 200, 230, 0.3);
-  --code-bg: rgba(55, 42, 50, 0.95);
-  --code-text: #e0ccd5;
-  --code-line-num: rgba(248, 180, 200, 0.3);
-  --code-placeholder: rgba(248, 180, 200, 0.25);
-  --btn-send-shadow: rgba(248, 180, 200, 0.3);
-  --btn-send-hover-shadow: rgba(248, 180, 200, 0.45);
-  --toast-bg: linear-gradient(135deg, rgba(248,180,200,0.9), rgba(220,190,240,0.85));
-  --toast-shadow: rgba(248, 180, 200, 0.35);
-  --loading-bg: rgba(255, 245, 248, 0.8);
-  --loading-border: rgba(248, 180, 200, 0.2);
-  --loading-shadow: rgba(248, 180, 200, 0.15);
-  --settings-bg: rgba(248, 230, 238, 0.35);
-  --input-bg: rgba(255, 255, 255, 0.55);
-  --input-border: rgba(248, 180, 200, 0.2);
-  --live2d-bg-start: rgba(255, 245, 248, 0.6);
-  --live2d-bg-end: rgba(255, 240, 245, 0.3);
-  --live2d-fade: rgba(255, 248, 250, 0.8);
-  --mood-color: rgba(90, 69, 80, 0.4);
   --code-inline-bg: rgba(248, 180, 200, 0.12);
   --code-inline-color: #8a6070;
   --pre-bg: rgba(60, 45, 55, 0.06);
@@ -65,6 +58,9 @@
   --card-hover-shadow: rgba(200, 150, 170, 0.15);
   --card-hover-border: rgba(248, 180, 200, 0.3);
   --card-active-shadow: rgba(248, 180, 200, 0.2);
+  --loading-bg: rgba(255, 245, 248, 0.8);
+  --loading-border: rgba(248, 180, 200, 0.2);
+  --loading-shadow: rgba(248, 180, 200, 0.15);
 }
 
 body {
@@ -76,87 +72,23 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* ===== 梦幻气泡背景装饰（增强版：加入星星和条纹） ===== */
+/* ===== 轻量背景装饰（优化：合并为单层，移除body::after条纹动画减少重绘） ===== */
 body::before {
   content: '';
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: -1;
   background:
-    radial-gradient(circle 80px at 12% 18%, var(--bubble-1) 0%, transparent 100%),
-    radial-gradient(circle 55px at 78% 12%, var(--bubble-2) 0%, transparent 100%),
-    radial-gradient(circle 100px at 88% 72%, var(--bubble-1) 0%, transparent 100%),
-    radial-gradient(circle 40px at 22% 82%, var(--bubble-3) 0%, transparent 100%),
-    radial-gradient(circle 65px at 50% 50%, var(--bubble-2) 0%, transparent 100%),
-    radial-gradient(circle 30px at 8% 55%, var(--bubble-3) 0%, transparent 100%),
-    radial-gradient(circle 50px at 92% 38%, var(--bubble-1) 0%, transparent 100%),
-    radial-gradient(circle 35px at 40% 25%, var(--bubble-2) 0%, transparent 100%),
-    radial-gradient(circle 45px at 65% 85%, var(--bubble-3) 0%, transparent 100%);
+    radial-gradient(circle 100px at 20% 20%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(circle 80px at 80% 70%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(circle 60px at 40% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
-}
-
-/* 梦幻条纹装饰层 */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: -1;
-  background:
-    repeating-linear-gradient(
-      135deg,
-      transparent,
-      transparent 40px,
-      rgba(255, 255, 255, 0.03) 40px,
-      rgba(255, 255, 255, 0.03) 42px
-    ),
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 60px,
-      rgba(255, 255, 255, 0.02) 60px,
-      rgba(255, 255, 255, 0.02) 62px
-    );
-  pointer-events: none;
-  animation: stripeShift 30s linear infinite;
-}
-
-@keyframes stripeShift {
-  0% { background-position: 0 0, 0 0; }
-  100% { background-position: 84px 84px, 124px 124px; }
 }
 
 /* ===== 梦幻粒子飘浮动画 ===== */
-@keyframes floatBubble {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
-  50% { transform: translateY(-6px) scale(1.03); opacity: 1; }
-}
-
-@keyframes floatBubble2 {
-  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
-  50% { transform: translateY(-10px) rotate(3deg); opacity: 0.8; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes sparkle {
-  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1) rotate(180deg); }
-}
-
 @keyframes twinkle {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
-}
-
-@keyframes floatStar {
-  0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
-  25% { transform: translateY(-8px) rotate(90deg); opacity: 1; }
-  50% { transform: translateY(-3px) rotate(180deg); opacity: 0.8; }
-  75% { transform: translateY(-10px) rotate(270deg); opacity: 1; }
-  100% { transform: translateY(0) rotate(360deg); opacity: 0.6; }
 }
 
 /* ===== 标题栏 ===== */
@@ -177,30 +109,11 @@ body::after {
 .titlebar::before {
   content: '';
   position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
+  top: 0; left: 0; right: 0; bottom: 0;
   background:
-    radial-gradient(circle 18px at 20% 40%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(circle 12px at 65% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(circle 22px at 82% 25%, rgba(255,255,255,0.45) 0%, transparent 100%);
-  animation: floatBubble 5s ease-in-out infinite;
+    radial-gradient(circle 30px at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(circle 20px at 80% 50%, rgba(255,255,255,0.2) 0%, transparent 100%);
   pointer-events: none;
-}
-
-/* 标题栏星星装饰 */
-.titlebar::after {
-  content: '\2726 \2727 \2726';
-  position: absolute;
-  right: 90px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 8px;
-  color: var(--primary-color);
-  opacity: 0.4;
-  letter-spacing: 4px;
-  pointer-events: none;
-  animation: twinkle 3s ease-in-out infinite;
-  z-index: 1;
 }
 
 .titlebar-drag { flex: 1; }
@@ -285,20 +198,7 @@ body::after {
   content: '';
   position: absolute;
   width: 100%; height: 100%;
-  background:
-    radial-gradient(circle 35px at 8% 35%, var(--bubble-1) 0%, transparent 100%),
-    radial-gradient(circle 25px at 85% 65%, var(--bubble-2) 0%, transparent 100%),
-    radial-gradient(circle 50px at 50% 85%, var(--bubble-3) 0%, transparent 100%);
-  animation: floatBubble2 7s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.live2d-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 40px;
-  background: linear-gradient(transparent, var(--live2d-fade));
+  background: radial-gradient(circle 60px at 50% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -341,25 +241,10 @@ body::after {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background:
-    radial-gradient(circle 60px at 5% 10%, var(--bubble-2) 0%, transparent 100%),
-    radial-gradient(circle 45px at 95% 88%, var(--bubble-1) 0%, transparent 100%),
-    radial-gradient(circle 30px at 48% 42%, var(--bubble-3) 0%, transparent 100%);
+    radial-gradient(circle 60px at 10% 20%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(circle 45px at 90% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
-}
-
-/* 聊天面板梦幻光斑层 */
-.chat-panel::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background:
-    radial-gradient(ellipse 80px 60px at 15% 30%, rgba(255,255,255,0.15) 0%, transparent 100%),
-    radial-gradient(ellipse 60px 80px at 80% 60%, rgba(255,255,255,0.1) 0%, transparent 100%),
-    radial-gradient(ellipse 100px 40px at 50% 90%, rgba(255,255,255,0.08) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 0;
-  animation: floatBubble 8s ease-in-out infinite;
 }
 
 .chat-panel > * {
@@ -419,16 +304,6 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.messages::-webkit-scrollbar { width: 5px; }
-.messages::-webkit-scrollbar-track { background: transparent; }
-.messages::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 3px;
-}
-.messages::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-hover);
 }
 
 .message {
@@ -505,21 +380,6 @@ body::after {
   overflow: hidden;
 }
 
-/* 消息气泡微光效果 */
-.message-content::before {
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
-  background: radial-gradient(circle 30px at 80% 20%, rgba(255,255,255,0.2) 0%, transparent 100%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.message-content:hover::before {
-  opacity: 1;
-}
 
 .message.user .message-content {
   background: var(--message-user-bg);
@@ -637,16 +497,6 @@ body::after {
 
 .thinking-block.expanded .thinking-content {
   display: block;
-}
-
-.thinking-content::-webkit-scrollbar { width: 4px; }
-.thinking-content::-webkit-scrollbar-track { background: transparent; }
-.thinking-content::-webkit-scrollbar-thumb {
-  background: rgba(180, 200, 240, 0.25);
-  border-radius: 2px;
-}
-.thinking-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(180, 200, 240, 0.4);
 }
 
 /* 流式输出光标 */
@@ -1288,13 +1138,6 @@ body::after {
   gap: 12px;
 }
 
-.character-grid::-webkit-scrollbar { width: 5px; }
-.character-grid::-webkit-scrollbar-track { background: transparent; }
-.character-grid::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 3px;
-}
-
 .character-card {
   display: flex;
   align-items: center;
@@ -1422,22 +1265,6 @@ body::after {
 .character-card:nth-child(4) { animation-delay: 0.24s; }
 .character-card:nth-child(5) { animation-delay: 0.32s; }
 
-/* ===== 梦幻光效装饰 ===== */
-.live2d-container {
-  position: relative;
-}
-
-.live2d-container .sparkle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: sparkle 2s ease-in-out infinite;
-  box-shadow: 0 0 6px var(--glow-color);
-}
-
 /* ===== 梦幻星星装饰（CSS-only） ===== */
 .dream-stars {
   position: absolute;
@@ -1484,4 +1311,299 @@ body::after {
   .character-card-icon {
     font-size: 18px;
   }
+}
+
+/* ============================================================
+   形态一（默认）：极简悬浮桌宠模式
+   - 窗口全局透明，仅显示角色 + 文字气泡
+   - 角色可自由拖拽
+   - 双击角色切换到形态二
+   - 使用 opacity 过渡实现丝滑切换
+   ============================================================ */
+
+/* 桌宠覆盖层（默认可见） */
+.pet-overlay {
+  display: block;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 500;
+  background: transparent;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+}
+body.web-mode-active .pet-overlay {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0s 0.3s;
+}
+
+/* 角色显示区域（可拖拽） */
+.pet-character-area {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -140px;
+  margin-top: -170px;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 502;
+  cursor: grab;
+}
+.pet-character-area:active {
+  cursor: grabbing;
+}
+
+/* Live2D canvas */
+#pet-canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* GIF图片 */
+.pet-gif-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: auto;
+  cursor: pointer;
+  display: none;
+}
+
+/* 文字气泡容器（右上角） */
+.pet-bubble-container {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 503;
+  pointer-events: none;
+  max-height: 300px;
+}
+
+/* 文字气泡 */
+.pet-bubble {
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 14px;
+  border-radius: 14px;
+  max-width: 220px;
+  word-break: break-word;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
+  position: relative;
+  pointer-events: none;
+  animation: bubble-in 0.3s ease-out;
+}
+.pet-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  right: -6px;
+  border: 6px solid transparent;
+  border-left-color: rgba(255, 255, 255, 0.92);
+  border-bottom-color: rgba(255, 255, 255, 0.92);
+}
+.pet-bubble.bubble-fade-out {
+  animation: bubble-out 0.4s ease-in forwards;
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bubble-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* 返回桌宠按钮（形态二标题栏） */
+.btn-back-pet {
+  width: auto !important;
+  padding: 0 8px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: bold;
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+.btn-back-pet:hover {
+  background: var(--glow-color) !important;
+  box-shadow: 0 0 8px var(--glow-color);
+}
+
+/* 切换到网页模式按钮（角色下方居中） */
+.btn-switch-web {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -16px;
+  margin-top: 120px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  color: #888;
+  font-size: 16px;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 510;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 0;
+}
+.btn-switch-web::after {
+  content: '\2194';
+}
+.btn-switch-web:hover {
+  background: rgba(240,130,150,0.8);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* ===== 形态切换：opacity 过渡（非 display 切换）===== */
+
+/* 形态一（默认）：隐藏所有网页 UI（opacity 方式） */
+body #titlebar,
+body .live2d-container,
+body .chat-panel,
+body .character-panel,
+body .settings-panel,
+body .loading-overlay,
+body .dream-stars {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0s 0.3s;
+}
+
+/* 形态二激活时：显示网页 UI（渐入） */
+body.web-mode-active #titlebar,
+body.web-mode-active .live2d-container,
+body.web-mode-active .chat-panel,
+body.web-mode-active .character-panel,
+body.web-mode-active .settings-panel,
+body.web-mode-active .dream-stars {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+/* 加载动画特殊处理 */
+body.web-mode-active .loading-overlay {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+body.web-mode-active .loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ===== 角色提示词编辑器 ===== */
+.setting-section-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0 16px;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.setting-section-divider::before,
+.setting-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.prompt-editor {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-size: 13px;
+  font-family: 'Consolas', 'Microsoft YaHei', monospace;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+  transition: all 0.3s ease;
+}
+.prompt-editor:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow), 0 0 8px var(--glow-color);
+  background: rgba(255, 255, 255, 0.7);
+}
+.prompt-editor::placeholder {
+  color: var(--text-secondary);
+}
+
+.setting-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-prompt-save, .btn-prompt-reset {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.5px;
+}
+.btn-prompt-save {
+  background: var(--gradient-main);
+  color: white;
+  box-shadow: 0 2px 8px var(--btn-send-shadow);
+}
+.btn-prompt-save:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px var(--btn-send-hover-shadow);
+}
+.btn-prompt-reset {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+.btn-prompt-reset:hover {
+  background: var(--hover-color);
+  color: var(--text-color);
+  border-color: var(--primary-color);
+}
+
+.prompt-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+.prompt-status.success {
+  color: #6a9a7a;
+}
+.prompt-status.error {
+  color: #b06060;
 }

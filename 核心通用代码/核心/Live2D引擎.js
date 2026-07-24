@@ -1,4 +1,4 @@
-// 加藤惠桌宠 - Live2D管理器（本地模型版）
+// 加藤惠桌宠 - Live2D管理器（本地模型版 + VRM支持）
 class Live2DManager {
   constructor() {
     this.model = null;
@@ -10,6 +10,10 @@ class Live2DManager {
     this.gifElement = null;
     this.isGifMode = false;
     this._onVisibilityChange = null;
+    // VRM模式相关
+    this.isVrmMode = false;
+    // 当前实际使用的渲染模式：'live2d' | 'vrm' | 'gif' | 'static'
+    this.currentRenderMode = null;
     // 显示模式：'auto' | 'gif' | 'web'
     this.displayMode = localStorage.getItem('display-mode') || 'auto';
   }
@@ -59,17 +63,17 @@ class Live2DManager {
     if (window.PIXI && window.PIXI.live2d) return;
 
     return new Promise((resolve, reject) => {
-      const pixiScript = document.createElement('script');
-      pixiScript.src = 'https://cdn.jsdelivr.net/npm/pixi.js@7.3.3/dist/pixi.min.js';
-      pixiScript.onload = () => {
-        const live2dScript = document.createElement('script');
-        live2dScript.src = 'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js';
-        live2dScript.onload = resolve;
-        live2dScript.onerror = reject;
-        document.head.appendChild(live2dScript);
-      };
-      pixiScript.onerror = reject;
-      document.head.appendChild(pixiScript);
+      const addScript = (src) => new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = res;
+        s.onerror = () => rej(new Error('Failed: ' + src));
+        document.head.appendChild(s);
+      });
+      addScript(window.CDN_CONFIG.pixi)
+        .then(() => addScript(window.CDN_CONFIG.pixiLive2d))
+        .then(resolve)
+        .catch(reject);
     });
   }
 
@@ -181,27 +185,109 @@ class Live2DManager {
     }
   }
 
-  // 加载当前角色的本地Live2D模型
+  // 加载当前角色的模型（自动降级：Live2D > VRM > GIF > 静态图）
   async loadCharacterModel() {
     const character = window.characterManager?.getCurrentCharacter();
-    if (!character?.live2d?.modelPath) {
-      // 没有配置Live2D模型，尝试GIF降级
-      const gifLoaded = await this.loadGifFallback();
-      if (!gifLoaded) {
-        this.showFallback();
-      }
+    if (!character) {
+      this.showFallback();
       return false;
     }
 
-    const success = await this.loadCustomModel(character.live2d.modelPath, character.name);
-    if (!success) {
-      // Live2D加载失败，尝试GIF降级
-      const gifLoaded = await this.loadGifFallback();
-      if (!gifLoaded) {
-        this.showFallback();
+    // 第一优先：Live2D — 先缓存检查，避免不必要的HTTP请求
+    if (character.live2d?.modelPath) {
+      const exists = await window.characterManager.checkModelFileExists(character.live2d.modelPath);
+      if (exists) {
+        const success = await this.loadCustomModel(character.live2d.modelPath, character.name);
+        if (success) {
+          this.currentRenderMode = 'live2d';
+          return true;
+        }
       }
     }
-    return success;
+
+    // 第二优先：VRM
+    if (character.vrm?.modelPath) {
+      const exists = await window.characterManager.checkModelFileExists(character.vrm.modelPath);
+      if (exists) {
+        const vrmSuccess = await this._loadVrmModel(character.vrm.modelPath);
+        if (vrmSuccess) {
+          this.currentRenderMode = 'vrm';
+          return true;
+        }
+      }
+    }
+
+    // 第三优先：GIF
+    const gifLoaded = await this.loadGifFallback();
+    if (gifLoaded) {
+      this.currentRenderMode = 'gif';
+      return true;
+    }
+
+    // 最后：静态封面图
+    this.currentRenderMode = 'static';
+    this.showFallback();
+    return false;
+  }
+
+  // 加载 VRM 模型
+  async _loadVrmModel(modelPath) {
+    try {
+      // 清理之前的模式
+      this._cleanupVrmMode();
+      this._cleanupGifMode();
+
+      // 关键：销毁 pixi.js 的 Application，释放 canvas 上的 WebGL 上下文
+      // 否则 three.js 无法在同一个 canvas 上创建新的 WebGL context
+      if (this.app) {
+        if (this.model) {
+          this.app.stage.removeChild(this.model);
+          this.model.destroy();
+          this.model = null;
+        }
+        // destroy(false) = 保留 canvas 元素在 DOM 中，只销毁 WebGL context
+        this.app.destroy(false);
+        this.app = null;
+      }
+
+      // canvas 被 pixi destroy 后需要重新获取或确保元素还在
+      const canvas = document.getElementById('live2d-canvas');
+      const container = document.getElementById('live2d-container');
+      if (!canvas || !container) return false;
+
+      // 重置 canvas 尺寸，强制浏览器释放旧的 WebGL context
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      if (!canvas || !container) return false;
+
+      // 初始化 VRM 管理器
+      const vrmManager = window.vrmManager;
+      if (!vrmManager) return false;
+
+      const success = await vrmManager.init();
+      if (!success) return false;
+
+      const loaded = await vrmManager.loadModel(modelPath);
+      if (!loaded) return false;
+
+      // 设置鼠标追踪
+      vrmManager.setupMouseTracking(container);
+
+      this.isVrmMode = true;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 清理 VRM 模式
+  _cleanupVrmMode() {
+    if (this.isVrmMode) {
+      this.isVrmMode = false;
+      if (window.vrmManager) {
+        window.vrmManager.destroy();
+      }
+    }
   }
 
   // 加载指定路径的Live2D模型
@@ -213,17 +299,7 @@ class Live2DManager {
         this.model = null;
       }
 
-      // 先检查模型文件是否存在
-      try {
-        const resp = await fetch(modelPath);
-        if (!resp.ok) {
-          throw new Error(`模型文件不存在: ${resp.status}`);
-        }
-      } catch (fetchError) {
-        this._showModelNotFoundToast(characterName);
-        return false;
-      }
-
+      // 文件存在性已在上游缓存检查过
       this.model = await PIXI.live2d.Live2DModel.from(modelPath, {
         autoInteract: true,
         autoUpdate: true
@@ -315,6 +391,13 @@ class Live2DManager {
   }
 
   playAnimation(type) {
+    // VRM 模式
+    if (this.isVrmMode && window.vrmManager) {
+      window.vrmManager.playAnimation(type);
+      return;
+    }
+
+    // Live2D 模式
     if (!this.model) return;
 
     const animations = {
@@ -336,6 +419,13 @@ class Live2DManager {
   }
 
   playExpression(type) {
+    // VRM 模式
+    if (this.isVrmMode && window.vrmManager) {
+      window.vrmManager.playExpression(type);
+      return;
+    }
+
+    // Live2D 模式
     if (!this.model || !this.model.internalModel) return;
 
     const expressions = {
@@ -383,27 +473,18 @@ class Live2DManager {
   }
 
   updateByAIResponse(text) {
-    const tsukkomiWords = ['真是的', '所以说', '脑回路', '是吗', '哦？', '原来', '我倒是无所谓'];
-    const gentleWords = ['没关系', '慢慢来', '一直都在', '支持你', '加油', '陪着你', '休息'];
-    const jealousWords = ['是谁呀', '无所谓啦', '忘了', '生气', '记着', '算账'];
-    const thinkingWords = ['嗯', '呼嗯', '让我想想'];
-
-    if (tsukkomiWords.some(word => text.includes(word))) {
-      this.updateMood('annoyed');
-      this.playAnimation('tap');
-    } else if (jealousWords.some(word => text.includes(word))) {
-      this.updateMood('annoyed');
-      this.playAnimation('normal');
-    } else if (gentleWords.some(word => text.includes(word))) {
-      this.updateMood('gentle');
-      this.playAnimation('happy');
-    } else if (thinkingWords.some(word => text.includes(word))) {
-      this.updateMood('thinking');
-      this.playAnimation('idle');
-    } else {
-      this.updateMood('normal');
-      this.playAnimation('normal');
+    // VRM 模式委托
+    if (this.isVrmMode && window.vrmManager) {
+      const emotion = analyzeAIContent(text);
+      window.vrmManager.playExpression(emotion);
+      window.vrmManager.playAnimation(animationFromEmotion(emotion));
+      return;
     }
+
+    // Live2D 模式 — 使用共享分析
+    const emotion = analyzeAIContent(text);
+    this.updateMood(moodFromEmotion(emotion));
+    this.playAnimation(animationFromEmotion(emotion));
   }
 
   showFallback() {
@@ -458,6 +539,8 @@ class Live2DManager {
       document.removeEventListener('visibilitychange', this._onVisibilityChange);
       this._onVisibilityChange = null;
     }
+    // 清理VRM
+    this._cleanupVrmMode();
     // 清理GIF相关
     this.gifElement = null;
     this.isGifMode = false;
@@ -497,27 +580,29 @@ class Live2DManager {
       this.model.destroy();
       this.model = null;
     }
+    // 清理VRM
+    this._cleanupVrmMode();
 
     // 尝试加载GIF
     const gifLoaded = await this.loadGifFallback();
     if (!gifLoaded) {
-      // 如果没有GIF，显示封面图
       this.showFallback();
       return false;
     }
     return true;
   }
 
-  // 切换到网页模式（显示封面图或Live2D）
+  // 切换到网页模式（显示封面图或Live2D或VRM）
   switchToWebMode() {
     // 清理GIF模式
     this._cleanupGifMode();
+    // 清理VRM
+    this._cleanupVrmMode();
 
-    // 如果有Live2D模型，重新加载
+    // 重新加载模型（自动降级）
     if (this.isInitialized && this.app) {
       this.loadCharacterModel();
     } else {
-      // 显示封面图
       this.showFallback();
     }
   }
