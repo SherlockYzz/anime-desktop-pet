@@ -4,8 +4,8 @@
     <strong>Live2D 动态形象 · 多角色切换 · AI 智能聊天 · 代码辅助</strong>
   </p>
   <p>
-    <img src="https://img.shields.io/github/stars/SherlockYzz/desktop-pet?style=for-the-badge&logo=github" alt="Stars">
-    <img src="https://img.shields.io/github/license/SherlockYzz/desktop-pet?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/github/stars/SherlockYzz/anime-desktop-pet?style=for-the-badge&logo=github" alt="Stars">
+    <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge" alt="License">
     <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron" alt="Electron">
     <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
   </p>
@@ -23,19 +23,19 @@
 <table>
 <tr>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>加藤惠</b><br>
     <sub>路人女主的养成方法</sub><br>
     <small>平淡吐槽 · 温柔包容</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A6%88/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A6%88/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>蕾姆</b><br>
     <sub>Re:从零开始的异世界生活</sub><br>
     <small>温柔贤惠 · 坚定守护</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>02</b><br>
     <sub>DARLING in the FRANXX</sub><br>
     <small>大胆奔放 · 天真妖媚</small>
@@ -68,7 +68,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/SherlockYzz/desktop-pet.git
+git clone https://github.com/SherlockYzz/anime-desktop-pet.git
 cd desktop-pet
 
 # 安装依赖
@@ -150,11 +150,11 @@ npm start
 
 <div align="center">
   <p>
-    <a href="https://github.com/SherlockYzz/desktop-pet">⭐ Star 支持</a>
+    <a href="https://github.com/SherlockYzz/anime-desktop-pet">⭐ Star 支持</a>
     ·
-    <a href="https://github.com/SherlockYzz/desktop-pet/issues">🐛 反馈问题</a>
+    <a href="https://github.com/SherlockYzz/anime-desktop-pet/issues">🐛 反馈问题</a>
     ·
-    <a href="https://github.com/SherlockYzz/desktop-pet/discussions">💬 讨论交流</a>
+    <a href="https://github.com/SherlockYzz/anime-desktop-pet/discussions">💬 讨论交流</a>
   </p>
   <p>Made with ❤️ by 二次元爱好者</p>
 </div>
