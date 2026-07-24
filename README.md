@@ -1,11 +1,11 @@
 <div align="center">
-  <h1>✨ AI 桌宠 · 二次元桌面伴侣</h1>
+  <h1>✨ 二次元桌宠项目 · AI 桌面伴侣</h1>
   <p>
     <strong>Live2D 动态形象 · 多角色切换 · AI 智能聊天 · 代码辅助</strong>
   </p>
   <p>
-    <img src="https://img.shields.io/github/stars/SherlockYzz/ai-desktop-pet?style=for-the-badge&logo=github" alt="Stars">
-    <img src="https://img.shields.io/github/license/SherlockYzz/ai-desktop-pet?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/github/stars/SherlockYzz/desktop-pet?style=for-the-badge&logo=github" alt="Stars">
+    <img src="https://img.shields.io/github/license/SherlockYzz/desktop-pet?style=for-the-badge" alt="License">
     <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron" alt="Electron">
     <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
   </p>
@@ -14,28 +14,28 @@
 
 ## 介绍
 
-**AI 桌宠** 是一款基于 **Electron** 的二次元桌面宠物应用。让加藤惠、蕾姆、02 等经典角色常驻你的桌面，陪你聊天、帮你写代码、给你打气！
+**二次元桌宠项目** 是一款基于 **Electron** 的二次元桌面宠物应用。让加藤惠、蕾姆、02 等经典角色常驻你的桌面，陪你聊天、帮你写代码、给你打气！
 
-> 💡 本项目完全开源免费，支持接入任意兼容 OpenAI 接口的大语言模型（如 DeepSeek、GPT、Claude 等）。
+> 本项目完全开源免费，支持接入任意兼容 OpenAI 接口的大语言模型（如 DeepSeek、GPT、Claude 等）。
 
 ## 角色阵容
 
 <table>
 <tr>
   <td align="center" width="200">
-    <img src="角色-加藤惠/图片素材/头像.jpg" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>加藤惠</b><br>
     <sub>路人女主的养成方法</sub><br>
     <small>平淡吐槽 · 温柔包容</small>
   </td>
   <td align="center" width="200">
-    <img src="角色-蕾姆/图片素材/头像.jpg" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A6%88/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>蕾姆</b><br>
     <sub>Re:从零开始的异世界生活</sub><br>
     <small>温柔贤惠 · 坚定守护</small>
   </td>
   <td align="center" width="200">
-    <img src="角色-零二/图片素材/头像.jpg" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
     <b>02</b><br>
     <sub>DARLING in the FRANXX</sub><br>
     <small>大胆奔放 · 天真妖媚</small>
@@ -68,8 +68,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/SherlockYzz/ai-desktop-pet.git
-cd ai-desktop-pet
+git clone https://github.com/SherlockYzz/desktop-pet.git
+cd desktop-pet
 
 # 安装依赖
 npm install
@@ -95,7 +95,7 @@ npm start
 | 连续点击 | 触发吐槽/小情绪 |
 | `Ctrl+Shift+P` | 显示/隐藏窗口 |
 
-> 💡 长时间无操作时，角色会主动找你聊天哦！部分角色还有生日彩蛋~
+> 长时间无操作时，角色会主动找你聊天哦！部分角色还有生日彩蛋~
 
 ## 角色定制
 
@@ -124,19 +124,6 @@ npm start
 - **AI 接口**: OpenAI 兼容 API
 - **构建**: electron-builder
 
-## 截图
-
-<details>
-<summary>点击展开截图</summary>
-<br>
-
-![主界面](https://via.placeholder.com/800x500?text=AI桌宠-主界面)
-![聊天界面](https://via.placeholder.com/800x500?text=AI桌宠-聊天界面)
-![角色切换](https://via.placeholder.com/800x500?text=AI桌宠-角色切换)
-
-> 截图待补充，欢迎贡献！
-</details>
-
 ## 路线图
 
 - [x] 基础桌宠框架
@@ -163,11 +150,11 @@ npm start
 
 <div align="center">
   <p>
-    <a href="https://github.com/SherlockYzz/ai-desktop-pet">⭐ Star 支持</a>
+    <a href="https://github.com/SherlockYzz/desktop-pet">⭐ Star 支持</a>
     ·
-    <a href="https://github.com/SherlockYzz/ai-desktop-pet/issues">🐛 反馈问题</a>
+    <a href="https://github.com/SherlockYzz/desktop-pet/issues">🐛 反馈问题</a>
     ·
-    <a href="https://github.com/SherlockYzz/ai-desktop-pet/discussions">💬 讨论交流</a>
+    <a href="https://github.com/SherlockYzz/desktop-pet/discussions">💬 讨论交流</a>
   </p>
   <p>Made with ❤️ by 二次元爱好者</p>
 </div>
