@@ -53,7 +53,7 @@
     <b>Three.js / VRM</b><br><small>3D 模型渲染</small>
   </td>
   <td align="center" width="120">
-    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg" width="40" height="40"><br>
+   <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg" width="40" height="40">
     <b>AI API</b><br><small>OpenAI 兼容接口</small>
   </td>
   <td align="center" width="120">
@@ -69,7 +69,7 @@
 
 ## 📖 项目介绍
 
-**ReDame** 是一款基于 Electron 的二次元桌面宠物应用。五位经典角色常驻桌面，陪你聊天、帮你写代码、给你打气！
+**二次元桌宠项目**是一款基于 Electron 的二次元桌面宠物应用。动漫或二游经典角色常驻桌面，陪你聊天、帮你写代码、给你打气！
 
 ### v2.0.0 重磅升级
 
