@@ -4,7 +4,6 @@
     <strong>Live2D 动态形象 · 多角色切换 · AI 智能聊天 · 代码辅助</strong>
   </p>
   <p>
-    <img src="https://img.shields.io/github/stars/SherlockYzz/anime-desktop-pet?style=for-the-badge&logo=github" alt="Stars">
     <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge" alt="License">
     <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron" alt="Electron">
     <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
