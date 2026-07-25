@@ -114,7 +114,7 @@ class SettingsManager {
     this.app.showToast(`「${window.characterManager.registry[characterId]?.name || characterId}」提示词已更新`);
   }
 
-  _resetPrompt() {
+  async _resetPrompt() {
     const charSelect = document.getElementById('prompt-character-select');
     const editor = document.getElementById('prompt-editor');
     const status = document.getElementById('prompt-status');
@@ -124,10 +124,10 @@ class SettingsManager {
     const character = window.characterManager.registry[characterId];
     if (!character) return;
 
-    // 删除自定义提示词
-    window.characterManager.deleteCustomPrompt(characterId);
+    // 删除自定义提示词 + 等待文件重载完成
+    await window.characterManager.deleteCustomPrompt(characterId);
 
-    // 编辑器恢复为默认提示词
+    // 编辑器恢复为默认提示词（此时 systemPrompt 已从文件重新加载）
     editor.value = character.systemPrompt || '';
 
     if (status) {
@@ -280,7 +280,7 @@ class SettingsManager {
   }
 
   // ★ 加载提示词编辑器内容
-  _loadPromptEditor() {
+  async _loadPromptEditor() {
     const charSelect = document.getElementById('prompt-character-select');
     const editor = document.getElementById('prompt-editor');
     const status = document.getElementById('prompt-status');
@@ -290,6 +290,16 @@ class SettingsManager {
     const currentId = window.characterManager.currentCharacterId;
     if (currentId && [...charSelect.options].some(o => o.value === currentId)) {
       charSelect.value = currentId;
+    }
+
+    const characterId = charSelect.value;
+    // ★ 没有自定义提示词时，从文件重新加载确保不是旧缓存
+    if (characterId && !window.characterManager.getCustomPrompt(characterId)) {
+      const character = window.characterManager.registry[characterId];
+      if (character && !character.isCustom) {
+        character._defaultSystemPrompt = null;
+        await window.characterManager.loadCharacterSystemPromptOnly(characterId);
+      }
     }
 
     this._updatePromptEditor();

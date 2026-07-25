@@ -313,15 +313,20 @@ class CharacterManager {
     return localStorage.getItem(CharacterManager.CUSTOM_PROMPT_PREFIX + characterId) || '';
   }
 
-  deleteCustomPrompt(characterId) {
+  async deleteCustomPrompt(characterId) {
     localStorage.removeItem(CharacterManager.CUSTOM_PROMPT_PREFIX + characterId);
+    // ★ 清除文件内容缓存，确保恢复默认时从文件重新读取最新内容
+    localStorage.removeItem('prompt_cache_' + characterId);
     const character = this.registry[characterId];
     if (character) {
+      character._defaultSystemPrompt = null; // 标记为待重新加载
       character.systemPrompt = character._defaultSystemPrompt || '';
     }
     if (this.currentCharacterId === characterId) {
       if (window.mimoAPI) window.mimoAPI.clearHistory();
     }
+    // ★ 立即从文件重新加载默认提示词（等待完成）
+    await this.loadCharacterSystemPromptOnly(characterId);
   }
   async _loadCharacterTextData(characterId) {
     // ★ 完整加载（提示词+台词），由 switchCharacter 在切换角色时完整调用

@@ -10,7 +10,7 @@ class MimoAPI {
     this.baseUrl = 'https://ark.cn-beijing.volces.com/api/v3';
     this.provider = 'doubao';
     this.conversationHistory = [];
-    this.maxHistory = 30;
+    this.maxHistory = 6;
     this._responseMode = 'instant';
     this._promptMode = 'auto';
     this._maxRetries = 2;
@@ -59,16 +59,16 @@ class MimoAPI {
 
     switch (mode) {
       case 'instant':
-        params.temperature = 0.7;
-        params.max_tokens = isCodeMode ? 2048 : 512;
+        params.temperature = 0.5;
+        params.max_tokens = isCodeMode ? 4096 : 2048;
         break;
       case 'balanced':
         params.temperature = 0.7;
-        params.max_tokens = isCodeMode ? 4096 : 1024;
+        params.max_tokens = isCodeMode ? 8192 : 2048;
         break;
       case 'deep':
         params.temperature = 0.8;
-        params.max_tokens = isCodeMode ? 8192 : 2048;
+        params.max_tokens = isCodeMode ? 16384 : 4096;
         break;
     }
     return params;

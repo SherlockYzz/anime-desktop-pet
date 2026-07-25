@@ -265,6 +265,9 @@ class CustomCharacterManager {
           window.characterManager._initCharacterSelector?.();
           window.app._initCharacterSelector?.();
         }
+        // 刷新提示词编辑器角色下拉
+        const promptSelect = document.getElementById('prompt-character-select');
+        if (promptSelect) promptSelect.dataset.populated = '';
       } else {
         this._showStatus(status, '创建失败，请重试', 'error');
       }
@@ -322,6 +325,9 @@ class CustomCharacterManager {
           window.characterManager._initCharacterSelector?.();
           window.app._initCharacterSelector?.();
         }
+        // 刷新提示词编辑器角色下拉
+        const promptSelect = document.getElementById('prompt-character-select');
+        if (promptSelect) promptSelect.dataset.populated = '';
       } else if (result.message !== '取消导入') {
         window.app?.showToast(`导入失败: ${result.message}`);
       }
