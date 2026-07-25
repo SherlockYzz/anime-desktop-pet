@@ -203,7 +203,7 @@ class CustomCharacterManager {
   }
 
   _resetForm() {
-    const ids = ['cc-name', 'cc-series', 'cc-tagline', 'cc-description', 'cc-prompt'];
+    const ids = ['cc-name', 'cc-series', 'cc-tagline', 'cc-description', 'cc-prompt', 'cc-canonical'];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -234,6 +234,11 @@ class CustomCharacterManager {
     if (!series) { this._showStatus(status, '请输入作品出处', 'error'); return; }
     if (!systemPrompt) { this._showStatus(status, '请输入系统提示词', 'error'); return; }
     if (!this._avatarBase64) { this._showStatus(status, '请上传角色头像', 'error'); return; }
+    if (!this._coverBase64) { this._showStatus(status, '请上传封面图', 'error'); return; }
+    // 原作台词集：每行一句，至少1句
+    const canonicalText = document.getElementById('cc-canonical')?.value.trim();
+    const canonicalLines = canonicalText ? canonicalText.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [];
+    if (canonicalLines.length < 1) { this._showStatus(status, '请至少填写1句原作台词', 'error'); return; }
 
     // 检查electronAPI
     if (!window.electronAPI) {
@@ -251,6 +256,7 @@ class CustomCharacterManager {
         coverBase64: this._coverBase64,
         live2dModelBase64: this._live2dBase64,
         live2dModelFileName: this._live2dFileName,
+        canonicalLines,
       });
 
       if (result.success) {

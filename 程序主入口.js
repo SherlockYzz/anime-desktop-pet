@@ -158,15 +158,17 @@ function sanitizeId(name) {
 
 /** 保存角色数据到磁盘（共用逻辑，供创建和导入使用） */
 function saveCharacterData(data) {
-  const { name, series, tagline, description, systemPrompt, primaryColor, avatarBase64, coverBase64, live2dModelBase64, live2dModelFileName } = data;
+  const { name, series, tagline, description, systemPrompt, primaryColor, avatarBase64, coverBase64, live2dModelBase64, live2dModelFileName, canonicalLines } = data;
 
   const charId = sanitizeId(name);
   const charDir = path.join(__dirname, '自定义角色', charId);
   const imgDir = path.join(charDir, '图片素材');
   const live2dDir = path.join(charDir, 'Live2D模型');
+  const dialogueDir = path.join(charDir, '触发台词');
 
   fs.mkdirSync(imgDir, { recursive: true });
   fs.mkdirSync(live2dDir, { recursive: true });
+  fs.mkdirSync(dialogueDir, { recursive: true });
 
   const avatarRelPath = `../../自定义角色/${charId}/图片素材/头像.png`;
   if (avatarBase64) {
@@ -190,6 +192,11 @@ function saveCharacterData(data) {
   }
 
   fs.writeFileSync(path.join(charDir, '系统提示词.txt'), systemPrompt || '', 'utf-8');
+
+  // 保存原作台词集
+  if (canonicalLines && canonicalLines.length > 0) {
+    fs.writeFileSync(path.join(charDir, '原作台词集.txt'), canonicalLines.join('\n'), 'utf-8');
+  }
 
   const registryPath = path.join(__dirname, '自定义角色', 'registry.json');
   let registry = {};
@@ -254,6 +261,13 @@ ipcMain.handle('export-custom-character', async (event, characterId) => {
   let systemPrompt = '';
   try { systemPrompt = fs.readFileSync(path.join(charDir, '系统提示词.txt'), 'utf-8'); } catch {}
 
+  // 读取原作台词集
+  let canonicalLines = [];
+  try {
+    const canonText = fs.readFileSync(path.join(charDir, '原作台词集.txt'), 'utf-8');
+    canonicalLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  } catch {}
+
   const exportData = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -265,6 +279,7 @@ ipcMain.handle('export-custom-character', async (event, characterId) => {
       primaryColor: charMeta.primaryColor || '#f0a0b0',
       avatarBase64, coverBase64,
       live2dModelBase64, live2dModelFileName,
+      canonicalLines,
     }
   };
 
@@ -294,7 +309,10 @@ ipcMain.handle('import-custom-character', async (event) => {
     const data = JSON.parse(raw);
 
     if (!data.character || !data.character.name || !data.character.systemPrompt) {
-      return { success: false, message: '无效的角色数据文件' };
+      return { success: false, message: '无效的角色数据文件（缺少名称或系统提示词）' };
+    }
+    if (!data.character.canonicalLines || data.character.canonicalLines.length < 1) {
+      return { success: false, message: '无效的角色数据文件（缺少原作台词集）' };
     }
 
     const result = saveCharacterData(data.character);

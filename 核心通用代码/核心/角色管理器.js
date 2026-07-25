@@ -216,8 +216,18 @@ class CharacterManager {
   /** 后台加载台词文件（不阻塞启动） */
   async loadCharacterDialoguesInBackground(characterId) {
     const character = this.registry[characterId];
-    // ★ 自定义角色没有台词文件
+
+    // ★ 自定义角色：加载原作台词集（触发台词为可选，暂不加载）
     if (character?.isCustom) {
+      try {
+        const canonPath = `../../自定义角色/${characterId}/原作台词集.txt`;
+        const canonResp = await fetch(canonPath);
+        if (canonResp.ok) {
+          const canonText = await canonResp.text();
+          const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          if (canonLines.length > 0) character.lines._canonical = canonLines;
+        }
+      } catch (e) { /* 跳过 */ }
       this._loadedCharacters.add(characterId);
       return;
     }
@@ -242,7 +252,7 @@ class CharacterManager {
     if (!folder || !character) return;
 
     const linePromises = Object.entries(DIALOGUE_FILE_MAP).map(async ([fileName, key]) => {
-      const filePath = `../../${folder}/台词/${fileName}`;
+      const filePath = `../../${folder}/触发台词/${fileName}`;
       try {
         const resp = await fetch(filePath);
         if (resp.ok) {
