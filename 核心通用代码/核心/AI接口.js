@@ -10,7 +10,7 @@ class MimoAPI {
     this.baseUrl = 'https://ark.cn-beijing.volces.com/api/v3';
     this.provider = 'doubao';
     this.conversationHistory = [];
-    this.maxHistory = 6;
+    this.maxHistory = 30;
     this._responseMode = 'instant';
     this._promptMode = 'auto';
     this._maxRetries = 2;

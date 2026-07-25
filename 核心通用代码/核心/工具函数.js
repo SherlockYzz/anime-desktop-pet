@@ -6,10 +6,10 @@
 /** 角色ID → 文件夹名映射（所有内建角色） */
 const CHARACTER_FOLDER_MAP = {
   megumi: '角色-加藤惠',
-  rem: '角色-蕾姆',
-  zerotwo: '角色-零二',
+  yukino: '角色-雪之下雪乃',
   takagi: '角色-高木同学',
-  yukino: '角色-雪之下雪乃'
+  rem: '角色-蕾姆',
+  zerotwo: '角色-零二'
 };
 
 /** HTML转义：防止XSS注入 */

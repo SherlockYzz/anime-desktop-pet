@@ -167,6 +167,7 @@ class CharacterManager {
 
     // ★ 先尝试从缓存读取系统提示词（同台词缓存，一天一变）
     const cacheKey = `prompt_cache_${characterId}`;
+    let cacheHit = false;
     try {
       const raw = localStorage.getItem(cacheKey);
       if (raw) {
@@ -181,34 +182,37 @@ class CharacterManager {
               character.lines[situation] = lines;
             }
           }
-          return; // ★ 缓存命中，跳过文件 fetch
+          cacheHit = true;
         }
       }
     } catch (e) { /* 忽略 */ }
 
-    try {
-      const promptPath = `../../${folder}/系统提示词.txt?t=${Date.now()}`;
-      const promptResp = await fetch(promptPath, { cache: 'no-store' });
-      if (promptResp.ok) {
-        const filePrompt = (await promptResp.text()).trim();
-        character._defaultSystemPrompt = filePrompt;
-        const customPrompt = this.getCustomPrompt(characterId);
-        character.systemPrompt = customPrompt || filePrompt;
-        // ★ 写入缓存
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify({
-            _version: this._getCacheVersion(),
-            prompt: filePrompt
-          }));
-        } catch (e) { /* localStorage 满 */ }
-      }
-    } catch (e) { /* 静默 */ }
+    if (!cacheHit) {
+      // ★ 缓存未命中或版本过期，从文件加载
+      try {
+        const promptPath = `../../${folder}/系统提示词.txt?t=${Date.now()}`;
+        const promptResp = await fetch(promptPath, { cache: 'no-store' });
+        if (promptResp.ok) {
+          const filePrompt = (await promptResp.text()).trim();
+          character._defaultSystemPrompt = filePrompt;
+          const customPrompt = this.getCustomPrompt(characterId);
+          character.systemPrompt = customPrompt || filePrompt;
+          // ★ 写入缓存
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+              _version: this._getCacheVersion(),
+              prompt: filePrompt
+            }));
+          } catch (e) { /* localStorage 满 */ }
+        }
+      } catch (e) { /* 静默 */ }
 
-    // ★ 尝试从缓存读取台词，这样 UI 能先显示
-    const cached = this._getCachedDialogue(characterId);
-    if (cached && cached.lines) {
-      for (const [situation, lines] of Object.entries(cached.lines)) {
-        character.lines[situation] = lines;
+      // ★ 从缓存加载台词，这样 UI 能先显示
+      const cached = this._getCachedDialogue(characterId);
+      if (cached && cached.lines) {
+        for (const [situation, lines] of Object.entries(cached.lines)) {
+          character.lines[situation] = lines;
+        }
       }
     }
   }
@@ -368,11 +372,59 @@ class CharacterManager {
   }
 
   getAllCharacters() {
-    return Object.keys(this.registry).map(id => ({
+    // 读取用户自定义顺序
+    const savedOrder = this.getCharacterOrder();
+    const allIds = Object.keys(this.registry);
+
+    // 按自定义顺序排列，新角色放最后
+    const orderedIds = savedOrder.filter(id => allIds.includes(id));
+    const newIds = allIds.filter(id => !savedOrder.includes(id));
+    const finalIds = [...orderedIds, ...newIds];
+
+    return finalIds.map(id => ({
       id, name: this.registry[id].name, series: this.registry[id].series,
       tagline: this.registry[id].tagline, theme: this.registry[id].theme,
       avatar: this.registry[id].avatar,
     }));
+  }
+
+  // 获取角色顺序
+  getCharacterOrder() {
+    try {
+      const saved = localStorage.getItem('character-order');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  }
+
+  // 保存角色顺序
+  saveCharacterOrder(order) {
+    localStorage.setItem('character-order', JSON.stringify(order));
+  }
+
+  // 移动角色位置（上移-1，下移1）
+  moveCharacter(characterId, direction) {
+    const order = this.getCharacterOrder();
+    const allIds = Object.keys(this.registry);
+
+    // 如果没有保存过顺序，先初始化为当前顺序
+    if (order.length === 0) {
+      order.push(...allIds);
+    }
+
+    // 确保所有角色都在顺序中
+    allIds.forEach(id => { if (!order.includes(id)) order.push(id); });
+
+    const currentIndex = order.indexOf(characterId);
+    if (currentIndex === -1) return false;
+
+    const newIndex = currentIndex + direction;
+    if (newIndex < 0 || newIndex >= order.length) return false;
+
+    // 交换位置
+    [order[currentIndex], order[newIndex]] = [order[newIndex], order[currentIndex]];
+
+    this.saveCharacterOrder(order);
+    return true;
   }
 
   async switchCharacter(characterId) {
@@ -427,6 +479,14 @@ class CharacterManager {
     const lines = this.currentCharacter?.lines?._canonical;
     if (!lines || index < 0 || index >= lines.length) return;
     lines.splice(index, 1);
+    this._saveCanonicalToFile();
+  }
+
+  // 编辑原作台词
+  updateCanonicalLine(index, newLine) {
+    const lines = this.currentCharacter?.lines?._canonical;
+    if (!lines || index < 0 || index >= lines.length) return;
+    lines[index] = newLine;
     this._saveCanonicalToFile();
   }
 

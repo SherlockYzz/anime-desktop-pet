@@ -1431,6 +1431,51 @@ body::before {
   box-shadow: 0 2px 6px var(--btn-send-shadow);
 }
 
+/* 角色排序按钮 */
+.character-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.character-card:hover .character-card-actions {
+  opacity: 1;
+}
+
+.character-order-btn {
+  width: 24px;
+  height: 22px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.character-order-btn:hover:not(:disabled) {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.character-order-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.character-order-btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
 /* ===== 动画 ===== */
 @keyframes characterCardEnter {
   from {
@@ -2423,6 +2468,21 @@ body.web-mode-active .loading-overlay.show {
   background: var(--hover-color);
   border-color: var(--primary-color);
 }
+.btn-canonical-reset {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-canonical-reset:hover {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
 .canonical-list {
   max-height: 260px;
   overflow-y: auto;
@@ -2458,6 +2518,26 @@ body.web-mode-active .loading-overlay.show {
 .canonical-item-text {
   flex: 1;
   word-break: break-all;
+}
+.canonical-item-edit {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.canonical-item-edit:hover {
+  background: rgba(100, 150, 200, 0.15);
+  color: #4080c0;
 }
 .canonical-item-delete {
   flex-shrink: 0;

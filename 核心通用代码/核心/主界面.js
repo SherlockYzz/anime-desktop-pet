@@ -260,14 +260,54 @@ class App {
     const grid = document.getElementById('character-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    list.forEach(char => {
+
+    list.forEach((char, index) => {
       const card = document.createElement('div');
       card.className = `character-card ${char.id === curId ? 'active' : ''}`;
       card.dataset.characterId = char.id;
-      card.innerHTML = `<div class="character-card-avatar" style="background:${char.theme.primary}20;border-color:${char.theme.primary}40;"><img src="${char.avatar}" alt="${char.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="character-card-icon" style="color:${char.theme.primary};display:none;">${char.name.charAt(0)}</span></div><div class="character-card-info"><div class="character-card-name" style="color:${char.theme.primary};">${char.name}</div><div class="character-card-series">${char.series}</div><div class="character-card-tagline">${char.tagline}</div></div>${char.id === curId ? '<div class="character-card-badge">当前</div>' : ''}`;
+      card.innerHTML = `
+        <div class="character-card-avatar" style="background:${char.theme.primary}20;border-color:${char.theme.primary}40;">
+          <img src="${char.avatar}" alt="${char.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="character-card-icon" style="color:${char.theme.primary};display:none;">${char.name.charAt(0)}</span>
+        </div>
+        <div class="character-card-info">
+          <div class="character-card-name" style="color:${char.theme.primary};">${char.name}</div>
+          <div class="character-card-series">${char.series}</div>
+          <div class="character-card-tagline">${char.tagline}</div>
+        </div>
+        <div class="character-card-actions">
+          <button class="character-order-btn character-order-up" data-id="${char.id}" ${index === 0 ? 'disabled' : ''} title="上移">&#9650;</button>
+          <button class="character-order-btn character-order-down" data-id="${char.id}" ${index === list.length - 1 ? 'disabled' : ''} title="下移">&#9660;</button>
+        </div>
+        ${char.id === curId ? '<div class="character-card-badge">当前</div>' : ''}`;
+
       card.addEventListener('mouseenter', () => { if (char.id !== curId) window.characterManager.precacheCharacter(char.id); });
-      card.addEventListener('click', () => this._switchCharacter(char.id));
+      card.addEventListener('click', (e) => {
+        // 点击排序按钮时不切换角色
+        if (e.target.closest('.character-order-btn')) return;
+        this._switchCharacter(char.id);
+      });
       grid.appendChild(card);
+    });
+
+    // 绑定排序按钮事件
+    this._bindCharacterOrderEvents();
+  }
+
+  _bindCharacterOrderEvents() {
+    const grid = document.getElementById('character-grid');
+    if (!grid) return;
+
+    grid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.character-order-btn');
+      if (!btn || btn.disabled) return;
+
+      const characterId = btn.dataset.id;
+      const isUp = btn.classList.contains('character-order-up');
+      const direction = isUp ? -1 : 1;
+
+      window.characterManager.moveCharacter(characterId, direction);
+      this._initCharacterSelector(); // 刷新列表
     });
   }
 
