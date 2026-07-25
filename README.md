@@ -1,38 +1,120 @@
 <div align="center">
-  <h1>✨ 二次元桌宠项目 · AI 桌面伴侣</h1>
-  <p>
-    <strong>Live2D 动态形象 · 五大角色 · AI 智能聊天 · 原作台词集 · 关键词触发</strong>
-  </p>
-  <p>
-    <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge" alt="License">
-    <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron" alt="Electron">
-    <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
-    <img src="https://img.shields.io/badge/Version-2.0.0-ff69b4?style=for-the-badge" alt="Version">
-  </p>
-  <br>
+
+# ✨ ReDame · 二次元AI桌宠
+
+**Live2D 动态形象 · 五大经典角色 · AI 智能聊天 · 原作台词集 · 关键词触发**
+
+<br>
+
+<p>
+  <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
+  <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
+  <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
+  <img src="https://img.shields.io/badge/Version-2.0.0-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/VRM-Three.js-green?style=for-the-badge" alt="VRM">
+</p>
+
+<p>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet">⭐ Star 支持</a>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/issues">🐛 反馈问题</a>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/discussions">💬 讨论交流</a>
+</p>
+
+<br>
+
 </div>
 
-## 介绍
+---
 
-**二次元桌宠项目** 是一款基于 **Electron** 的二次元桌面宠物应用。五位经典角色常驻桌面，陪你聊天、帮你写代码、给你打气！
+## 🛠️ 技术栈
 
-**v2.0.0 重磅升级**：
-- 🎉 **新增角色**：雪之下雪乃（春物）、高木同学（擅长捉弄的高木同学）
-- 📚 **原作台词集系统**：每个角色独立的经典台词库，启动/点击/待机/告别时随机展示
-- ⚡ **关键词触发台词**：聊天命中关键词自动触发角色台词，秒级响应
-- 🔄 **角色顺序更换**：在设置中自由调整角色显示顺序
-- 🔙 **恢复默认状态**：提示词和原作台词集均可一键恢复默认
-- 💬 **原作台词集管理**：支持单条添加、批量导入、删除、编辑
-- ⚖️ **三种 AI 回复模式**：即答/均衡/深度，灵活平衡速度与深度
-- 💭 **思考过程折叠**：AI 思考过程自动折叠显示，阅读更清爽
+<table>
+<tr>
+  <td align="center" width="120">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/electron.svg" width="40" height="40" style="filter: invert(0.8)"><br>
+    <b>Electron 28</b><br><small>跨平台桌面框架</small>
+  </td>
+  <td align="center" width="120">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/html5.svg" width="40" height="40"><br>
+    <b>HTML5 + CSS3</b><br><small>渲染与样式</small>
+  </td>
+  <td align="center" width="120">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/javascript.svg" width="40" height="40"><br>
+    <b>JavaScript</b><br><small>核心逻辑</small>
+  </td>
+  <td align="center" width="120">
+    <b style="font-size:24px">🎭</b><br>
+    <b>Live2D Cubism</b><br><small>2D 动态引擎</small>
+  </td>
+  <td align="center" width="120">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/threedotjs.svg" width="40" height="40"><br>
+    <b>Three.js / VRM</b><br><small>3D 模型渲染</small>
+  </td>
+  <td align="center" width="120">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg" width="40" height="40"><br>
+    <b>AI API</b><br><small>OpenAI 兼容接口</small>
+  </td>
+  <td align="center" width="120">
+    <b style="font-size:24px">📦</b><br>
+    <b>electron-builder</b><br><small>应用打包构建</small>
+  </td>
+</tr>
+</table>
 
-**v1.3.0 新增**：三种 AI 回复模式（即答/均衡/深度），思考过程折叠显示，响应速度大幅优化。
+> 完全开源免费，支持接入任意兼容 OpenAI 接口的大语言模型（DeepSeek、GPT、Claude 等）。
 
-**v1.2.0 新增**：创建**自定义角色**，把你喜欢的任何角色（甚至原创角色）加入桌宠！支持导入/导出角色数据，轻松分享给朋友。
+---
 
-> 本项目完全开源免费，支持接入任意兼容 OpenAI 接口的大语言模型（如 DeepSeek、GPT、Claude 等）。
+## 📖 项目介绍
 
-## 功能特性
+**ReDame** 是一款基于 Electron 的二次元桌面宠物应用。五位经典角色常驻桌面，陪你聊天、帮你写代码、给你打气！
+
+### v2.0.0 重磅升级
+
+<table>
+<tr>
+  <td>🎉 <b>新增角色</b></td>
+  <td>雪之下雪乃（春物）、高木同学（擅长捉弄的高木同学）</td>
+</tr>
+<tr>
+  <td>📚 <b>原作台词集系统</b></td>
+  <td>每个角色独立的经典台词库，启动/点击/待机/告别时随机展示</td>
+</tr>
+<tr>
+  <td>⚡ <b>关键词触发台词</b></td>
+  <td>聊天命中关键词自动触发角色台词，秒级响应</td>
+</tr>
+<tr>
+  <td>🔄 <b>角色顺序更换</b></td>
+  <td>在设置中自由调整角色显示顺序</td>
+</tr>
+<tr>
+  <td>🔙 <b>恢复默认状态</b></td>
+  <td>提示词和原作台词集均可一键恢复默认</td>
+</tr>
+<tr>
+  <td>💬 <b>原作台词集管理</b></td>
+  <td>支持单条添加、批量导入、删除、编辑</td>
+</tr>
+<tr>
+  <td>⚖️ <b>三种 AI 回复模式</b></td>
+  <td>即答/均衡/深度，灵活平衡速度与深度</td>
+</tr>
+<tr>
+  <td>💭 <b>思考过程折叠</b></td>
+  <td>AI 思考过程自动折叠显示，阅读更清爽</td>
+</tr>
+</table>
+
+**v1.3.0**：三种 AI 回复模式 · 思考过程折叠 · 响应速度优化
+
+**v1.2.0**：创建自定义角色 · 导入/导出角色数据 · 分享给朋友
+
+---
+
+## ✨ 功能特性
 
 | 特性 | 说明 |
 |------|------|
@@ -48,58 +130,118 @@
 | 🎯 **桌宠模式** | 迷你尺寸桌面宠物，陪伴感满分 |
 | ⚙️ **丰富设置** | 自定义 API、模型、透明度、提示词等 |
 | 🌈 **精美主题** | 每个角色独立配色，渐变色彩设计 |
-| **➕ 自定义角色** | 创建属于你自己的桌宠角色，一切由你定义 |
-| **📤 导入/导出** | 导出角色分享给朋友，或导入他人分享的角色 |
+| ➕ **自定义角色** | 创建属于你自己的桌宠角色，一切由你定义 |
+| 📤 **导入/导出** | 导出角色分享给朋友，或导入他人分享的角色 |
 | 🔄 **角色顺序更换** | 在设置中自由调整角色显示顺序 |
 | 🔙 **恢复默认状态** | 提示词和原作台词集均可一键恢复默认 |
 
-## 角色阵容
+---
 
-### 内置角色
+## 🎭 角色阵容
 
 <table>
 <tr>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #e8a0bf"><br>
     <b>加藤惠</b><br>
     <sub>路人女主的养成方法</sub><br>
-    <small>平淡吐槽 · 温柔包容</small>
+    <small>🎀 平淡吐槽 · 温柔包容</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A7%86/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A7%86/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #4a90d9"><br>
     <b>蕾姆</b><br>
     <sub>Re:从零开始的异世界生活</sub><br>
-    <small>温柔贤惠 · 坚定守护</small>
+    <small>💙 温柔贤惠 · 坚定守护</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #e84855"><br>
     <b>02</b><br>
     <sub>DARLING in the FRANXX</sub><br>
-    <small>大胆奔放 · 天真妖媚</small>
+    <small>❤️ 大胆奔放 · 天真妖媚</small>
   </td>
 </tr>
 <tr>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%AB%98%E6%9C%A8%E5%90%8C%E5%AD%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%AB%98%E6%9C%A8%E5%90%8C%E5%AD%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #f5a623"><br>
     <b>高木同学</b><br>
     <sub>擅长捉弄的高木同学</sub><br>
-    <small>调皮捉弄 · 温柔可爱</small>
+    <small>💛 调皮捉弄 · 温柔可爱</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%AA%E4%B9%8B%E4%B8%8B%E9%9B%AA%E4%B9%83/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%"><br>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%AA%E4%B9%8B%E4%B8%8B%E9%9B%AA%E4%B9%83/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #7b68ee"><br>
     <b>雪之下雪乃</b><br>
     <sub>我的青春恋爱物语果然有问题</sub><br>
-    <small>毒舌傲娇 · 冰山美人</small>
+    <small>💜 毒舌傲娇 · 冰山美人</small>
   </td>
-  <td></td>
+  <td align="center" width="200">
+    <i style="font-size:48px">➕</i><br>
+    <b>自定义角色</b><br>
+    <sub>等你来创造！</sub><br>
+    <small>✨ 创建属于你的专属桌宠</small>
+  </td>
 </tr>
 </table>
 
-### 自定义角色（v1.2.0 新功能）
+---
 
-除了内置角色，你现在可以自由创建任意角色！初音未来、时崎狂三、甚至你原创的角色——只需填写设定、上传头像、编写系统提示词，即可拥有专属桌宠。
+## 🗺️ 路线图
 
-## 快速开始
+<table>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>已完成</b></td>
+  <td>基础桌宠框架 · 多角色切换 · AI 聊天 · VRM 3D 模型 · 代码辅助</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v1.2.0</b></td>
+  <td>自定义角色创建 · 角色导入/导出</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v1.3.0</b></td>
+  <td>三种 AI 回复模式 · 思考过程折叠 · 响应速度优化</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v2.0.0</b></td>
+  <td>新增雪之下雪乃、高木同学 · 原作台词集 · 关键词触发 · 角色顺序更换 · 恢复默认功能</td>
+</tr>
+<tr>
+  <td width="40" align="center">🔄</td>
+  <td><b>制作中</b></td>
+  <td>所有角色的专属 Live2D 动态资源</td>
+</tr>
+<tr>
+  <td width="40" align="center">🔄</td>
+  <td><b>制作中</b></td>
+  <td>角色语音大模型合成 / 声库</td>
+</tr>
+<tr>
+  <td width="40" align="center">📋</td>
+  <td><b>计划中</b></td>
+  <td>更多角色（初音未来、时崎狂三……）</td>
+</tr>
+<tr>
+  <td width="40" align="center">📋</td>
+  <td><b>计划中</b></td>
+  <td>桌宠小游戏（戳泡泡、养成等）</td>
+</tr>
+<tr>
+  <td width="40" align="center">📋</td>
+  <td><b>计划中</b></td>
+  <td>插件系统</td>
+</tr>
+<tr>
+  <td width="40" align="center">📋</td>
+  <td><b>计划中</b></td>
+  <td>Mac / Linux 优化</td>
+</tr>
+</table>
+
+---
+
+## 🚀 快速开始
 
 ### 环境要求
 
@@ -156,7 +298,7 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 
 ---
 
-## 角色三大模块详解（v2.0.0 新增）
+## 📋 角色三大模块详解（v2.0.0）
 
 每个角色由三个独立模块组成，理解这三个模块是使用本应用的关键：
 
@@ -171,7 +313,7 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 4. 在文本框中修改提示词内容
 5. 点击「保存此角色提示词」→ 立即生效
 
-**恢复默认**：点击「恢复默认」按钮，提示词会回退到初始模板版本，你的自定义修改会被覆盖。
+**恢复默认**：点击「恢复默认」按钮，提示词会回退到初始模板版本。
 
 ### 模块 2：原作台词集（v2.0.0 新增）
 
@@ -186,11 +328,7 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 6. **删除台词**：将鼠标移到台词上，点击右侧的 `×` 按钮
 7. **恢复默认**：点击「恢复默认」按钮，回退到初始台词集
 
-**触发时机**：
-- 应用启动时
-- 用户点击角色时
-- 角色待机闲置时
-- 用户退出/告别时
+**触发时机**：应用启动时 · 用户点击角色时 · 角色待机闲置时 · 用户退出/告别时
 
 ### 模块 3：关键词触发台词集（v2.0.0 新增）
 
@@ -213,24 +351,14 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 
 ---
 
-## 自定义角色功能（v1.2.0）
+## 🎨 自定义角色功能（v1.2.0）
 
 ### 创建角色
 
 1. 点击标题栏的 👤 按钮打开角色选择面板
 2. 点击右上角的 **+** 按钮
-3. 填写角色信息：
-   - **角色名称**（必填）：如"初音未来"
-   - **作品出处**（必填）：如"VOCALOID"
-   - **一句话简介**：简短描述角色特点
-   - **详细描述**：角色的背景故事和性格
-   - **主题色**：选择主色调，系统会自动生成完整主题
-   - **头像**（必填）：上传角色头像
-   - **封面图**：可选的角色大图
-   - **系统提示词**（必填）：**最关键的部分！** 定义角色的性格、说话方式、行为规则，直接决定 AI 扮演的质量
-   - **原作台词集**（必填）：角色的经典台词，至少 1 句，每行一句
-   - **Live2D 模型**：可选，上传 .model3.json 文件
-4. 点击"创建角色"，角色会自动保存并出现在角色列表中
+3. 填写角色信息：**名称**、**作品出处**、**简介**、**详细描述**、**主题色**、**头像**、**封面图**、**系统提示词**（最关键）、**原作台词集**、**Live2D 模型**（可选）
+4. 点击"创建角色"，自动保存并出现在角色列表中
 
 > **提示：** 系统提示词是决定角色扮演质量的关键。写得越详细，角色的表现越生动。可以参考内置角色的提示词写法。
 
@@ -238,8 +366,7 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 
 1. 打开设置面板（⚙）
 2. 在"角色提示词设定"区域，选择你的自定义角色
-3. 点击"导出此角色"
-4. 选择保存位置，会生成一个 `.json` 文件
+3. 点击"导出此角色" → 选择保存位置，生成 `.json` 文件
 
 导出的文件包含角色的所有数据（名称、设定、头像、封面、提示词、Live2D 模型），可以分享给朋友。
 
@@ -249,34 +376,24 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 2. 选择其他人分享的 `.json` 角色数据文件
 3. 角色会自动导入到你的桌宠中
 
-### 编辑角色提示词
+### 编辑 / 删除角色
 
-1. 打开设置面板（⚙）
-2. 在"角色提示词设定"区域，选择要编辑的角色
-3. 在文本框中修改系统提示词
-4. 点击"保存此角色提示词"，修改会立即生效
-
-> 此功能也支持修改内置角色的提示词！
-
-### 删除自定义角色
-
-1. 在设置面板中选中自定义角色
-2. 点击"删除此角色"
-3. 确认删除（此操作不可撤销）
+- **编辑提示词**：设置面板 → 角色提示词设定 → 选择角色 → 修改 → 保存
+- **删除自定义角色**：设置面板 → 选择自定义角色 → 点击"删除此角色"（不可撤销）
 
 ---
 
-## 角色定制（进阶）
+## 🔧 角色定制（进阶）
 
 内置角色的台词、人设、主题色也可以自由编辑：
 
 ```
 角色-加藤惠/
-├── 角色设定.js        # 主题色、Live2D 配置
-├── 系统提示词.txt      # AI 人设（可直接编辑）
-├── 原作台词集.txt      # 原作经典台词（每行一句）
-├── 图片素材/           # 头像和封面
-└── 触发台词/           # 分类触发台词（每行一句）
+├── 角色设定.js          # 主题色、Live2D 配置
+├── 系统提示词.txt        # AI 人设（可直接编辑）
+├── 原作台词集.txt        # 原作经典台词（每行一句）
+├── 图片素材/             # 头像和封面
+└── 触发台词/             # 分类触发台词（每行一句）
     ├── 开机.txt、待机.txt、点击.txt、告别.txt
     ├── 吐槽.txt、温柔.txt、吃醋.txt、毒舌.txt
     ├── 捉弄.txt、调情.txt、孤独.txt、自我怀疑.txt
@@ -288,44 +405,13 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 
 > 对于大多数用户，推荐使用**自定义角色功能**（直接在应用内创建），无需手动编辑文件。
 
-## 技术栈
+---
 
-- **框架**: Electron 28
-- **渲染**: HTML5 + CSS3 + JavaScript
-- **2D 引擎**: Live2D Cubism (CubismSdkForWeb)
-- **3D 模型**: VRM (Three.js)
-- **AI 接口**: OpenAI 兼容 API
-- **构建**: electron-builder
-
-## 路线图
-
-- [x] 基础桌宠框架
-- [x] 多角色切换
-- [x] AI 聊天
-- [x] VRM 3D 模型支持
-- [x] 代码辅助
-- [x] **自定义角色创建**（v1.2.0）
-- [x] **角色导入/导出**（v1.2.0）
-- [x] **三种 AI 回复模式**（v1.3.0）
-- [x] **思考过程折叠展示**（v1.3.0）
-- [x] **响应速度优化**（v1.3.0）
-- [x] **新增雪之下雪乃、高木同学**（v2.0.0）
-- [x] **原作台词集系统**（v2.0.0）
-- [x] **关键词触发台词系统**（v2.0.0）
-- [x] **角色顺序更换**（v2.0.0）
-- [x] **恢复默认状态功能**（v2.0.0）
-- [ ] 所有角色的专属 Live2D 动态资源（制作中）
-- [ ] 角色语音大模型合成 / 声库
-- [ ] 更多角色（初音未来、时崎狂三...）
-- [ ] 桌宠小游戏（戳泡泡、养成等）
-- [ ] 插件系统
-- [ ] Mac/Linux 优化
-
-## 贡献
+## 🤝 贡献
 
 欢迎提交 Issue 和 PR！一起让桌宠更可爱 ✨
 
-## 许可证
+## 📄 许可证
 
 [MIT](LICENSE)
 
