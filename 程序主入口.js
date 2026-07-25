@@ -330,3 +330,25 @@ ipcMain.handle('delete-custom-character', async (event, id) => {
 
   return { success: true };
 });
+
+// ★ 保存原作台词集到文件
+ipcMain.handle('save-canonical-lines', async (event, folder, lines) => {
+  const filePath = path.join(__dirname, folder, '原作台词集.txt');
+  try {
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// ★ 读取原作台词集
+ipcMain.handle('load-canonical-lines', async (event, folder) => {
+  const filePath = path.join(__dirname, folder, '原作台词集.txt');
+  try {
+    const text = fs.readFileSync(filePath, 'utf-8');
+    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  } catch {
+    return [];
+  }
+});

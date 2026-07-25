@@ -14,4 +14,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteCustomCharacter: (id) => ipcRenderer.invoke('delete-custom-character', id),
   exportCustomCharacter: (id) => ipcRenderer.invoke('export-custom-character', id),
   importCustomCharacter: () => ipcRenderer.invoke('import-custom-character'),
+
+  // 原作台词集
+  saveCanonicalLines: (folder, lines) => ipcRenderer.invoke('save-canonical-lines', folder, lines),
+  loadCanonicalLines: (folder) => ipcRenderer.invoke('load-canonical-lines', folder),
 });

@@ -2360,3 +2360,129 @@ body.web-mode-active .loading-overlay.show {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
+
+/* ===== 原作台词集管理 ===== */
+.canonical-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.canonical-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  font-size: 13px;
+  resize: vertical;
+  min-height: 40px;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+.canonical-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+.canonical-input::placeholder {
+  color: var(--text-secondary);
+}
+.btn-canonical-add {
+  padding: 8px 16px;
+  background: var(--gradient-main);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s;
+  box-shadow: 0 2px 6px var(--btn-send-shadow);
+}
+.btn-canonical-add:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 10px var(--btn-send-hover-shadow);
+}
+.canonical-import-row {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+.btn-canonical-import {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--tab-active-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-canonical-import:hover {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+}
+.canonical-list {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.canonical-list::-webkit-scrollbar {
+  width: 4px;
+}
+.canonical-list::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+.canonical-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+.canonical-item:hover {
+  border-color: var(--border-color);
+  background: var(--hover-color);
+}
+.canonical-item-text {
+  flex: 1;
+  word-break: break-all;
+}
+.canonical-item-delete {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.canonical-item-delete:hover {
+  background: rgba(200, 100, 100, 0.15);
+  color: #c04040;
+}
+.canonical-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 16px 0;
+  font-style: italic;
+}

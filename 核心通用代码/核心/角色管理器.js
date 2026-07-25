@@ -1,14 +1,9 @@
 
 // ========================================
 //  二次元桌宠 - 角色管理器
-//  优化：台词本地缓存（避免重复fetch）、模型文件缓存
+//  职责：角色切换、主题应用、台词加载与缓存、原作台词集管理
+//  依赖：工具函数.js (CHARACTER_FOLDER_MAP)
 // ========================================
-
-const CHARACTER_FOLDER_MAP = {
-  megumi: '角色-加藤惠',
-  rem: '角色-蕾姆',
-  zerotwo: '角色-零二'
-};
 
 const DIALOGUE_FILE_MAP = {
   '开机.txt': 'boot', '待机.txt': 'idle', '点击.txt': 'click',
@@ -16,7 +11,8 @@ const DIALOGUE_FILE_MAP = {
   '告别.txt': 'farewell', '特殊.txt': 'special', '天气.txt': 'weather',
   '夸奖.txt': 'praise', '晚安.txt': 'bedtime', '鼓励.txt': 'encouragement',
   '美食.txt': 'food', '料理.txt': 'cooking', '自我怀疑.txt': 'self_doubt',
-  '调情.txt': 'playful', '孤独.txt': 'loneliness'
+  '调情.txt': 'playful', '孤独.txt': 'loneliness',
+  '捉弄.txt': 'tease', '毒舌.txt': 'sharp_tongue'
 };
 
 // CSS属性映射表
@@ -58,6 +54,8 @@ class CharacterManager {
     this._cachedTheme = null;
     this._precacheTimer = null;
     this._modelExistsCache = new Map();
+    // ★ 启动时清除所有台词缓存，确保从文件读取最新内容
+    this._clearAllDialogueCache();
     // ★ 等待自定义角色加载完成
     // ★ 自定义角色加载带3秒超时，防止IPC卡住阻塞整个启动流程
     const customCharPromise = window.customCharManager
@@ -103,6 +101,20 @@ class CharacterManager {
     } catch (e) {
       // localStorage 可能满，忽略
     }
+  }
+
+  /** 启动时清除所有角色的台词缓存，确保文件修改立即生效 */
+  _clearAllDialogueCache() {
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('dialogue_cache_') || key.startsWith('prompt_cache_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (e) { /* 忽略 */ }
   }
 
   async checkModelFileExists(path) {
@@ -242,6 +254,17 @@ class CharacterManager {
     });
     await Promise.all(linePromises);
 
+    // ★ 加载原作台词集
+    try {
+      const canonPath = `../../${folder}/原作台词集.txt`;
+      const canonResp = await fetch(canonPath);
+      if (canonResp.ok) {
+        const canonText = await canonResp.text();
+        const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (canonLines.length > 0) character.lines._canonical = canonLines;
+      }
+    } catch (e) { /* 跳过 */ }
+
     this._loadedCharacters.add(characterId);
 
     // ★ 写入缓存，下次启动不再请求文件
@@ -360,9 +383,53 @@ class CharacterManager {
   getCurrentCharacter() { return this.currentCharacter; }
   getSystemPrompt() { return this.currentCharacter?.systemPrompt || ''; }
 
+  // 核心场景：优先从原作台词集取
+  static _CANONICAL_SITUATIONS = new Set(['boot', 'click', 'idle', 'farewell']);
+
   getRandomLine(situation) {
-    const lines = this.currentCharacter?.lines?.[situation];
+    const char = this.currentCharacter;
+    if (!char?.lines) return '……';
+
+    // 核心场景 + 有原作台词集 → 从原作台词集随机选
+    if (CharacterManager._CANONICAL_SITUATIONS.has(situation) && char.lines._canonical?.length > 0) {
+      return char.lines._canonical[Math.floor(Math.random() * char.lines._canonical.length)];
+    }
+
+    const lines = char.lines[situation];
     return (lines && lines.length > 0) ? lines[Math.floor(Math.random() * lines.length)] : '……';
+  }
+
+  // 获取原作台词集（供前端管理界面使用）
+  getCanonicalLines() {
+    return this.currentCharacter?.lines?._canonical || [];
+  }
+
+  // 添加原作台词
+  addCanonicalLine(line) {
+    if (!this.currentCharacter?.lines) return;
+    if (!this.currentCharacter.lines._canonical) this.currentCharacter.lines._canonical = [];
+    this.currentCharacter.lines._canonical.push(line);
+    this._saveCanonicalToFile();
+  }
+
+  // 删除原作台词
+  removeCanonicalLine(index) {
+    const lines = this.currentCharacter?.lines?._canonical;
+    if (!lines || index < 0 || index >= lines.length) return;
+    lines.splice(index, 1);
+    this._saveCanonicalToFile();
+  }
+
+  // 将原作台词集保存到文件（通过 IPC 调用主进程）
+  async _saveCanonicalToFile() {
+    const folder = CHARACTER_FOLDER_MAP[this.currentCharacterId];
+    if (!folder) return;
+    const lines = this.currentCharacter?.lines?._canonical || [];
+    try {
+      if (window.electronAPI?.saveCanonicalLines) {
+        await window.electronAPI.saveCanonicalLines(folder, lines);
+      }
+    } catch (e) { /* 忽略 */ }
   }
 
   getSituations() { return Object.keys(this.currentCharacter?.lines || {}); }

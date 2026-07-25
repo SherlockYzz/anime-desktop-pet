@@ -1,11 +1,43 @@
 // 二次元桌宠 - 聊天管理器（增强版）
-// 负责消息渲染、流式输出、聊天历史、角色点击事件
+// 负责消息渲染、流式输出、聊天历史、角色点击事件、关键词触发台词
 class ChatManager {
   constructor(app) {
     this.app = app;
     this.maxMessages = 50;
     this._kaomojiInterval = null;
     this._isNearBottom = true; // 追踪用户是否在底部
+  }
+
+  // ===== 关键词触发台词系统 =====
+  // 用户输入命中关键词时，秒级优先推送匹配台词，之后AI照常回复
+  // 关键词覆盖面要广，用同义词/近义词降低触发门槛
+  static KEYWORD_TRIGGERS = [
+    { keywords: ['天气', '下雨', '下雪', '晴天', '阴天', '台风', '热死了', '冷死了', '好热', '好冷', '降温', '升温', '出太阳', '打雷', '刮风', '下雨了', '下雪了', '天晴', '雾霾', '潮湿', '干燥'], situation: 'weather' },
+    { keywords: ['晚安', '睡觉', '睡了', '困了', '好困', '我要睡', '该睡了', '好晚', '不早了', '熬夜', '失眠', '做梦', '打瞌睡', '犯困', '想睡', '先睡了', '睡不着'], situation: 'bedtime' },
+    { keywords: ['加油', '鼓励', '好累', '坚持不下去', '做不到', '好难', '不想干', '放弃', '撑不住', '累了', '疲惫', '心累', '好辛苦', '太难了', '没动力', '不想努力', '想放弃', '压力大', '受不了', '崩溃', '烦躁', '烦死了', '怎么办', '我不行', '没信心', '沮丧', '丧', 'emo', '心态崩了'], situation: 'encouragement' },
+    { keywords: ['好吃', '美食', '好饿', '吃啥', '吃什么', '零食', '甜点', '蛋糕', '火锅', '烧烤', '饿了', '肚子饿', '想吃', '嘴馋', '夜宵', '下午茶', '奶茶', '冰淇淋', '巧克力', '拉面', '寿司', '披萨', '汉堡', '炸鸡', '薯条', '吃饭', '干饭', '觅食', '大餐', '美味', '馋了'], situation: 'food' },
+    { keywords: ['做饭', '料理', '烹饪', '下厨', '菜谱', '做饭', '做菜', '煮饭', '炒菜', '烤面包', '烘焙', '便当', '便当', '厨艺', '手艺', '掌勺'], situation: 'cooking' },
+    { keywords: ['夸我', '表扬', '厉害', '我很棒', '夸奖', '赞赏', '赞美', '称赞', '鼓励我', '认可', '肯定', '真棒', '太强了', '优秀', '完美', '做得好', '不错嘛', '好样的', '了不起', '真厉害'], situation: 'praise' },
+    { keywords: ['孤单', '孤独', '寂寞', '一个人', '没人陪', '好无聊', '无聊', '空虚', '冷清', '没人理', '没人说话', '没人聊天', '发呆', '没事干', '闲得慌', '好寂寞', '独自', '单着', '没有朋友'], situation: 'loneliness' },
+    { keywords: ['怀疑自己', '我不行', '没用', '废物', '一无是处', '自我怀疑', '否定自己', '自卑', '不够好', '配不上', '差劲', '没价值', '没意义', '活着干嘛', '讨厌自己', '恨自己', '不争气', '太差了', '我太菜', '不自信'], situation: 'self_doubt' },
+  ];
+
+  /**
+   * 检查用户输入是否命中关键词触发台词
+   * @param {string} msg 用户消息
+   * @returns {string|null} 触发的台词，无匹配返回null
+   */
+  checkKeywordTrigger(msg) {
+    if (!msg) return null;
+    const lower = msg.toLowerCase();
+    for (const trigger of ChatManager.KEYWORD_TRIGGERS) {
+      for (const kw of trigger.keywords) {
+        if (lower.includes(kw)) {
+          return window.characterManager.getRandomLine(trigger.situation);
+        }
+      }
+    }
+    return null;
   }
 
   // === 消息渲染 ===
@@ -33,10 +65,10 @@ class ChatManager {
         const cleaned = (content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
         rendered = marked.parse(cleaned || content || '');
       } else {
-        rendered = this._escapeHtml(content || '').replace(/\n/g, '<br>');
+        rendered = escapeHtml(content || '').replace(/\n/g, '<br>');
       }
     } catch (e) {
-      rendered = this._escapeHtml(content || '').replace(/\n/g, '<br>');
+      rendered = escapeHtml(content || '').replace(/\n/g, '<br>');
     }
 
     let tb = '';
@@ -45,9 +77,9 @@ class ChatManager {
       try {
         rt = window.marked
           ? marked.parse(thinking)
-          : this._escapeHtml(thinking).replace(/\n/g, '<br>');
+          : escapeHtml(thinking).replace(/\n/g, '<br>');
       } catch (e) {
-        rt = this._escapeHtml(thinking).replace(/\n/g, '<br>');
+        rt = escapeHtml(thinking).replace(/\n/g, '<br>');
       }
       tb = `<div class="thinking-block"><button class="thinking-toggle" onclick="this.parentElement.classList.toggle('expanded')"><span class="thinking-arrow">&#9654;</span><span class="thinking-label">思考过程</span></button><div class="thinking-content">${rt}</div></div>`;
     }
@@ -235,14 +267,10 @@ class ChatManager {
         return marked.parse(cleaned || text);
       } catch (e) { /* fall through */ }
     }
-    return this._escapeHtml(text).replace(/\n/g, '<br>');
+    return escapeHtml(text).replace(/\n/g, '<br>');
   }
 
-  _escapeHtml(text) {
-    const d = document.createElement('div');
-    d.textContent = text || '';
-    return d.innerHTML;
-  }
+  // escapeHtml 已在 工具函数.js 中全局定义
 
   // === 角色点击 ===
 

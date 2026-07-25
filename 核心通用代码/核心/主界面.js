@@ -330,6 +330,13 @@ class App {
 
     this.chat.addMessage('user', msg);
     input.value = '';
+
+    // ★ 关键词触发台词：命中关键词时秒级优先推送匹配台词
+    const triggeredLine = this.chat.checkKeywordTrigger(msg);
+    if (triggeredLine) {
+      this.chat.addMessage('ai', triggeredLine);
+    }
+
     this.isLoading = true;
     const btn = document.getElementById('btn-chat-send');
     if (btn) btn.disabled = true;

@@ -194,6 +194,9 @@
       <!-- ★ 角色提示词编辑 -->
       <div class="setting-section-divider"><span>角色提示词设定</span></div>
       <div class="setting-item">
+        <div class="setting-item-description">系统提示词是AI回复的基础指令，决定角色的性格和说话方式。修改后保存立即生效；点击「恢复默认」回退到初始模板。</div>
+      </div>
+      <div class="setting-item">
         <label>选择角色</label>
         <select id="prompt-character-select">
           <!-- 由 SettingsManager 动态填充 -->
@@ -208,6 +211,26 @@
         <button class="btn-prompt-save" id="btn-prompt-save">保存此角色提示词</button>
         <button class="btn-prompt-reset" id="btn-prompt-reset">恢复默认</button>
         <span class="prompt-status" id="prompt-status"></span>
+      </div>
+
+      <!-- ★ 原作台词集管理 -->
+      <div class="setting-section-divider"><span>原作台词集管理</span></div>
+      <div class="setting-item">
+        <div class="setting-item-description">原作台词是角色的经典台词库，用于启动、点击、待机、告别等核心场景。支持单条添加和批量导入txt文件（每行一句）。修改后立即生效，不影响日常AI对话。</div>
+        <div class="canonical-add-row">
+          <textarea id="canonical-input" class="canonical-input" placeholder="输入一句原作台词，按回车或点击添加..." rows="2" spellcheck="false"></textarea>
+          <button class="btn-canonical-add" id="btn-canonical-add">添加</button>
+        </div>
+        <div class="canonical-import-row">
+          <button class="btn-canonical-import" id="btn-canonical-import">批量导入（每行一句）</button>
+          <input type="file" id="canonical-file-input" accept=".txt" hidden>
+        </div>
+      </div>
+      <div class="setting-item">
+        <label>当前台词集 (<span id="canonical-count">0</span> 句)</label>
+        <div class="canonical-list" id="canonical-list">
+          <!-- 由 JS 动态填充 -->
+        </div>
       </div>
 
       <!-- ★ 自定义角色管理 -->
@@ -331,10 +354,13 @@
   </div>
 
   <script src="CDN配置.js"></script>
+  <script src="工具函数.js"></script>
   <script src="角色注册表.js"></script>
   <script src="../../角色-加藤惠/角色设定.js"></script>
   <script src="../../角色-蕾姆/角色设定.js"></script>
   <script src="../../角色-零二/角色设定.js"></script>
+  <script src="../../角色-高木同学/角色设定.js"></script>
+  <script src="../../角色-雪之下雪乃/角色设定.js"></script>
   <script src="API服务商.js"></script>
   <script src="自定义角色管理器.js"></script>
   <script src="角色管理器.js"></script>

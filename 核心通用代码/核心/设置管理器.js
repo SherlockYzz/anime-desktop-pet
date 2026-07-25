@@ -43,7 +43,208 @@ class SettingsManager {
         if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
       }
     });
+
+    // ★ 原作台词集管理事件
+    this._bindCanonicalEvents();
   }
+
+  /** 绑定原作台词集管理的所有事件 */
+  _bindCanonicalEvents() {
+    // 添加台词
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-canonical-add') {
+        this._addCanonicalLine();
+      }
+    });
+
+    // 输入框回车添加
+    document.addEventListener('keydown', (e) => {
+      if (e.target.id === 'canonical-input' && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this._addCanonicalLine();
+      }
+    });
+
+    // 删除单条台词（事件委托）
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('canonical-item-delete')) {
+        const index = parseInt(e.target.dataset.index, 10);
+        if (!isNaN(index)) this._removeCanonicalLine(index);
+      }
+    });
+
+    // 批量导入按钮
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-canonical-import') {
+        document.getElementById('canonical-file-input')?.click();
+      }
+    });
+
+    // 文件选择
+    document.addEventListener('change', (e) => {
+      if (e.target.id === 'canonical-file-input') {
+        this._importCanonicalFile(e.target.files);
+        e.target.value = '';
+      }
+    });
+
+    // 角色切换时刷新台词列表
+    document.addEventListener('change', (e) => {
+      if (e.target.id === 'prompt-character-select') {
+        this._refreshCanonicalList();
+      }
+    });
+  }
+
+  /** 添加一句原作台词 */
+  _addCanonicalLine() {
+    const input = document.getElementById('canonical-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    // 支持多行粘贴：按行拆分，每行一句
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const charSelect = document.getElementById('prompt-character-select');
+    const characterId = charSelect?.value || window.characterManager.currentCharacterId;
+    if (!characterId) return;
+
+    // 确保操作的是正确的角色
+    const prevId = window.characterManager.currentCharacterId;
+    const isCurrentChar = characterId === prevId;
+
+    lines.forEach(line => {
+      if (isCurrentChar) {
+        window.characterManager.addCanonicalLine(line);
+      } else {
+        // 非当前角色：直接操作注册表数据
+        const char = window.characterManager.registry[characterId];
+        if (char) {
+          if (!char.lines._canonical) char.lines._canonical = [];
+          char.lines._canonical.push(line);
+        }
+      }
+    });
+
+    // 非当前角色需要手动保存
+    if (!isCurrentChar) {
+      const char = window.characterManager.registry[characterId];
+      if (char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
+        const f = CHARACTER_FOLDER_MAP[characterId];
+        if (f) window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
+      }
+    }
+
+    input.value = '';
+    this._refreshCanonicalList();
+    this.app.showToast(`已添加 ${lines.length} 句台词`);
+  }
+
+  /** 删除单条原作台词 */
+  _removeCanonicalLine(index) {
+    const charSelect = document.getElementById('prompt-character-select');
+    const characterId = charSelect?.value || window.characterManager.currentCharacterId;
+    if (!characterId) return;
+
+    if (characterId === window.characterManager.currentCharacterId) {
+      window.characterManager.removeCanonicalLine(index);
+    } else {
+      const char = window.characterManager.registry[characterId];
+      if (char?.lines?._canonical) {
+        char.lines._canonical.splice(index, 1);
+        // 保存
+        const f = CHARACTER_FOLDER_MAP[characterId];
+        if (f && window.electronAPI?.saveCanonicalLines) {
+          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
+        }
+      }
+    }
+
+    this._refreshCanonicalList();
+  }
+
+  /** 从文件批量导入原作台词 */
+  _importCanonicalFile(files) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) {
+        this.app.showToast('文件为空或无有效台词');
+        return;
+      }
+
+      const charSelect = document.getElementById('prompt-character-select');
+      const characterId = charSelect?.value || window.characterManager.currentCharacterId;
+      if (!characterId) return;
+
+      const isCurrentChar = characterId === window.characterManager.currentCharacterId;
+      lines.forEach(line => {
+        if (isCurrentChar) {
+          window.characterManager.addCanonicalLine(line);
+        } else {
+          const char = window.characterManager.registry[characterId];
+          if (char) {
+            if (!char.lines._canonical) char.lines._canonical = [];
+            char.lines._canonical.push(line);
+          }
+        }
+      });
+
+      if (!isCurrentChar) {
+        const f = CHARACTER_FOLDER_MAP[characterId];
+        const char = window.characterManager.registry[characterId];
+        if (f && char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
+          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
+        }
+      }
+
+      this._refreshCanonicalList();
+      this.app.showToast(`已导入 ${lines.length} 句台词`);
+    };
+    reader.readAsText(file);
+  }
+
+  /** 刷新原作台词列表显示 */
+  _refreshCanonicalList() {
+    const listEl = document.getElementById('canonical-list');
+    const countEl = document.getElementById('canonical-count');
+    if (!listEl) return;
+
+    const charSelect = document.getElementById('prompt-character-select');
+    const characterId = charSelect?.value || window.characterManager.currentCharacterId;
+    if (!characterId) {
+      listEl.innerHTML = '<div class="canonical-empty">请先选择角色</div>';
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
+
+    let lines = [];
+    if (characterId === window.characterManager.currentCharacterId) {
+      lines = window.characterManager.getCanonicalLines();
+    } else {
+      const char = window.characterManager.registry[characterId];
+      lines = char?.lines?._canonical || [];
+    }
+
+    if (countEl) countEl.textContent = lines.length;
+
+    if (lines.length === 0) {
+      listEl.innerHTML = '<div class="canonical-empty">暂无原作台词，点击上方添加</div>';
+      return;
+    }
+
+    listEl.innerHTML = lines.map((line, i) =>
+      `<div class="canonical-item">
+        <span class="canonical-item-text">${escapeHtml(line)}</span>
+        <button class="canonical-item-delete" data-index="${i}" title="删除此句">&times;</button>
+      </div>`
+    ).join('');
+  }
+
+  // escapeHtml 已在 工具函数.js 中全局定义
 
   /** 删除自定义角色 */
   async _deleteCharacter() {
@@ -190,7 +391,7 @@ class SettingsManager {
       'custom-model-input', 'prompt-mode', 'response-mode',
       'always-on-top', 'opacity-slider',
     ];
-    const debounceSave = this._debounce(() => {
+    const debounceSave = debounce(() => {
       this.save();
       // 静默保存，不弹 Toast
     }, 800);
@@ -203,14 +404,7 @@ class SettingsManager {
     });
   }
 
-  /** 简单 debounce */
-  _debounce(fn, delay) {
-    let timer = null;
-    return (...args) => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => { fn.apply(this, args); timer = null; }, delay);
-    };
-  }
+  // debounce 已在 工具函数.js 中全局定义
 
   onProviderChange(providerId, skipRestore) {
     const p = window.getProvider(providerId);
@@ -277,6 +471,8 @@ class SettingsManager {
 
     // ★ 加载当前角色的提示词到编辑器
     this._loadPromptEditor();
+    // ★ 刷新原作台词列表
+    this._refreshCanonicalList();
   }
 
   // ★ 加载提示词编辑器内容
