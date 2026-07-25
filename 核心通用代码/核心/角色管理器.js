@@ -58,7 +58,16 @@ class CharacterManager {
     this._cachedTheme = null;
     this._precacheTimer = null;
     this._modelExistsCache = new Map();
-    // ★ 不再清空对话缓存——让localStorage缓存生效，加速下次启动
+    // ★ 等待自定义角色加载完成
+    // ★ 自定义角色加载带3秒超时，防止IPC卡住阻塞整个启动流程
+    const customCharPromise = window.customCharManager
+      ? window.customCharManager.loadCustomCharacters()
+      : Promise.resolve();
+    const timeoutPromise = new Promise(resolve => setTimeout(() => {
+      console.warn('[CharacterManager] 自定义角色加载超时(3s)，继续启动');
+      resolve();
+    }, 3000));
+    this._customCharactersReady = Promise.race([customCharPromise, timeoutPromise]);
   }
 
   /** 获取台词缓存版本号（基于日期，一天一变；不影响提示词热更新） */
@@ -100,7 +109,10 @@ class CharacterManager {
     if (!path) return false;
     if (this._modelExistsCache.has(path)) return this._modelExistsCache.get(path);
     try {
-      const resp = await fetch(path, { method: 'HEAD' });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+      const resp = await fetch(path, { method: 'HEAD', signal: controller.signal });
+      clearTimeout(timer);
       const exists = resp.ok;
       this._modelExistsCache.set(path, exists);
       return exists;
@@ -128,9 +140,39 @@ class CharacterManager {
 
   /** 只加载系统提示词（最核心，API必需），不加载台词文件 */
   async loadCharacterSystemPromptOnly(characterId) {
-    const folder = CHARACTER_FOLDER_MAP[characterId];
     const character = this.registry[characterId];
+    if (!character) return;
+
+    // ★ 自定义角色：提示词已在注册时加载到内存
+    if (character.isCustom) {
+      const customPrompt = this.getCustomPrompt(characterId);
+      character.systemPrompt = customPrompt || character._defaultSystemPrompt || '';
+      return;
+    }
+
+    const folder = CHARACTER_FOLDER_MAP[characterId];
     if (!folder || !character) return;
+
+    // ★ 先尝试从缓存读取系统提示词（同台词缓存，一天一变）
+    const cacheKey = `prompt_cache_${characterId}`;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data._version === this._getCacheVersion()) {
+          character._defaultSystemPrompt = data.prompt;
+          character.systemPrompt = this.getCustomPrompt(characterId) || data.prompt;
+          // 同时加载台词缓存
+          const cachedLines = this._getCachedDialogue(characterId);
+          if (cachedLines && cachedLines.lines) {
+            for (const [situation, lines] of Object.entries(cachedLines.lines)) {
+              character.lines[situation] = lines;
+            }
+          }
+          return; // ★ 缓存命中，跳过文件 fetch
+        }
+      }
+    } catch (e) { /* 忽略 */ }
 
     try {
       const promptPath = `../../${folder}/系统提示词.txt?t=${Date.now()}`;
@@ -140,6 +182,13 @@ class CharacterManager {
         character._defaultSystemPrompt = filePrompt;
         const customPrompt = this.getCustomPrompt(characterId);
         character.systemPrompt = customPrompt || filePrompt;
+        // ★ 写入缓存
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({
+            _version: this._getCacheVersion(),
+            prompt: filePrompt
+          }));
+        } catch (e) { /* localStorage 满 */ }
       }
     } catch (e) { /* 静默 */ }
 
@@ -154,9 +203,14 @@ class CharacterManager {
 
   /** 后台加载台词文件（不阻塞启动） */
   async loadCharacterDialoguesInBackground(characterId) {
-    const folder = CHARACTER_FOLDER_MAP[characterId];
     const character = this.registry[characterId];
-    if (!folder || !character) return;
+    // ★ 自定义角色没有台词文件
+    if (character?.isCustom) {
+      this._loadedCharacters.add(characterId);
+      return;
+    }
+
+    const folder = CHARACTER_FOLDER_MAP[characterId];
 
     // ★ 如果已有缓存，跳过（UI 所需的台词已经在 loadCharacterSystemPromptOnly 里加载了）
     const cached = this._getCachedDialogue(characterId);
@@ -196,6 +250,9 @@ class CharacterManager {
 
   // ★ 启动时加载当前角色（分两阶段）
   async loadSavedCharacter() {
+    // ★ 等待自定义角色注册完成
+    await this._customCharactersReady;
+
     const savedId = localStorage.getItem('selected-character') || 'megumi';
 
     // ★ 阶段A：只加载核心（系统提示词），让UI尽快显示

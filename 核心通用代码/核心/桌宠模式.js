@@ -189,9 +189,13 @@ class PetMode {
     }
   }
 
-  // === 角色加载（自动降级：Live2D > VRM > GIF，使用缓存检查）===
+  // === 角色加载（自动降级：Live2D > VRM > GIF，使用缓存检查）
+  // ★ 优化：先检查模型文件是否存在，再加载 CDN 脚本，避免无谓的 CDN 加载
   async _loadCharacter() {
-    await window.live2dManager.loadScripts();
+    // 清理之前的 fallback
+    const oldFallback = document.querySelector('.pet-fallback-img');
+    if (oldFallback) oldFallback.remove();
+
     const char = window.characterManager?.getCurrentCharacter();
     if (!char) return;
 
@@ -205,13 +209,18 @@ class PetMode {
     const gif = document.getElementById('pet-gif');
     if (!canvas || !area) return;
 
+    // ★ 立即显示静态封面，让用户立刻看到角色（模型/GIF 加载完成后会自动替换）
+    this._showPetFallback();
+
     let loaded = false;
 
-    // Live2D — 使用缓存检查
+    // ★ 先检查 Live2D 模型文件是否存在，再决定是否加载 PIXI CDN
     if (char.live2d?.modelPath) {
       const exists = await window.characterManager.checkModelFileExists(char.live2d.modelPath);
       if (exists) {
+        // 只有模型存在才加载 PIXI CDN
         try {
+          await window.live2dManager.loadScripts();
           this._pixiApp = new PIXI.Application({
             view: canvas, width: area.clientWidth, height: area.clientHeight,
             transparent: true, backgroundAlpha: 0, resizeTo: area,
@@ -223,6 +232,9 @@ class PetMode {
           this._pixiApp.stage.addChild(this._model);
           canvas.style.display = ''; if (gif) gif.style.display = 'none';
           loaded = true; this._renderMode = 'live2d';
+          // ★ 移除静态占位
+          const fb = document.querySelector('.pet-fallback-img');
+          if (fb) fb.remove();
         } catch (e) { loaded = false; }
       }
     }
@@ -239,6 +251,9 @@ class PetMode {
           if (ok) {
             const modelOk = await window.vrmManager.loadModel(char.vrm.modelPath);
             if (modelOk) { loaded = true; this._renderMode = 'vrm'; }
+            // ★ 移除静态占位
+            const fb2 = document.querySelector('.pet-fallback-img');
+            if (fb2) fb2.remove();
           }
         } catch (e) { loaded = false; }
       }
@@ -254,14 +269,39 @@ class PetMode {
     const gif = document.getElementById('pet-gif');
     if (!path || !gif) return;
     if (canvas) canvas.style.display = 'none';
+
     const ok = await new Promise(resolve => {
       const timer = setTimeout(() => resolve(false), 8000);
       gif.onload = () => { clearTimeout(timer); resolve(true); };
       gif.onerror = () => { clearTimeout(timer); resolve(false); };
       gif.src = path;
     });
-    if (ok) { gif.style.display = 'block'; gif.style.visibility = 'visible'; gif.style.opacity = '1'; }
-    else { gif.style.display = 'none'; }
+    if (ok) {
+      gif.style.display = 'block'; gif.style.visibility = 'visible'; gif.style.opacity = '1';
+      // ★ GIF 加载成功，移除静态占位
+      const fb = document.querySelector('.pet-fallback-img');
+      if (fb) fb.remove();
+    }
+  }
+
+  /** GIF 加载失败时显示静态封面 */
+  _showPetFallback() {
+    const area = document.getElementById('pet-character-area');
+    if (!area) return;
+    const coverPath = window.characterManager?.getCoverPath?.();
+    if (!coverPath) return;
+    // 移除旧 fallback
+    const old = area.querySelector('.pet-fallback-img');
+    if (old) old.remove();
+    const img = document.createElement('img');
+    img.className = 'pet-fallback-img';
+    img.src = coverPath;
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;pointer-events:none;';
+    const canvas = document.getElementById('pet-canvas');
+    if (canvas) canvas.style.display = 'none';
+    const gif = document.getElementById('pet-gif');
+    if (gif) gif.style.display = 'none';
+    area.appendChild(img);
   }
 
   // === 点击交互 ===

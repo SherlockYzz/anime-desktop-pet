@@ -94,7 +94,11 @@
   <div class="character-panel" id="character-panel">
     <div class="character-header">
       <h3>选择你的桌宠</h3>
-      <button class="btn-close-panel" id="btn-close-character">&#x2715;</button>
+      <div class="character-header-actions">
+        <button class="btn-import-character" id="btn-import-character" title="导入角色">&#x21E9;</button>
+        <button class="btn-add-character" id="btn-create-character" title="创建新角色">+</button>
+        <button class="btn-close-panel" id="btn-close-character">&#x2715;</button>
+      </div>
     </div>
     <div class="character-grid" id="character-grid"></div>
   </div>
@@ -206,7 +210,91 @@
         <span class="prompt-status" id="prompt-status"></span>
       </div>
 
+      <!-- ★ 自定义角色管理 -->
+      <div class="setting-item" id="setting-custom-char-actions" style="display:none;">
+        <div class="setting-section-divider"><span>自定义角色管理</span></div>
+        <button class="btn-export-character" id="btn-export-character">导出此角色</button>
+        <button class="btn-delete-character" id="btn-delete-character">删除此角色</button>
+      </div>
+
       <button class="btn-save-settings" id="btn-save-settings">保存设置</button>
+    </div>
+  </div>
+
+  <!-- 创建角色面板 -->
+  <div class="create-character-panel" id="create-character-panel">
+    <div class="cc-header">
+      <h3>创建新角色</h3>
+      <button class="btn-close-panel" id="btn-close-create-character">&#x2715;</button>
+    </div>
+    <div class="cc-content">
+      <div class="cc-setting-item">
+        <label>角色名称 <span class="cc-required">*</span></label>
+        <input type="text" id="cc-name" placeholder="如：初音未来">
+      </div>
+      <div class="cc-setting-item">
+        <label>作品出处 <span class="cc-required">*</span></label>
+        <input type="text" id="cc-series" placeholder="如：VOCALOID">
+      </div>
+      <div class="cc-setting-item">
+        <label>一句话简介</label>
+        <input type="text" id="cc-tagline" placeholder="如：世界第一的公主殿下">
+      </div>
+      <div class="cc-setting-item">
+        <label>详细描述</label>
+        <textarea id="cc-description" placeholder="介绍这个角色的背景和性格..." rows="2"></textarea>
+      </div>
+      <div class="cc-setting-item">
+        <label>主题色</label>
+        <input type="color" id="cc-color" value="#f0a0b0">
+        <div class="cc-item-desc">选择角色的主色调，系统会自动生成配套主题</div>
+      </div>
+
+      <!-- 头像 -->
+      <div class="cc-setting-item">
+        <label>头像 <span class="cc-required">*</span></label>
+        <div class="cc-image-upload" id="cc-avatar-upload">
+          <div class="cc-image-preview" id="cc-avatar-preview">
+            <span class="cc-upload-placeholder">点击上传头像</span>
+          </div>
+          <input type="file" id="cc-avatar-input" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- 封面 -->
+      <div class="cc-setting-item">
+        <label>封面图</label>
+        <div class="cc-image-upload" id="cc-cover-upload">
+          <div class="cc-image-preview" id="cc-cover-preview">
+            <span class="cc-upload-placeholder">点击上传封面</span>
+          </div>
+          <input type="file" id="cc-cover-input" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- 系统提示词 -->
+      <div class="cc-setting-item">
+        <label>系统提示词 <span class="cc-required">*</span></label>
+        <div class="cc-item-desc">定义角色的性格、说话方式、行为规则。写好提示词是角色成功的关键。</div>
+        <textarea id="cc-prompt" placeholder="输入角色的系统提示词..." rows="8" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Live2D模型 -->
+      <div class="cc-setting-item">
+        <label>Live2D 模型（可选）</label>
+        <div class="cc-item-desc">上传 .model3.json 文件，模型资源需放在同目录下</div>
+        <div class="cc-file-upload" id="cc-live2d-upload">
+          <span id="cc-live2d-label">点击选择 model3.json 文件</span>
+          <input type="file" id="cc-live2d-input" accept=".json,.zip" hidden>
+        </div>
+      </div>
+
+      <div class="cc-status" id="cc-status"></div>
+
+      <div class="cc-actions">
+        <button class="btn-cc-save" id="btn-cc-save">创建角色</button>
+        <button class="btn-cc-cancel" id="btn-cc-cancel">取消</button>
+      </div>
     </div>
   </div>
 
@@ -248,6 +336,7 @@
   <script src="../../角色-蕾姆/角色设定.js"></script>
   <script src="../../角色-零二/角色设定.js"></script>
   <script src="API服务商.js"></script>
+  <script src="自定义角色管理器.js"></script>
   <script src="角色管理器.js"></script>
   <script src="情绪分析.js"></script>
   <script src="Live2D引擎.js"></script>

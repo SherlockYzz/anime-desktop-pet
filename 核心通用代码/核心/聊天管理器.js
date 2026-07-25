@@ -1,10 +1,11 @@
-// 二次元桌宠 - 聊天管理器
+// 二次元桌宠 - 聊天管理器（增强版）
 // 负责消息渲染、流式输出、聊天历史、角色点击事件
 class ChatManager {
   constructor(app) {
     this.app = app;
     this.maxMessages = 50;
     this._kaomojiInterval = null;
+    this._isNearBottom = true; // 追踪用户是否在底部
   }
 
   // === 消息渲染 ===
@@ -13,11 +14,8 @@ class ChatManager {
     const container = document.getElementById('chat-messages');
     if (!container) return;
 
-    // ★ 容错：null/undefined → 空字符串
     content = content || '';
     if (thinking === undefined || thinking === null) thinking = '';
-
-    // ★ 不试探分割：thinking 只来自 API 明确提供的 reasoning 字段
 
     const div = document.createElement('div');
     div.className = `message ${type}`;
@@ -29,7 +27,6 @@ class ChatManager {
       avatar = `<img src="${path}" alt="${name}">`;
     }
 
-    // ★ 渲染 markdown，容错
     let rendered;
     try {
       if (window.marked && type === 'ai') {
@@ -57,7 +54,7 @@ class ChatManager {
 
     div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-content">${tb}<div class="message-text">${rendered}</div></div>`;
     container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
+    this._scrollToBottom(container);
     this._trimMessages();
   }
 
@@ -70,7 +67,7 @@ class ChatManager {
     div.className = 'message ai';
     div.innerHTML = `<div class="message-avatar"><img src="${path}" alt="${name}"></div><div class="message-content"><div class="message-text">${text || ''}</div></div>`;
     container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
+    this._scrollToBottom(container);
   }
 
   clearMessages() {
@@ -108,7 +105,26 @@ class ChatManager {
     });
   }
 
-  // === 流式消息 ===
+  // ★ 追踪用户是否在底部（自动滚动用）
+  _trackScroll(container) {
+    const isNear = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    this._isNearBottom = isNear;
+  }
+
+  _scrollToBottom(container, smooth) {
+    if (!container) container = document.getElementById('chat-messages');
+    if (!container) return;
+    // 如果用户手动滚上去了，不强制滚动（不影响用户阅读历史）
+    this._trackScroll(container);
+    if (!this._isNearBottom && !smooth) return;
+    if (smooth) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  // === 流式消息（增强版） ===
 
   createStreamMessage() {
     const container = document.getElementById('chat-messages');
@@ -118,12 +134,20 @@ class ChatManager {
     const name = window.characterManager.getCurrentCharacter()?.name || '';
     div.innerHTML = `<div class="message-avatar"><img src="${path}" alt="${name}"></div><div class="message-content"><div class="thinking-block streaming"><button class="thinking-toggle" onclick="this.parentElement.classList.toggle('expanded')"><span class="thinking-arrow">&#9654;</span><span class="thinking-label">思考中...</span></button><div class="thinking-content"></div></div><div class="message-text"><span class="streaming-cursor"></span></div></div>`;
     container.appendChild(div);
+    this._scrollToBottom(container);
+
+    // 监听滚动，用户手动翻看历史时停止自动滚
+    container.addEventListener('scroll', () => this._trackScroll(container), { passive: true });
+
     return {
       el: div,
       tb: div.querySelector('.thinking-block'),
       tl: div.querySelector('.thinking-label'),
       tc: div.querySelector('.thinking-content'),
       mt: div.querySelector('.message-text'),
+      _thinkingStarted: false,
+      _contentStarted: false,
+      _kaomojiInterval: null,
     };
   }
 
@@ -144,15 +168,16 @@ class ChatManager {
     } else if (type === 'content') {
       el._contentStarted = true;
       if (el._kaomojiInterval) { clearInterval(el._kaomojiInterval); el._kaomojiInterval = null; }
-      // ★ 保留光标元素：用 textContent 会删掉 cursor span，改用 replaceChildren
       el.mt.textContent = '';
       el.mt.appendChild(document.createTextNode(full));
       const cursor = el.mt.querySelector('.streaming-cursor') || document.createElement('span');
       cursor.className = 'streaming-cursor';
       el.mt.appendChild(cursor);
     }
-    const c = document.getElementById('chat-messages');
-    if (c) c.scrollTop = c.scrollHeight;
+    // ★ 只在用户靠近底部时自动滚
+    if (this._isNearBottom) {
+      this._scrollToBottom(null, true);
+    }
   }
 
   finalizeStream(el, content, thinking) {
@@ -161,51 +186,17 @@ class ChatManager {
     content = content || '';
     thinking = thinking || '';
 
-    // ★ 不试探分割：thinking 只来自 API 明确提供的 reasoning 字段
-
     if (thinking) {
       el.tc.innerHTML = this._renderMarkdown(thinking);
       el.tl.textContent = '思考过程';
       el.tb.classList.remove('streaming', 'expanded');
-      // ★ 清除收起状态的内联样式，让样式表控制
       el.tb.style.display = '';
     } else {
       el.tb.classList.remove('streaming');
       el.tb.style.display = 'none';
     }
     el.mt.innerHTML = this._renderMarkdown(content);
-    const c = document.getElementById('chat-messages');
-    if (c) c.scrollTop = c.scrollHeight;
-  }
-
-  // ★ 分割思考/答案（和 AI接口.js 保持一致）
-  //   规律：思考的最后一段以"最后"开头，之后的内容才是答案
-  _splitThinking(text) {
-    if (!text || text.length < 20) return { thinking: '', content: text || '' };
-
-    // <think> 标签
-    const tag = text.match(/<think>([\s\S]*?)<\/think>/);
-    if (tag) return { thinking: tag[1].trim(), content: text.replace(/<think>[\s\S]*?<\/think>/g, '').trim() };
-
-    // Think:/Answer:
-    const t = text.match(/Think[：:]\s*([\s\S]*?)(?:Answer[：:]|$)/i);
-    const a = text.match(/Answer[：:]\s*([\s\S]*)/i);
-    if (t && a) return { thinking: t[1].trim(), content: a[1].trim() };
-
-    // ★ 段落分割：以"最后"开头的段落及之前=思考，之后=答案
-    const paras = text.split(/\n\s*\n/).filter(p => p.trim());
-    if (paras.length >= 2) {
-      for (let i = 0; i < paras.length; i++) {
-        if (paras[i].trim().startsWith('最后')) {
-          const thinking = paras.slice(0, i + 1).join('\n\n').trim();
-          const content = paras.slice(i + 1).join('\n\n').trim();
-          if (content.length > 5) return { thinking, content };
-          break;
-        }
-      }
-    }
-
-    return { thinking: '', content: text };
+    this._scrollToBottom(null, true);
   }
 
   // === 加载动画 (颜文字) ===
@@ -221,7 +212,7 @@ class ChatManager {
     const name = window.characterManager.getCurrentCharacter()?.name || '';
     div.innerHTML = `<div class="message-avatar"><img src="${path}" alt="${name}"></div><div class="message-content"><div class="kaomoji-text"></div></div>`;
     c.appendChild(div);
-    c.scrollTop = c.scrollHeight;
+    this._scrollToBottom(c);
     let i = 0;
     const textEl = div.querySelector('.kaomoji-text');
     this._kaomojiInterval = setInterval(() => { textEl.textContent = list[i % list.length]; i++; }, 400);

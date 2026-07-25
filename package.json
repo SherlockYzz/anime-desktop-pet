@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "1.0.0",
-  "description": "二次元AI桌宠 - 支持多角色切换的桌面宠物",
+  "version": "1.2.0",
+  "description": "二次元AI桌宠 - 支持多角色切换、自定义角色、导入/导出的桌面宠物",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",

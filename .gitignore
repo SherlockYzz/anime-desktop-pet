@@ -10,3 +10,6 @@ yarn.lock
 # IDE
 .idea/
 *.iml
+
+# Runtime data (created at runtime by custom character manager)
+自定义角色/

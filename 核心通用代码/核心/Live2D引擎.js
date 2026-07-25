@@ -98,6 +98,17 @@ class Live2DManager {
     const gifPath = this._getGifPath();
     if (!gifPath) return false;
 
+    // ★ 快速检查 GIF 是否存在，避免无谓的 8 秒超时
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 2000);
+      const headResp = await fetch(gifPath, { method: 'HEAD', signal: ctrl.signal });
+      clearTimeout(t);
+      if (!headResp.ok) { this.showFallback(); return false; }
+    } catch {
+      this.showFallback(); return false;
+    }
+
     try {
       const container = document.getElementById('live2d-container');
 

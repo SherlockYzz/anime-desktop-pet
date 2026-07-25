@@ -28,6 +28,66 @@ class SettingsManager {
         this._resetPrompt();
       }
     });
+
+    // 删除自定义角色
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-delete-character') {
+        this._deleteCharacter();
+      }
+    });
+
+    // 导出角色
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-export-character') {
+        const charSelect = document.getElementById('prompt-character-select');
+        if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
+      }
+    });
+  }
+
+  /** 删除自定义角色 */
+  async _deleteCharacter() {
+    const charSelect = document.getElementById('prompt-character-select');
+    const characterId = charSelect?.value;
+    if (!characterId) return;
+
+    const character = window.characterManager.registry[characterId];
+    if (!character || !character.isCustom) return;
+
+    if (!confirm(`确定要删除角色「${character.name}」吗？\n此操作不可撤销。`)) return;
+
+    try {
+      await window.electronAPI.deleteCustomCharacter(characterId);
+
+      // 从注册表移除
+      delete window.CHARACTER_REGISTRY[characterId];
+
+      // 如果删除的是当前角色，切换到第一个可用角色
+      if (window.characterManager.currentCharacterId === characterId) {
+        const remaining = window.characterManager.getAllCharacters();
+        if (remaining.length > 0) {
+          await window.app._switchCharacter(remaining[0].id);
+        }
+      }
+
+      // 刷新角色选择器
+      window.app._initCharacterSelector?.();
+
+      // 刷新设置面板的角色下拉
+      const sel = document.getElementById('prompt-character-select');
+      if (sel) {
+        sel.dataset.populated = '';
+        this._populateCharacterSelect();
+      }
+
+      // 隐藏删除按钮区域
+      const actions = document.getElementById('setting-custom-char-actions');
+      if (actions) actions.style.display = 'none';
+
+      this.app.showToast(`角色「${character.name}」已删除`);
+    } catch (e) {
+      this.app.showToast(`删除失败: ${e.message}`);
+    }
   }
 
   _savePrompt() {
@@ -117,8 +177,39 @@ class SettingsManager {
     sel.value = this.settings.provider || 'local';
     this.onProviderChange(sel.value, true);
 
-    // ★ 同时填充角色选择下拉
     this._populateCharacterSelect();
+
+    // ★ 自动保存：任何输入/选择变更都自动保存
+    this._bindAutoSave();
+  }
+
+  /** 绑定自动保存事件 */
+  _bindAutoSave() {
+    const autoSaveIds = [
+      'api-provider', 'api-base-url', 'api-key', 'model-select',
+      'custom-model-input', 'prompt-mode', 'response-mode',
+      'always-on-top', 'opacity-slider',
+    ];
+    const debounceSave = this._debounce(() => {
+      this.save();
+      // 静默保存，不弹 Toast
+    }, 800);
+
+    autoSaveIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const eventType = el.type === 'checkbox' || el.type === 'range' ? 'input' : 'change';
+      el.addEventListener(eventType, debounceSave);
+    });
+  }
+
+  /** 简单 debounce */
+  _debounce(fn, delay) {
+    let timer = null;
+    return (...args) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { fn.apply(this, args); timer = null; }, delay);
+    };
   }
 
   onProviderChange(providerId, skipRestore) {
@@ -230,6 +321,12 @@ class SettingsManager {
       const hasCustom = !!window.characterManager.getCustomPrompt(characterId);
       status.textContent = hasCustom ? '✓ 已使用自定义设定' : '';
       status.className = 'prompt-status' + (hasCustom ? ' success' : '');
+    }
+
+    // ★ 显示/隐藏"删除此角色"按钮（仅自定义角色显示）
+    const customActions = document.getElementById('setting-custom-char-actions');
+    if (customActions) {
+      customActions.style.display = character.isCustom ? 'block' : 'none';
     }
   }
 

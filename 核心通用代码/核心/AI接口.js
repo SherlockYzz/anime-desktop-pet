@@ -1,7 +1,8 @@
-// 二次元桌宠 - AI接口
+// 二次元桌宠 - AI接口（增强版）
 // ★ 核心原则：
 //   - 流式实时显示全部文本 → 结束后智能分割 → 思考放折叠框，只留答案在正文
 //   - 对话历史存完整原文，分割只影响显示
+//   - 自动重试 + 更健壮的流式解析
 class MimoAPI {
   constructor() {
     this.apiKey = '';
@@ -12,6 +13,7 @@ class MimoAPI {
     this.maxHistory = 30;
     this._responseMode = 'instant';
     this._promptMode = 'auto';
+    this._maxRetries = 2;
   }
 
   getSystemPrompt() { return window.characterManager.getSystemPrompt(); }
@@ -38,15 +40,10 @@ class MimoAPI {
 
   _buildSystemPrompt(isCodeMode) {
     let sys = this.getSystemPrompt();
-    // ★ 不再截断提示词
-
     if (isCodeMode) {
       const name = window.characterManager.getCurrentCharacter()?.name || '我';
       sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
     }
-
-    // （不强行限制语言——各角色的提示词已包含了其自然的语言习惯）
-
     return sys;
   }
 
@@ -77,7 +74,46 @@ class MimoAPI {
     return params;
   }
 
-  // ★ 非流式（兜底）
+  // ★ 通用带重试的 fetch
+  async _fetchWithRetry(url, options, retries) {
+    const maxRetries = retries ?? this._maxRetries;
+    let lastErr;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s 超时
+        options.signal = controller.signal;
+
+        const res = await fetch(url, options);
+        clearTimeout(timeoutId);
+
+        if (res.ok) return res;
+
+        // 服务端错误才重试，4xx 不重试
+        if (res.status < 500) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `HTTP ${res.status}`);
+        }
+
+        // 5xx 重试
+        throw new Error(`服务器错误 HTTP ${res.status}`);
+      } catch (err) {
+        lastErr = err;
+        if (err.name === 'AbortError') {
+          lastErr = new Error('请求超时，请检查网络或API地址是否正确');
+        }
+        if (attempt < maxRetries) {
+          // 指数退避：1s, 2s
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+      }
+    }
+    throw lastErr;
+  }
+
+  // 非流式（兜底）
   async sendMessage(message, isCodeMode = false) {
     if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
@@ -96,14 +132,10 @@ class MimoAPI {
     };
 
     try {
-      const res = await fetch(`${this.baseUrl}/chat/completions`, {
+      const res = await this._fetchWithRetry(`${this.baseUrl}/chat/completions`, {
         method: 'POST', headers: this._buildHeaders(), body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        this.conversationHistory.pop();
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
+      }, 1); // 非流式只重试1次
+
       const data = await res.json();
       const msg = data.choices[0]?.message || {};
       const apiThinking = msg.reasoning_content || msg.reasoning || '';
@@ -114,7 +146,6 @@ class MimoAPI {
         throw new Error('模型返回了空内容，请检查模型是否正常工作');
       }
 
-      // ★ 有 API 单独的 reasoning 字段就用它；否则尝试分割
       let displayThinking = apiThinking;
       let displayContent = rawContent;
       if (!displayThinking && rawContent.length > 30) {
@@ -123,13 +154,12 @@ class MimoAPI {
         displayContent = split.answer || rawContent;
       }
 
-      // ★ 对话历史存完整原文
       this.conversationHistory.push({ role: 'assistant', content: rawContent });
       return { thinking: displayThinking, content: displayContent };
     } catch (err) { throw err; }
   }
 
-  // ★ 流式
+  // ★ 流式（带自动重试）
   async sendMessageStream(message, isCodeMode = false, onChunk) {
     if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
@@ -147,84 +177,134 @@ class MimoAPI {
       stream: true,
     };
 
-    try {
-      const res = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST', headers: this._buildHeaders(), body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        this.conversationHistory.pop();
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
+    let attempt = 0;
+    const maxRetries = this._maxRetries;
 
-      let reasoningText = '';   // API 单独给的 reasoning_content
-      let contentText = '';     // content 字段内容
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+    while (attempt <= maxRetries) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s 超时
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const res = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: this._buildHeaders(),
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === 'data: [DONE]') continue;
-          if (!trimmed.startsWith('data:')) continue;
-
-          const jsonStr = trimmed.slice(5).trim();
-          if (!jsonStr) continue;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta || {};
-
-            // ★ API 明确分开了 reasoning 和 content
-            if (delta.reasoning_content || delta.reasoning || delta.thinking) {
-              const t = delta.reasoning_content || delta.reasoning || delta.thinking;
-              reasoningText += t;
-              onChunk?.('thinking', t, reasoningText);
-            }
-            if (delta.content) {
-              contentText += delta.content;
-              onChunk?.('content', delta.content, contentText);
-            }
-          } catch (e) {
-            console.warn('[MimoAPI] 流式解析跳过一行:', e.message);
+        if (!res.ok) {
+          // 4xx 不重试
+          if (res.status < 500) {
+            const err = await res.json().catch(() => ({}));
+            this.conversationHistory.pop();
+            throw new Error(err.error?.message || `HTTP ${res.status}`);
           }
+          // 5xx 继续重试
+          throw new Error(`服务器错误 HTTP ${res.status}`);
         }
-      }
 
-      const fullRaw = contentText || reasoningText || '';
-      if (!fullRaw) {
+        return await this._readStream(res, onChunk);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          err = new Error('请求超时，请检查网络或API地址是否正确');
+        }
+        if (attempt < maxRetries) {
+          onChunk?.('content', `\n\n[重试第 ${attempt + 1} 次...]\n\n`, '');
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          attempt++;
+          continue;
+        }
         this.conversationHistory.pop();
-        throw new Error(`模型返回为空，请检查模型名称是否匹配（当前: ${this.model}）`);
+        // 转成友好的中文错误信息
+        throw this._friendlyError(err, this.model);
       }
-
-      // ★ 分割显示用的 thinking/content
-      let displayThinking = reasoningText;
-      let displayContent = contentText;
-
-      // ★ 如果 API 没给单独的 reasoning，且内容够长 → 智能分割
-      if (!displayThinking && displayContent.length > 30) {
-        const split = this._splitThink(displayContent);
-        displayThinking = split.think;
-        displayContent = split.answer || displayContent;
-      }
-
-      // ★ 对话历史存完整原文
-      this.conversationHistory.push({ role: 'assistant', content: fullRaw });
-      return { thinking: displayThinking, content: displayContent };
-    } catch (err) { throw err; }
+    }
   }
 
-  // ★ 分割思考/答案（基于你的模型输出规律）
-  //   规律：思考的最后一段以"最后"开头，之后的内容才是真正答案
-  //   策略：显式标签 > "最后"段落分割 > 兜底
+  // ★ 读取流式响应
+  async _readStream(res, onChunk) {
+    let reasoningText = '';
+    let contentText = '';
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        if (!trimmed.startsWith('data:')) continue;
+
+        // ★ 兼容各种 SSE 格式：data: {...} 或 data:{"..."}
+        const jsonStr = trimmed.replace(/^data:\s*/, '').trim();
+        if (!jsonStr) continue;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const choices = parsed.choices;
+          if (!choices || choices.length === 0) continue;
+
+          const delta = choices[0]?.delta || {};
+
+          // 处理 reasoning
+          const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thinking;
+          if (reasoningDelta) {
+            reasoningText += reasoningDelta;
+            onChunk?.('thinking', reasoningDelta, reasoningText);
+          }
+
+          // 处理 content
+          if (delta.content) {
+            contentText += delta.content;
+            onChunk?.('content', delta.content, contentText);
+          }
+        } catch (e) {
+          // ★ 跳过解析失败的行（某些模型会发非标准 JSON 行）
+          console.warn('[MimoAPI] 流式解析跳过:', e.message);
+        }
+      }
+    }
+
+    const fullRaw = contentText || reasoningText || '';
+    if (!fullRaw) {
+      throw new Error(`模型返回为空，请检查模型名称是否匹配（当前: ${this.model}）`);
+    }
+
+    // 分割显示用的 thinking/content
+    let displayThinking = reasoningText;
+    let displayContent = contentText;
+
+    if (!displayThinking && displayContent.length > 30) {
+      const split = this._splitThink(displayContent);
+      displayThinking = split.think;
+      displayContent = split.answer || displayContent;
+    }
+
+    this.conversationHistory.push({ role: 'assistant', content: fullRaw });
+    return { thinking: displayThinking, content: displayContent };
+  }
+
+  // ★ 友好的中文错误信息
+  _friendlyError(err, modelName) {
+    const msg = err.message || '';
+    if (msg.includes('401') || msg.includes('Unauthorized')) return new Error('API Key 无效，请在设置中检查');
+    if (msg.includes('403') || msg.includes('Forbidden')) return new Error('API 权限不足，请检查 Key 是否有权限');
+    if (msg.includes('404') || msg.includes('Not Found')) return new Error(`模型「${modelName}」不存在或 API 地址有误`);
+    if (msg.includes('429') || msg.includes('Rate')) return new Error('请求过于频繁，请稍后再试');
+    if (msg.includes('超时') || msg.includes('timeout') || msg.includes('abort')) return new Error('连接超时，请检查网络或API地址');
+    if (msg.includes('fetch')) return new Error('无法连接到 API 服务器，请检查地址和网络');
+    return err;
+  }
+
+  // ★ 分割思考/答案（保留你的原始逻辑）
   _splitThink(text) {
     if (!text || text.length < 30) return { think: '', answer: text };
 
@@ -277,10 +357,15 @@ class MimoAPI {
       const res = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST', headers: this._buildHeaders(), body: JSON.stringify(body)
       });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error?.message || `HTTP ${res.status}`);
+      }
       await res.json();
       return { success: true, message: '连接成功' };
-    } catch (err) { return { success: false, message: err.message }; }
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   clearHistory() { this.conversationHistory = []; }

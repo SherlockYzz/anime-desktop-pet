@@ -19,6 +19,8 @@ class App {
     this._inactivityTimer = null;
     this._live2dReady = false;
     this._charDataReady = false;
+    this._loadingRotate = null;
+    this._loadingTexts = ['正在努力思考...', '快要好了...', '再等一下下...', '马上就好！'];
 
     this.chat = new ChatManager(this);
     this.codeEditor = new CodeEditor(this);
@@ -52,25 +54,24 @@ class App {
   // ★ 阶段2：只加载核心角色数据 → 立刻显示UI，非核心工作延后
   async _initPhase2() {
     try {
-      // ★ loadSavedCharacter 现在只加载系统提示词 + 从缓存读台词，非常快
       await window.characterManager.loadSavedCharacter();
       this._charDataReady = true;
     } catch (e) {
       console.warn('角色数据加载失败:', e);
     }
 
-    // ★ 核心UI更新（不依赖台词文件全部加载完毕）
     try {
       this._showBootMessage();
       window.live2dManager?.showFallback();
     } catch (e) {
       console.warn('核心UI初始化出错:', e);
     } finally {
-      // ★ 立即关闭加载动画！不等待台词文件、角色卡片等非核心任务
       this.showLoading(false);
     }
 
-    // ★ 阶段2B：非核心任务推到后台微任务队列，不阻塞首帧交互
+    // ★ 立即启动桌宠模式（不等 600ms 延迟），让用户立刻看到角色
+    this.petMode.init(true);
+
     this._deferInit();
   }
 
@@ -81,23 +82,28 @@ class App {
         this._checkSpecialDate();
         this._startIdleTimer();
         this._startInactivityMonitor();
-        // ★ 角色选择器也延迟构建（首次点击才需要渲染）
         this._initCharacterSelector();
+        this._showShortcutHint(); // ★ 首次使用提示快捷键
       } catch (e) {
         console.warn('延迟初始化出错:', e);
       }
-    }, 300); // 300ms后，确保UI已经可交互
+    }, 300);
 
-    // ★ 阶段3：启动桌宠模式 + 后台Live2D（再延迟一点，不跟上面的任务抢）
     setTimeout(() => this._initPhase3(), 600);
+  }
+
+  /** 首次启动时显示快捷键提示（只提示一次） */
+  _showShortcutHint() {
+    if (localStorage.getItem('shortcut_hint_shown')) return;
+    localStorage.setItem('shortcut_hint_shown', '1');
+    setTimeout(() => {
+      this.showToast('快捷键: Ctrl+Shift+P 切换显示/隐藏');
+    }, 2000);
   }
 
   // ★ 阶段3：桌宠模式和重型资源（后台加载，不阻塞）
   async _initPhase3() {
-    // 桌宠模式（先显示占位，再加载模型）
-    this.petMode.init(true);
-
-    // ★ 后台初始化 Live2D（loadCharacterModel 内部已有模型存在性检查，无需重复 HEAD 请求）
+    // ★ 桌宠模式已提前到 _initPhase2 启动
     setTimeout(() => this._initLive2D(), 100);
 
     // ★ 预检所有角色的模型文件（完全不阻塞任何流程）
@@ -230,6 +236,10 @@ class App {
     window.electronAPI?.onShowSettings?.(() => this.settings.show());
     document.getElementById('btn-character-select')?.addEventListener('click', () => this._showCharacterSelector());
     document.getElementById('btn-close-character')?.addEventListener('click', () => this._hideCharacterSelector());
+    document.getElementById('btn-create-character')?.addEventListener('click', () => {
+      this._hideCharacterSelector();
+      window.customCharManager?.showCreatePanel();
+    });
     document.getElementById('btn-clear-chat')?.addEventListener('click', () => this.chat.clearWithConfirm());
     document.getElementById('api-provider')?.addEventListener('change', (e) => this.settings.onProviderChange(e.target.value));
     document.getElementById('btn-test-connection')?.addEventListener('click', () => this.settings.testConnection());
@@ -363,7 +373,10 @@ class App {
         clearInterval(this.idleTimer);
         this.idleTimer = setInterval(() => {
           if (Date.now() - this.lastInteraction >= IDLE_TIMEOUT && !this.isLoading) {
-            this.chat.addMessage('ai', window.characterManager.getRandomLine('idle'));
+            // 长期无交互时，发送不同的闲置台词，不全是 idle 类
+            const situations = ['idle', 'gentle', 'loneliness', 'encouragement'];
+            const s = situations[Math.floor(Math.random() * situations.length)];
+            this.chat.addMessage('ai', window.characterManager.getRandomLine(s));
             window.live2dManager.triggerIdle();
             this.lastInteraction = Date.now();
           }
@@ -385,7 +398,23 @@ class App {
       overlay.classList.toggle('show', show);
       const txt = overlay.querySelector('.loading-text');
       if (txt && text) txt.textContent = text;
+      // ★ 用变化的文案，不那么枯燥
+      if (show && !text && this._loadingTexts) {
+        const texts = this._loadingTexts || ['正在努力思考...', '快要好了...', '再等一下下...', '马上就好！'];
+        let i = 0;
+        txt.textContent = texts[0];
+        this._loadingRotate = setInterval(() => {
+          i = (i + 1) % texts.length;
+          txt.textContent = texts[i];
+        }, 3000);
+      }
     }
+
+    if (!show && this._loadingRotate) {
+      clearInterval(this._loadingRotate);
+      this._loadingRotate = null;
+    }
+
     const btn = document.getElementById('btn-chat-send');
     if (btn) btn.disabled = show;
 

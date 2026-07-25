@@ -1135,7 +1135,7 @@ body::before {
   backdrop-filter: blur(8px);
 }
 
-.loading-overlay.show { display: flex; }
+.loading-overlay.show { display: flex; opacity: 1; visibility: visible; }
 
 .loading-spinner {
   width: 40px;
@@ -1238,6 +1238,55 @@ body::before {
   padding: 16px;
   background: var(--settings-bg);
   border-bottom: 1px solid var(--border-color);
+}
+
+.character-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-add-character {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--gradient-main);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px var(--btn-send-shadow);
+}
+.btn-add-character:hover {
+  transform: scale(1.15) rotate(90deg);
+  box-shadow: 0 3px 10px var(--btn-send-hover-shadow);
+}
+
+.btn-import-character {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--tab-active-color);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+.btn-import-character:hover {
+  transform: scale(1.1);
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .character-header h3 {
@@ -2066,4 +2115,248 @@ body.web-mode-active .loading-overlay.show {
 .btn-copy:active,
 .btn-run:active {
   transform: scale(0.95);
+}
+
+/* ============================================================
+   自定义角色创建面板
+   ============================================================ */
+.create-character-panel {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--gradient-bg);
+  z-index: 110;
+  display: none;
+  flex-direction: column;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.create-character-panel.show { display: flex; animation: char-panel-in 0.3s ease-out; }
+
+.cc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--settings-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+.cc-header h3 {
+  font-size: 15px;
+  font-weight: normal;
+  letter-spacing: 2px;
+  color: var(--tab-active-color);
+}
+
+.cc-content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.cc-setting-item {
+  margin-bottom: 16px;
+}
+.cc-setting-item label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+.cc-setting-item input[type="text"],
+.cc-setting-item textarea,
+.cc-setting-item select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.cc-setting-item input[type="text"]:focus,
+.cc-setting-item textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow), 0 0 8px var(--glow-color);
+  background: rgba(255, 255, 255, 0.7);
+}
+.cc-setting-item textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.6;
+}
+.cc-setting-item input[type="color"] {
+  width: 48px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+.cc-item-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.cc-required {
+  color: #d06070;
+  font-weight: bold;
+}
+
+/* 图片上传 */
+.cc-image-upload {
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px dashed var(--border-color);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: var(--input-bg);
+}
+.cc-image-upload:hover {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.7);
+}
+.cc-image-preview {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.cc-image-preview img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  display: block;
+}
+.cc-upload-placeholder {
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+/* 文件上传 */
+.cc-file-upload {
+  padding: 12px 16px;
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+  color: var(--text-secondary);
+  font-size: 13px;
+  background: var(--input-bg);
+}
+.cc-file-upload:hover {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-color);
+}
+
+/* 状态提示 */
+.cc-status {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: none;
+}
+.cc-status.success {
+  display: block;
+  background: rgba(160, 220, 180, 0.2);
+  color: #4a6a54;
+  border: 1px solid rgba(160, 220, 180, 0.3);
+}
+.cc-status.error {
+  display: block;
+  background: rgba(220, 160, 160, 0.2);
+  color: #6a4a4a;
+  border: 1px solid rgba(220, 160, 160, 0.3);
+}
+
+/* 按钮 */
+.cc-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.btn-cc-save, .btn-cc-cancel {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
+.btn-cc-save {
+  background: var(--gradient-main);
+  color: white;
+  box-shadow: 0 2px 8px var(--btn-send-shadow);
+}
+.btn-cc-save:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 14px var(--btn-send-hover-shadow);
+}
+.btn-cc-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-cc-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+.btn-cc-cancel:hover {
+  background: var(--hover-color);
+  color: var(--text-color);
+  border-color: var(--primary-color);
+}
+
+/* 删除角色按钮 */
+.btn-delete-character {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(200, 100, 100, 0.3);
+  border-radius: 10px;
+  color: #b06060;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+.btn-delete-character:hover {
+  background: rgba(200, 100, 100, 0.1);
+  border-color: rgba(200, 100, 100, 0.5);
+  color: #c04040;
+}
+
+/* 导出角色按钮 */
+.btn-export-character {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--tab-active-color);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.btn-export-character:hover {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
