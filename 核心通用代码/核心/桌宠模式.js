@@ -51,8 +51,8 @@ class PetMode {
 
     document.addEventListener('mouseup', () => { this._dragging = false; });
 
-    document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter());
-    document.getElementById('btn-switch-web')?.addEventListener('click', () => this.exit());
+    document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter(false, true));
+    document.getElementById('btn-switch-web')?.addEventListener('click', () => this.exit(true));
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && document.body.classList.contains('web-mode-active')) this.enter();
@@ -60,55 +60,96 @@ class PetMode {
   }
 
   // === 形态切换 ===
-  async enter(skipTransition) {
-    if (this._transitioning) return;
+  // ★ 安全解锁：防止 _transitioning 卡住导致模式切换永久失效
+  _safeUnlockTransition() {
+    this._transitioning = false;
+    if (this._transitionTimer) {
+      clearTimeout(this._transitionTimer);
+      this._transitionTimer = null;
+    }
+  }
+
+  // ★ 启动超时锁：超过5秒强制解锁，防止异常卡死
+  _armTransitionLock() {
+    if (this._transitionTimer) clearTimeout(this._transitionTimer);
+    this._transitionTimer = setTimeout(() => {
+      if (this._transitioning) {
+        console.warn('[PetMode] 过渡锁超时，强制解锁');
+        this._transitioning = false;
+      }
+      this._transitionTimer = null;
+    }, 5000);
+  }
+
+  async enter(skipTransition, force) {
+    if (this._transitioning && !force) return;
+    // ★ 如果是强制进入，先解锁再继续
+    if (force) this._transitioning = false;
     this._transitioning = true;
+    this._armTransitionLock();
     this.app.hideSettings?.();
     this.app.hideCharacterSelector?.();
 
-    if (skipTransition || !this._everTransitioned) {
+    try {
+      if (skipTransition || !this._everTransitioned) {
+        document.body.classList.remove('web-mode-active');
+        await this._loadCharacter();
+        this._bindClickEvents();
+        this._startIdleTimer();
+        this._showBubble(window.characterManager.getRandomLine('boot'));
+        this._startMouseTracking();
+        this._everTransitioned = true;
+        this._safeUnlockTransition();
+        return;
+      }
+
       document.body.classList.remove('web-mode-active');
       await this._loadCharacter();
       this._bindClickEvents();
       this._startIdleTimer();
       this._showBubble(window.characterManager.getRandomLine('boot'));
-      this._startMouseTracking(); // ★ 启动鼠标追踪
-      this._everTransitioned = true;
-      this._transitioning = false;
-      return;
+      this._startMouseTracking();
+      requestAnimationFrame(() => { this._safeUnlockTransition(); });
+    } catch (e) {
+      console.warn('[PetMode] 进入桌宠模式出错:', e);
+      // 即使出错也确保解锁，避免永久卡死
+      document.body.classList.remove('web-mode-active');
+      this._safeUnlockTransition();
     }
-
-    document.body.classList.remove('web-mode-active');
-    await this._loadCharacter();
-    this._bindClickEvents();
-    this._startIdleTimer();
-    this._showBubble(window.characterManager.getRandomLine('boot'));
-    this._startMouseTracking();
-    requestAnimationFrame(() => { this._transitioning = false; });
   }
 
-  async exit() {
-    if (this._transitioning) return;
+  async exit(force) {
+    if (this._transitioning && !force) return;
+    // ★ 如果是强制退出，先解锁再继续
+    if (force) this._transitioning = false;
     this._transitioning = true;
-    this._stopMouseTracking(); // ★ 停止鼠标追踪
-    this.app.hideSettings?.();
-    this.app.hideCharacterSelector?.();
-    this._stopIdleTimer();
-    this._clearBubbles();
+    this._armTransitionLock();
+    this._stopMouseTracking();
 
-    document.body.classList.add('web-mode-active');
+    try {
+      this.app.hideSettings?.();
+      this.app.hideCharacterSelector?.();
+      this._stopIdleTimer();
+      this._clearBubbles();
 
-    setTimeout(() => {
-      this._cleanupLive2D();
-      this._cleanupVRM();
-      this._renderMode = null;
-      const gif = document.getElementById('pet-gif');
-      if (gif) { gif.src = ''; gif.style.display = 'none'; }
-      const canvas = document.getElementById('pet-canvas');
-      if (canvas) canvas.style.display = '';
-      window.live2dManager?.showFallback();
-      this._transitioning = false;
-    }, 350);
+      document.body.classList.add('web-mode-active');
+
+      setTimeout(() => {
+        this._cleanupLive2D();
+        this._cleanupVRM();
+        this._renderMode = null;
+        const gif = document.getElementById('pet-gif');
+        if (gif) { gif.src = ''; gif.style.display = 'none'; }
+        const canvas = document.getElementById('pet-canvas');
+        if (canvas) canvas.style.display = '';
+        window.live2dManager?.showFallback();
+        this._safeUnlockTransition();
+      }, 350);
+    } catch (e) {
+      console.warn('[PetMode] 退出桌宠模式出错:', e);
+      document.body.classList.add('web-mode-active');
+      this._safeUnlockTransition();
+    }
   }
 
   // === ★ 鼠标追踪：角色视线/头部跟随鼠标 ===
@@ -241,7 +282,7 @@ class PetMode {
         this._lastInteraction = Date.now();
       } else if (this._clickCount === 2) {
         this._clickCount = 0;
-        this.exit();
+        this.exit(true); // ★ 强制退出，避免transition锁卡住
       } else {
         this._clickTimer = setTimeout(() => {
           if (this._clickCount === 1) {

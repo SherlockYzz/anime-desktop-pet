@@ -49,30 +49,47 @@ class App {
     setTimeout(() => this._initPhase2(), 10);
   }
 
-  // ★ 阶段2：加载角色数据（有localStorage缓存则毫秒级）
+  // ★ 阶段2：只加载核心角色数据 → 立刻显示UI，非核心工作延后
   async _initPhase2() {
     try {
+      // ★ loadSavedCharacter 现在只加载系统提示词 + 从缓存读台词，非常快
       await window.characterManager.loadSavedCharacter();
       this._charDataReady = true;
     } catch (e) {
       console.warn('角色数据加载失败:', e);
     }
 
-    // 角色依赖的UI更新
-    this._showBootMessage();
-    this._checkSpecialDate();
-    this._initCharacterSelector();
-    this._startIdleTimer();
-    this._startInactivityMonitor();
+    // ★ 核心UI更新（不依赖台词文件全部加载完毕）
+    try {
+      this._showBootMessage();
+      window.live2dManager?.showFallback();
+    } catch (e) {
+      console.warn('核心UI初始化出错:', e);
+    } finally {
+      // ★ 立即关闭加载动画！不等待台词文件、角色卡片等非核心任务
+      this.showLoading(false);
+    }
 
-    // 显示封面图
-    window.live2dManager?.showFallback();
+    // ★ 阶段2B：非核心任务推到后台微任务队列，不阻塞首帧交互
+    this._deferInit();
+  }
 
-    // 关闭加载动画
-    this.showLoading(false);
+  /** 延迟初始化：不阻塞首帧的非核心任务 */
+  _deferInit() {
+    setTimeout(() => {
+      try {
+        this._checkSpecialDate();
+        this._startIdleTimer();
+        this._startInactivityMonitor();
+        // ★ 角色选择器也延迟构建（首次点击才需要渲染）
+        this._initCharacterSelector();
+      } catch (e) {
+        console.warn('延迟初始化出错:', e);
+      }
+    }, 300); // 300ms后，确保UI已经可交互
 
-    // ★ 阶段3：启动桌宠模式 + 后台Live2D
-    setTimeout(() => this._initPhase3(), 50);
+    // ★ 阶段3：启动桌宠模式 + 后台Live2D（再延迟一点，不跟上面的任务抢）
+    setTimeout(() => this._initPhase3(), 600);
   }
 
   // ★ 阶段3：桌宠模式和重型资源（后台加载，不阻塞）
@@ -80,17 +97,11 @@ class App {
     // 桌宠模式（先显示占位，再加载模型）
     this.petMode.init(true);
 
-    // 后台检查并加载 Live2D
-    const char = window.characterManager?.getCurrentCharacter();
-    if (char?.live2d?.modelPath) {
-      try {
-        const exists = await window.characterManager.checkModelFileExists(char.live2d.modelPath);
-        if (exists) this._initLive2D();
-      } catch (e) { /* 静默 */ }
-    }
+    // ★ 后台初始化 Live2D（loadCharacterModel 内部已有模型存在性检查，无需重复 HEAD 请求）
+    setTimeout(() => this._initLive2D(), 100);
 
-    // 预检所有角色的模型文件
-    window.characterManager.precheckModelFiles();
+    // ★ 预检所有角色的模型文件（完全不阻塞任何流程）
+    setTimeout(() => window.characterManager.precheckModelFiles(), 3000);
 
     // ★ 阶段4：在空闲时加载CDN高亮库（不影响首帧）
     this._initHighlighting();
@@ -127,6 +138,7 @@ class App {
   _initDreamStars() {
     const c = document.getElementById('dream-stars');
     if (!c) return;
+    // 星星
     for (let i = 0; i < 12; i++) {
       const star = document.createElement('div');
       star.className = 'star';
@@ -137,12 +149,27 @@ class App {
       if (Math.random() > 0.7) { star.style.width = '4px'; star.style.height = '4px'; }
       c.appendChild(star);
     }
+    // ★ 浮动光点
+    for (let i = 0; i < 8; i++) {
+      const sp = document.createElement('div');
+      sp.className = 'floating-sparkle';
+      sp.style.left = (5 + Math.random() * 90) + '%';
+      sp.style.top = (10 + Math.random() * 80) + '%';
+      sp.style.setProperty('--sparkle-duration', (4 + Math.random() * 4) + 's');
+      sp.style.setProperty('--sparkle-delay', (Math.random() * 5) + 's');
+      if (Math.random() > 0.5) sp.style.width = '4px'; sp.style.height = '4px';
+      c.appendChild(sp);
+    }
   }
 
   _showBootMessage() {
-    const text = window.characterManager.getRandomLine('boot');
-    const first = document.querySelector('#chat-messages .message-text');
-    if (first) first.textContent = text || '';
+    const text = window.characterManager.getRandomLine('boot') || '……';
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    // ★ 清除 HTML 中可能残留的占位消息（已从 index.html 删除，但兼容旧缓存）
+    container.innerHTML = '';
+    // ★ 用聊天管理器的标准方法添加启动消息，自动匹配当前角色头像
+    this.chat.addBootMessage(text);
   }
 
   _checkSpecialDate() {
@@ -187,8 +214,8 @@ class App {
   }
 
   _bindEvents() {
-    document.getElementById('btn-minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
-    document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI.closeWindow(); });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => { window.electronAPI?.minimizeWindow?.()?.catch?.(e => console.warn('最小化失败:', e)); });
+    document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e)); });
     document.getElementById('btn-settings')?.addEventListener('click', () => this.settings.show());
     document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', (e) => this._switchTab(e.target.dataset.tab)));
     document.getElementById('btn-chat-send')?.addEventListener('click', () => this._sendChat());
@@ -200,7 +227,7 @@ class App {
     document.getElementById('opacity-slider')?.addEventListener('input', (e) => {
       document.getElementById('opacity-value').textContent = e.target.value + '%';
     });
-    window.electronAPI.onShowSettings(() => this.settings.show());
+    window.electronAPI?.onShowSettings?.(() => this.settings.show());
     document.getElementById('btn-character-select')?.addEventListener('click', () => this._showCharacterSelector());
     document.getElementById('btn-close-character')?.addEventListener('click', () => this._hideCharacterSelector());
     document.getElementById('btn-clear-chat')?.addEventListener('click', () => this.chat.clearWithConfirm());
@@ -280,8 +307,15 @@ class App {
     if (!msg || this.isLoading) return;
     this._resetIdle();
 
+    // ★ 确保在发送前切换到网页模式，并处理异常防止 isLoading 卡住
     if (!document.body.classList.contains('web-mode-active')) {
-      this.petMode?.exit();
+      try {
+        await this.petMode?.exit(true); // ★ 强制退出，绕过 transition 锁
+      } catch (e) {
+        console.warn('切换到网页模式失败:', e);
+        // 即使 exit 失败，也强制标记为网页模式
+        document.body.classList.add('web-mode-active');
+      }
     }
 
     this.chat.addMessage('user', msg);
@@ -354,6 +388,27 @@ class App {
     }
     const btn = document.getElementById('btn-chat-send');
     if (btn) btn.disabled = show;
+
+    // ★ 安全兜底：如果加载状态一直不关闭，10秒后强制恢复
+    if (show) {
+      if (this._loadingSafetyTimer) clearTimeout(this._loadingSafetyTimer);
+      this._loadingSafetyTimer = setTimeout(() => {
+        if (this.isLoading) {
+          console.warn('[App] 加载超时，强制恢复');
+          this.isLoading = false;
+          const overlay = document.getElementById('loading-overlay');
+          if (overlay) overlay.classList.remove('show');
+          const btn = document.getElementById('btn-chat-send');
+          if (btn) btn.disabled = false;
+        }
+        this._loadingSafetyTimer = null;
+      }, 10000);
+    } else {
+      if (this._loadingSafetyTimer) {
+        clearTimeout(this._loadingSafetyTimer);
+        this._loadingSafetyTimer = null;
+      }
+    }
   }
 
   showToast(msg) {
@@ -365,6 +420,7 @@ class App {
 
   hideSettings() { this.settings.hide(); }
   hideCharacterSelector() { this._hideCharacterSelector(); }
+  resetIdleTimer() { this._resetIdle(); }
 }
 
 document.addEventListener('DOMContentLoaded', () => { window.app = new App(); });

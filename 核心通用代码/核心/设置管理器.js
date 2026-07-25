@@ -90,6 +90,21 @@ class SettingsManager {
     opacity: 95,
   };
 
+  // ★ 动态填充角色选择下拉（从注册表读取，避免硬编码遗漏）
+  _populateCharacterSelect() {
+    const sel = document.getElementById('prompt-character-select');
+    if (!sel || sel.dataset.populated) return;
+    const list = window.characterManager.getAllCharacters();
+    sel.innerHTML = '';
+    list.forEach(char => {
+      const o = document.createElement('option');
+      o.value = char.id;
+      o.textContent = char.name;
+      sel.appendChild(o);
+    });
+    sel.dataset.populated = 'true';
+  }
+
   initProviderSelector() {
     const sel = document.getElementById('api-provider');
     if (!sel) return;
@@ -101,6 +116,9 @@ class SettingsManager {
     });
     sel.value = this.settings.provider || 'local';
     this.onProviderChange(sel.value, true);
+
+    // ★ 同时填充角色选择下拉
+    this._populateCharacterSelect();
   }
 
   onProviderChange(providerId, skipRestore) {

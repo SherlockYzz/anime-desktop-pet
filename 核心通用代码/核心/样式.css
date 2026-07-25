@@ -1,6 +1,7 @@
-/* 二次元桌宠 - 动态主题系统（优化版）
+/* 二次元桌宠 - 动态主题系统（艺术增强版）
    优化：减少重复radial-gradient、合并伪元素、移除body::after条纹动画
    主题变量由角色管理器.js动态注入，:root仅保留默认值
+   ★ 艺术增强：樱花飘落、玻璃拟态装饰、发光微交互
 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -72,16 +73,17 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* ===== 轻量背景装饰（优化：合并为单层，移除body::after条纹动画减少重绘） ===== */
+/* ===== 轻量背景装饰 ===== */
 body::before {
   content: '';
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: -1;
   background:
-    radial-gradient(circle 100px at 20% 20%, rgba(255,255,255,0.35) 0%, transparent 100%),
-    radial-gradient(circle 80px at 80% 70%, rgba(255,255,255,0.25) 0%, transparent 100%),
-    radial-gradient(circle 60px at 40% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
+    radial-gradient(circle 120px at 15% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(circle 100px at 85% 25%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(circle 80px at 50% 85%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(circle 60px at 30% 60%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -114,6 +116,32 @@ body::before {
     radial-gradient(circle 30px at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
     radial-gradient(circle 20px at 80% 50%, rgba(255,255,255,0.2) 0%, transparent 100%);
   pointer-events: none;
+}
+
+/* ★ 标题栏底部装饰流光 */
+.titlebar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -100%;
+  width: 300%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--primary-color) 20%,
+    var(--secondary-color) 40%,
+    var(--accent-color) 55%,
+    var(--primary-color) 70%,
+    transparent 100%);
+  animation: titlebar-shine 4s ease-in-out infinite;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@keyframes titlebar-shine {
+  0% { left: -100%; }
+  50% { left: 0%; }
+  100% { left: -100%; }
 }
 
 .titlebar-drag { flex: 1; }
@@ -182,7 +210,7 @@ body::before {
   color: white;
 }
 
-/* ===== Live2D / 封面容器 ===== */
+/* ===== Live2D / 封面容器（装饰增强） ===== */
 .live2d-container {
   position: relative;
   width: 100%;
@@ -198,8 +226,25 @@ body::before {
   content: '';
   position: absolute;
   width: 100%; height: 100%;
-  background: radial-gradient(circle 60px at 50% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
+  background:
+    radial-gradient(circle 80px at 50% 80%, rgba(255,255,255,0.18) 0%, transparent 100%),
+    radial-gradient(circle 40px at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 100%);
   pointer-events: none;
+  z-index: 1;
+}
+
+/* ★ 装饰性四角光晕 */
+.live2d-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(circle 50px at 10% 10%, var(--glow-color) 0%, transparent 70%),
+    radial-gradient(circle 40px at 90% 10%, var(--glow-color) 0%, transparent 70%),
+    radial-gradient(circle 60px at 50% 95%, var(--glow-color) 0%, transparent 70%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
 }
 
 #live2d-canvas {
@@ -223,7 +268,7 @@ body::before {
   text-shadow: 0 0 6px rgba(255,255,255,0.5);
 }
 
-/* ===== 聊天面板（增强梦幻效果） ===== */
+/* ===== 聊天面板（增强梦幻效果，玻璃拟态） ===== */
 .chat-panel {
   flex: 1;
   display: flex;
@@ -233,7 +278,8 @@ body::before {
   height: calc(100vh - 250px);
   min-height: 300px;
   position: relative;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .chat-panel::before {
@@ -241,8 +287,9 @@ body::before {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background:
-    radial-gradient(circle 60px at 10% 20%, rgba(255,255,255,0.2) 0%, transparent 100%),
-    radial-gradient(circle 45px at 90% 80%, rgba(255,255,255,0.15) 0%, transparent 100%);
+    radial-gradient(circle 80px at 10% 20%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(circle 60px at 90% 80%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(circle 50px at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -272,6 +319,8 @@ body::before {
   border-radius: 8px;
   transition: all 0.3s ease;
   letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
 }
 
 .tab:hover {
@@ -284,6 +333,24 @@ body::before {
   color: var(--tab-active-color);
   text-shadow: 0 0 6px var(--glow-color);
   box-shadow: 0 1px 6px var(--shadow-color);
+}
+
+/* ★ 标签页底部滑动指示条 */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 30%;
+  right: 30%;
+  height: 2px;
+  background: var(--gradient-main);
+  border-radius: 1px;
+  animation: tab-indicator 0.3s ease-out;
+}
+
+@keyframes tab-indicator {
+  from { left: 50%; right: 50%; opacity: 0; }
+  to { left: 30%; right: 30%; opacity: 1; }
 }
 
 /* ===== 标签内容 ===== */
@@ -374,16 +441,51 @@ body::before {
   border-radius: 16px;
   padding: 10px 14px;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   box-shadow: 0 2px 10px var(--shadow-color);
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
+.message-content:hover {
+  box-shadow: 0 3px 15px var(--glow-color);
+}
+
+/* ★ AI消息气泡左尾（小三角装饰） */
+.message.ai .message-content::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  background: var(--message-ai-bg);
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  transform: rotate(45deg);
+  border-radius: 0 0 0 3px;
+}
 
 .message.user .message-content {
   background: var(--message-user-bg);
   border-color: var(--border-color);
+}
+
+/* ★ 用户消息气泡右尾（小三角装饰） */
+.message.user .message-content::before {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  background: var(--message-user-bg);
+  border-right: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  transform: rotate(45deg);
+  border-radius: 0 3px 0 0;
 }
 
 .message-text {
@@ -533,14 +635,15 @@ body::before {
   50% { opacity: 0.5; }
 }
 
-/* ===== 输入区域 ===== */
+/* ===== 输入区域（玻璃拟态增强） ===== */
 .input-area {
   display: flex;
   gap: 8px;
   padding: 12px;
   background: var(--settings-bg);
   border-top: 1px solid var(--border-color);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .input-area textarea {
@@ -559,12 +662,17 @@ body::before {
 
 .input-area textarea::placeholder {
   color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.input-area textarea:focus::placeholder {
+  color: transparent;
 }
 
 .input-area textarea:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--input-focus-shadow), 0 0 10px var(--glow-color);
-  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow), 0 0 12px var(--glow-color);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .btn-send {
@@ -579,11 +687,38 @@ body::before {
   white-space: nowrap;
   box-shadow: 0 2px 8px var(--btn-send-shadow);
   letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-send::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.btn-send:active::after {
+  width: 200px;
+  height: 200px;
+  opacity: 1;
+  transition: 0s;
 }
 
 .btn-send:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 14px var(--btn-send-hover-shadow);
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px var(--btn-send-hover-shadow);
+}
+
+.btn-send:active {
+  transform: scale(0.97);
 }
 
 .btn-send:disabled {
@@ -1486,7 +1621,8 @@ body .chat-panel,
 body .character-panel,
 body .settings-panel,
 body .loading-overlay,
-body .dream-stars {
+body .dream-stars,
+body .sakura-container {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1506,6 +1642,14 @@ body.web-mode-active .dream-stars {
   transition: opacity 0.3s ease;
 }
 
+/* ★ 樱花装饰单独处理：可见但不拦截点击 */
+body.web-mode-active .sakura-container {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
 /* 加载动画特殊处理 */
 body.web-mode-active .loading-overlay {
   opacity: 0;
@@ -1518,11 +1662,11 @@ body.web-mode-active .loading-overlay.show {
   pointer-events: auto;
 }
 
-/* ===== 角色提示词编辑器 ===== */
+/* ===== 角色提示词编辑器（装饰增强） ===== */
 .setting-section-divider {
   display: flex;
   align-items: center;
-  margin: 24px 0 16px;
+  margin: 28px 0 16px;
   gap: 12px;
   color: var(--text-secondary);
   font-size: 13px;
@@ -1533,7 +1677,19 @@ body.web-mode-active .loading-overlay.show {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border-color);
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+.setting-section-divider span {
+  position: relative;
+  padding: 0 4px;
+}
+.setting-section-divider span::before {
+  content: '✦ ';
+  opacity: 0.5;
+}
+.setting-section-divider span::after {
+  content: ' ✦';
+  opacity: 0.5;
 }
 
 .prompt-editor {
@@ -1606,4 +1762,308 @@ body.web-mode-active .loading-overlay.show {
 }
 .prompt-status.error {
   color: #b06060;
+}
+
+/* ============================================================
+   ★ 艺术增强区 — 樱花飘落、装饰粒子、微交互
+   所有新增装饰不改变原有色调，叠加在主题变量之上
+   ============================================================ */
+
+/* ── 1. 樱花花瓣飘落（CSS only） ── */
+.sakura-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.sakura-petal {
+  position: absolute;
+  top: -20px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50% 0 50% 0;
+  background: var(--primary-color);
+  opacity: 0;
+  animation: sakura-fall var(--fall-duration, 8s) linear infinite;
+  animation-delay: var(--fall-delay, 0s);
+}
+
+.sakura-petal:nth-child(1) { left: 5%; --fall-duration: 9s; --fall-delay: 0s; width: 10px; height: 10px; opacity: 0.15; }
+.sakura-petal:nth-child(2) { left: 15%; --fall-duration: 11s; --fall-delay: 1.5s; width: 8px; height: 8px; opacity: 0.12; }
+.sakura-petal:nth-child(3) { left: 25%; --fall-duration: 8s; --fall-delay: 0.8s; width: 11px; height: 11px; opacity: 0.18; }
+.sakura-petal:nth-child(4) { left: 40%; --fall-duration: 12s; --fall-delay: 3s; width: 9px; height: 9px; opacity: 0.1; }
+.sakura-petal:nth-child(5) { left: 55%; --fall-duration: 10s; --fall-delay: 2s; width: 13px; height: 13px; opacity: 0.14; }
+.sakura-petal:nth-child(6) { left: 65%; --fall-duration: 7s; --fall-delay: 1s; width: 8px; height: 8px; opacity: 0.16; }
+.sakura-petal:nth-child(7) { left: 78%; --fall-duration: 13s; --fall-delay: 2.5s; width: 10px; height: 10px; opacity: 0.11; }
+.sakura-petal:nth-child(8) { left: 88%; --fall-duration: 8.5s; --fall-delay: 0.3s; width: 12px; height: 12px; opacity: 0.13; }
+.sakura-petal:nth-child(9) { left: 35%; --fall-duration: 10.5s; --fall-delay: 4s; width: 7px; height: 7px; opacity: 0.09; }
+.sakura-petal:nth-child(10) { left: 72%; --fall-duration: 9.5s; --fall-delay: 3.5s; width: 11px; height: 11px; opacity: 0.12; }
+.sakura-petal:nth-child(11) { left: 10%; --fall-duration: 14s; --fall-delay: 5s; width: 9px; height: 9px; opacity: 0.08; }
+.sakura-petal:nth-child(12) { left: 50%; --fall-duration: 7.5s; --fall-delay: 1.8s; width: 10px; height: 10px; opacity: 0.15; }
+
+@keyframes sakura-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--sakura-opacity, 0.15);
+  }
+  85% {
+    opacity: var(--sakura-opacity, 0.15);
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* ── 2. 梦幻光点浮动 ── */
+.floating-sparkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  pointer-events: none;
+  animation: sparkle-float var(--sparkle-duration, 5s) ease-in-out infinite;
+  animation-delay: var(--sparkle-delay, 0s);
+  opacity: 0;
+}
+
+@keyframes sparkle-float {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateY(-20px) scale(1.2);
+  }
+  80% {
+    opacity: 0.6;
+  }
+}
+
+/* ── 3. 设置面板装饰光效 ── */
+.settings-panel.show {
+  display: flex;
+  animation: settings-panel-in 0.3s ease-out;
+}
+
+@keyframes settings-panel-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(20px);
+  }
+}
+
+.character-panel.show {
+  display: flex;
+  animation: char-panel-in 0.3s ease-out;
+}
+
+@keyframes char-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── 4. Toast 增强 ── */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--toast-bg);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 1000;
+  box-shadow: 0 4px 14px var(--toast-shadow), 0 0 30px var(--glow-color);
+  animation: toast-in 0.4s ease-out, toast-out 0.4s ease-in 2.1s forwards;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.95);
+  }
+}
+
+/* ── 5. 按钮通用微交互 ── */
+.titlebar-buttons button {
+  position: relative;
+  overflow: hidden;
+}
+
+.titlebar-buttons button:active {
+  transform: scale(0.92);
+}
+
+/* ── 6. 聊天消息入场动画增强 ── */
+.message {
+  display: flex;
+  gap: 10px;
+  max-width: 85%;
+  animation: message-in 0.35s ease-out;
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.message.user {
+  animation: message-in-right 0.35s ease-out;
+}
+
+@keyframes message-in-right {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── 7. 滚动条增强 ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
+  box-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ── 8. 角色卡片入场动画（已有，追加hover光效） ── */
+.character-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.character-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.character-card:hover::after {
+  opacity: 1;
+}
+
+.character-card:active {
+  transform: scale(0.98);
+}
+
+/* ── 9. 消息区域滚动条增强 ── */
+#chat-messages::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
+  box-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ── 10. 清除按钮增强 ── */
+.btn-clear-chat {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-clear-chat:active {
+  transform: scale(0.95);
+}
+
+/* ── 11. Live2D封面装饰渐变（叠加在动态创建的fallback图片上） ── */
+#live2d-fallback::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+#gif-fallback-container {
+  position: relative;
+}
+
+#gif-fallback-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 100%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── 12. 代码模式按钮增强 ── */
+.btn-ai-code {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ai-code:active {
+  transform: scale(0.97);
+}
+
+.btn-copy:active,
+.btn-run:active {
+  transform: scale(0.95);
 }

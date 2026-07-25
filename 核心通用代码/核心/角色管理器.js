@@ -58,22 +58,41 @@ class CharacterManager {
     this._cachedTheme = null;
     this._precacheTimer = null;
     this._modelExistsCache = new Map();
-    // ★ 启动时彻底清理所有旧缓存，文件是唯一源
-    this._purgeAllCache();
+    // ★ 不再清空对话缓存——让localStorage缓存生效，加速下次启动
   }
 
-  /** 清除 localStorage 中所有旧版本对话缓存（自定义提示词保留，那是用户主动保存的） */
-  _purgeAllCache() {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('dialogue_cache_')) {
-        keysToRemove.push(key);
+  /** 获取台词缓存版本号（基于日期，一天一变；不影响提示词热更新） */
+  _getCacheVersion() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  }
+
+  /** 从 localStorage 读取缓存的台词 */
+  _getCachedDialogue(characterId) {
+    const key = `dialogue_cache_${characterId}`;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      // 校验缓存版本，过期则丢弃
+      if (data._version !== this._getCacheVersion()) {
+        localStorage.removeItem(key);
+        return null;
       }
+      return data;
+    } catch {
+      return null;
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    if (keysToRemove.length > 0) {
-      console.log(`[CharacterManager] 已清理 ${keysToRemove.length} 个旧对话缓存`);
+  }
+
+  /** 将台词写入 localStorage 缓存 */
+  _setCachedDialogue(characterId, lines) {
+    const key = `dialogue_cache_${characterId}`;
+    try {
+      const data = { _version: this._getCacheVersion(), lines };
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+      // localStorage 可能满，忽略
     }
   }
 
@@ -102,30 +121,110 @@ class CharacterManager {
   }
 
   async loadCharacterData(characterId) {
-    // ★ 不加缓存保护，每次都重新从文件加载，确保提示词永远是最新版
+    // ★ 提示词永远从文件加载最新版（不加缓存）
+    //    台词会缓存到 localStorage 中加速下次启动
     await this._loadCharacterTextData(characterId);
   }
 
-  // ★ 启动时加载当前角色
+  /** 只加载系统提示词（最核心，API必需），不加载台词文件 */
+  async loadCharacterSystemPromptOnly(characterId) {
+    const folder = CHARACTER_FOLDER_MAP[characterId];
+    const character = this.registry[characterId];
+    if (!folder || !character) return;
+
+    try {
+      const promptPath = `../../${folder}/系统提示词.txt?t=${Date.now()}`;
+      const promptResp = await fetch(promptPath, { cache: 'no-store' });
+      if (promptResp.ok) {
+        const filePrompt = (await promptResp.text()).trim();
+        character._defaultSystemPrompt = filePrompt;
+        const customPrompt = this.getCustomPrompt(characterId);
+        character.systemPrompt = customPrompt || filePrompt;
+      }
+    } catch (e) { /* 静默 */ }
+
+    // ★ 尝试从缓存读取台词，这样 UI 能先显示
+    const cached = this._getCachedDialogue(characterId);
+    if (cached && cached.lines) {
+      for (const [situation, lines] of Object.entries(cached.lines)) {
+        character.lines[situation] = lines;
+      }
+    }
+  }
+
+  /** 后台加载台词文件（不阻塞启动） */
+  async loadCharacterDialoguesInBackground(characterId) {
+    const folder = CHARACTER_FOLDER_MAP[characterId];
+    const character = this.registry[characterId];
+    if (!folder || !character) return;
+
+    // ★ 如果已有缓存，跳过（UI 所需的台词已经在 loadCharacterSystemPromptOnly 里加载了）
+    const cached = this._getCachedDialogue(characterId);
+    if (cached && cached.lines) {
+      // 台词已在内存中，只需确保 _loadedCharacters 标记
+      this._loadedCharacters.add(characterId);
+      return;
+    }
+
+    await this._loadDialogueFiles(characterId);
+  }
+
+  /** 仅加载台词文件（不含系统提示词） */
+  async _loadDialogueFiles(characterId) {
+    const folder = CHARACTER_FOLDER_MAP[characterId];
+    const character = this.registry[characterId];
+    if (!folder || !character) return;
+
+    const linePromises = Object.entries(DIALOGUE_FILE_MAP).map(async ([fileName, key]) => {
+      const filePath = `../../${folder}/台词/${fileName}`;
+      try {
+        const resp = await fetch(filePath);
+        if (resp.ok) {
+          const text = await resp.text();
+          const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          if (lines.length > 0) character.lines[key] = lines;
+        }
+      } catch (e) { /* 跳过 */ }
+    });
+    await Promise.all(linePromises);
+
+    this._loadedCharacters.add(characterId);
+
+    // ★ 写入缓存，下次启动不再请求文件
+    this._setCachedDialogue(characterId, character.lines);
+  }
+
+  // ★ 启动时加载当前角色（分两阶段）
   async loadSavedCharacter() {
     const savedId = localStorage.getItem('selected-character') || 'megumi';
-    await this.loadCharacterData(savedId);
+
+    // ★ 阶段A：只加载核心（系统提示词），让UI尽快显示
+    await this.loadCharacterSystemPromptOnly(savedId);
     const success = await this.switchCharacter(savedId);
-    this._precacheOtherCharacters(savedId);
+
+    // ★ 阶段B：在后台加载台词文件（不阻塞 showLoading(false)）
+    setTimeout(() => {
+      this.loadCharacterDialoguesInBackground(savedId).catch(() => {});
+    }, 100);
+
+    // ★ 不再预缓存其他角色——改成按需加载，点击角色卡片时才预加载
     return success ? savedId : 'megumi';
   }
 
-  _precacheOtherCharacters(currentId) {
-    const otherIds = Object.keys(this.registry).filter(id => id !== currentId);
-    this._precacheTimer = setTimeout(async () => {
-      for (const id of otherIds) {
-        await this._loadCharacterTextData(id);
-      }
-    }, 5000);
-  }
-
   async precacheCharacter(characterId) {
-    await this._loadCharacterTextData(characterId);
+    // ★ 按需预加载：先尝试读缓存，再走文件
+    const cached = this._getCachedDialogue(characterId);
+    if (cached && cached.lines) {
+      const character = this.registry[characterId];
+      if (character) {
+        for (const [situation, lines] of Object.entries(cached.lines)) {
+          character.lines[situation] = lines;
+        }
+        this._loadedCharacters.add(characterId);
+      }
+      return;
+    }
+    await this._loadDialogueFiles(characterId);
   }
   // ★ 自定义提示词：用户可通过设置面板自由修改角色的系统提示词
   // 优先级：localStorage 自定义 > 文件加载的提示词
@@ -168,37 +267,9 @@ class CharacterManager {
     }
   }
   async _loadCharacterTextData(characterId) {
-    const folder = CHARACTER_FOLDER_MAP[characterId];
-    const character = this.registry[characterId];
-    if (!folder || !character) return;
-
-    try {
-      // ★ 只从文件加载，不用任何缓存——加 ?t= 时间戳绕过浏览器 HTTP 缓存，每次都是最新版
-      const promptPath = `../../${folder}/系统提示词.txt?t=${Date.now()}`;
-      const promptResp = await fetch(promptPath, { cache: 'no-store' });
-      if (promptResp.ok) {
-        const filePrompt = (await promptResp.text()).trim();
-        character._defaultSystemPrompt = filePrompt;
-        // ★ 自定义提示词优先：如果 localStorage 中有用户通过设置面板保存的自定义提示词则使用自定义
-        const customPrompt = this.getCustomPrompt(characterId);
-        character.systemPrompt = customPrompt || filePrompt;
-      }
-
-      const linePromises = Object.entries(DIALOGUE_FILE_MAP).map(async ([fileName, key]) => {
-        const filePath = `../../${folder}/台词/${fileName}`;
-        try {
-          const resp = await fetch(filePath);
-          if (resp.ok) {
-            const text = await resp.text();
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            if (lines.length > 0) character.lines[key] = lines;
-          }
-        } catch (e) { /* 跳过 */ }
-      });
-      await Promise.all(linePromises);
-
-      this._loadedCharacters.add(characterId);
-    } catch (error) { /* 静默处理 */ }
+    // ★ 完整加载（提示词+台词），由 switchCharacter 在切换角色时完整调用
+    await this.loadCharacterSystemPromptOnly(characterId);
+    await this.loadCharacterDialoguesInBackground(characterId);
   }
 
   getAllCharacters() {
@@ -211,7 +282,10 @@ class CharacterManager {
 
   async switchCharacter(characterId) {
     if (!this.registry[characterId]) return false;
+
+    // ★ 完整加载：系统提示词 + 台词文件（保持和改之前一样的行为）
     await this.loadCharacterData(characterId);
+
     this.currentCharacterId = characterId;
     this.currentCharacter = this.registry[characterId];
     localStorage.setItem('selected-character', characterId);

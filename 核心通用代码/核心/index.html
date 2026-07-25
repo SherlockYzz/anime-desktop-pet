@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>桌宠</title>
   <link rel="stylesheet" href="样式.css">
+  <!-- ★ preload 核心库，让浏览器尽早开始加载而不阻塞渲染 -->
+  <link rel="preload" href="../第三方库/marked.min.js" as="script">
 </head>
 <body>
   <!-- 标题栏 -->
@@ -39,12 +41,7 @@
     <!-- 聊天模式 -->
     <div class="tab-content active" id="tab-chat">
       <div class="messages" id="chat-messages">
-        <div class="message ai">
-          <div class="message-avatar"><img src="../../角色-加藤惠/图片素材/头像.png" alt=""></div>
-          <div class="message-content">
-            <div class="message-text">你好，我是加藤惠。请多指教。</div>
-          </div>
-        </div>
+        <!-- ★ 初始消息由 JavaScript 动态生成，确保头像与保存的角色一致 -->
       </div>
       <div class="input-area">
         <button class="btn-clear-chat" id="btn-clear-chat" title="清除聊天记录">清除</button>
@@ -195,9 +192,7 @@
       <div class="setting-item">
         <label>选择角色</label>
         <select id="prompt-character-select">
-          <option value="megumi">加藤惠</option>
-          <option value="rem">蕾姆</option>
-          <option value="zerotwo">零二</option>
+          <!-- 由 SettingsManager 动态填充 -->
         </select>
       </div>
       <div class="setting-item">
@@ -219,6 +214,22 @@
   <div class="loading-overlay" id="loading-overlay">
     <div class="loading-spinner"></div>
     <div class="loading-text">稍微等一下...</div>
+  </div>
+
+  <!-- ★ 樱花飘落装饰容器（CSS only） -->
+  <div class="sakura-container">
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
   </div>
 
   <!-- 形态一（默认）：极简悬浮桌宠 -->
