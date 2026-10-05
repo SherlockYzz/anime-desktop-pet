@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
-  <img src="https://img.shields.io/badge/Version-4.0.0-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-5.0.0-8A2BE2?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/VRM-Three.js-green?style=for-the-badge" alt="VRM">
 </p>
 
@@ -162,6 +162,39 @@
 ---
 
 
+### v5.0.0 重磅升级：架构统一、渲染缓存优化与全生态 LLM 扩展
+
+<table>
+<tr>
+  <td>🪟 <b>动态透明穿透</b></td>
+  <td>桌宠悬浮模式透明区域智能穿透鼠标事件，底层桌面图标与应用软件可自由点击，鼠标移入角色本体即时响应</td>
+</tr>
+<tr>
+  <td>🖥️ <b>多显示器自适应</b></td>
+  <td>基于窗口中心智能匹对对应屏幕工作区，跨屏移动、边缘吸附自适应，多屏环境下不再发生跳屏与吸附错位</td>
+</tr>
+<tr>
+  <td>⚡ <b>精灵图集内存驻留</b></td>
+  <td>全局静态纹理缓存池，模式切换与画布重构 0ms 瞬间复用，彻底根除重新下载与解码造成的掉帧</td>
+</tr>
+<tr>
+  <td>🤖 <b>全生态大模型矩阵</b></td>
+  <td>新增 <b>硅基流动 (DeepSeek V3/R1)</b>、<b>Google Gemini (2.5 Flash/Pro)</b>、<b>OpenAI (GPT-4o)</b>、<b>月之暗面 (Kimi)</b>、<b>智谱 (GLM-4)</b>、<b>本地 Ollama</b> 预设</td>
+</tr>
+<tr>
+  <td>⏰ <b>动态时空信标</b></td>
+  <td>提示词动态注入现实时钟、时段（清晨/正午/深夜）与运行环境，桌宠具备真实时间感知与时段关怀</td>
+</tr>
+<tr>
+  <td>⏹️ <b>流式生成可控中断</b></td>
+  <td>新增 AbortController 流式中断控制，随时安全停止生成，防止界面挂起与消息异常堆叠</td>
+</tr>
+<tr>
+  <td>🛡️ <b>系统托盘与路由治理</b></td>
+  <td>单例托盘彻底杜绝 Windows 幽灵图标；补齐纯净降级路由，阻断 404 资源探测</td>
+</tr>
+</table>
+
 ### v4.0.0 重磅升级：若曦精灵帧桌宠
 
 <table>
@@ -262,6 +295,11 @@
   <td width="40" align="center">✅</td>
   <td><b>v4.0.0</b></td>
   <td>若曦精灵帧角色 · 精灵帧引擎 · 桌面移动交互 · 自动漫步 · 本地化依赖</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v5.0.0</b></td>
+  <td>透明区域事件穿透 · 多屏幕自适应 · 精灵图集内存驻留 · 全生态大模型扩容 · 动态时空信标</td>
 </tr>
 <tr>
   <td width="40" align="center">🔄</td>

@@ -38,8 +38,31 @@ class MimoAPI {
     return h;
   }
 
+  abort() {
+    if (this._currentController) {
+      this._abortedByUser = true;
+      this._currentController.abort();
+      this._currentController = null;
+    }
+  }
+
   _buildSystemPrompt(isCodeMode) {
     let sys = this.getSystemPrompt();
+
+    // ★ 注入动态时空与现实世界感知信标
+    const now = new Date();
+    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const timeStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${days[now.getDay()]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    let timePeriod = '白天';
+    const h = now.getHours();
+    if (h >= 0 && h < 6) timePeriod = '凌晨/深夜';
+    else if (h >= 6 && h < 11) timePeriod = '上午';
+    else if (h >= 11 && h < 14) timePeriod = '中午';
+    else if (h >= 14 && h < 18) timePeriod = '下午';
+    else timePeriod = '夜晚';
+
+    sys += `\n\n[当前时空信标]\n- 当前现实时间：${timeStr} (${timePeriod})\n- 宿主环境：Windows 桌面桌宠客户端\n请在回复中自然流露时间感知（例如深夜关心休息、上午元气问候），保持人设亲和力。`;
+
     if (isCodeMode) {
       const name = window.characterManager.getCurrentCharacter()?.name || '我';
       sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
@@ -183,6 +206,8 @@ class MimoAPI {
     while (attempt <= maxRetries) {
       try {
         const controller = new AbortController();
+        this._currentController = controller;
+        this._abortedByUser = false;
         const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s 超时
 
         const res = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -204,18 +229,27 @@ class MimoAPI {
           throw new Error(`服务器错误 HTTP ${res.status}`);
         }
 
-        return await this._readStream(res, onChunk);
+        const streamResult = await this._readStream(res, onChunk);
+        this._currentController = null;
+        return streamResult;
       } catch (err) {
         if (err.name === 'AbortError') {
+          if (this._abortedByUser) {
+            err = new Error('已停止生成');
+            this.conversationHistory.pop();
+            this._currentController = null;
+            throw err;
+          }
           err = new Error('请求超时，请检查网络或API地址是否正确');
         }
-        if (attempt < maxRetries) {
+        if (attempt < maxRetries && !this._abortedByUser) {
           onChunk?.('content', `\n\n[重试第 ${attempt + 1} 次...]\n\n`, '');
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
           attempt++;
           continue;
         }
         this.conversationHistory.pop();
+        this._currentController = null;
         // 转成友好的中文错误信息
         throw this._friendlyError(err, this.model);
       }
@@ -366,6 +400,16 @@ class MimoAPI {
     } catch (err) {
       return { success: false, message: err.message };
     }
+  }
+
+  abort() {
+    if (this._currentController) {
+      this._abortedByUser = true;
+      this._currentController.abort();
+      this._currentController = null;
+      return true;
+    }
+    return false;
   }
 
   clearHistory() { this.conversationHistory = []; }

@@ -380,8 +380,9 @@ class App {
     this.isLoading = true;
     const btn = document.getElementById('btn-chat-send');
     if (btn) btn.disabled = true;
+    let el = null;
     try {
-      const el = this.chat.createStreamMessage();
+      el = this.chat.createStreamMessage();
       const result = await window.mimoAPI.sendMessageStream(msg, false, (type, chunk, full) => {
         this.chat.updateStream(el, type, full);
       });
@@ -395,7 +396,16 @@ class App {
         window.live2dManager.updateByAIResponse('');
       }
     } catch (err) {
-      this.chat.addMessage('ai', `出错了: ${err.message}`);
+      if (el) {
+        if (err.message === '已停止生成') {
+          this.chat.finalizeStream(el, el.mt.textContent || '(已停止生成)');
+        } else {
+          el.el.remove();
+          this.chat.addMessage('ai', `出错了: ${err.message}`);
+        }
+      } else {
+        this.chat.addMessage('ai', `出错了: ${err.message}`);
+      }
     } finally {
       this.isLoading = false;
       if (btn) btn.disabled = false;

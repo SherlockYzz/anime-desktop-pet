@@ -54,23 +54,36 @@ class SpriteAtlasManager {
     return !!(character && character.sprite && (character.sprite.atlas || character.sprite.manifest));
   }
 
-  // ============ 素材加载 ============
+  // ============ 素材加载（静态内存缓存：切模式/切画布时 0ms 瞬间复用） ============
   _loadImg(src) {
+    if (!src) return Promise.resolve(null);
+    if (SpriteAtlasManager._imgCache.has(src)) {
+      return Promise.resolve(SpriteAtlasManager._imgCache.get(src));
+    }
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => resolve(img);
+      img.onload = () => {
+        SpriteAtlasManager._imgCache.set(src, img);
+        resolve(img);
+      };
       img.onerror = () => resolve(null);
       img.src = src;
     });
   }
 
   _loadManifest(character) {
-    // 优先读取角色配置中的 manifest 路径；读取失败时使用内置默认清单
     const url = character?.sprite?.manifest;
     if (!url) return Promise.resolve(this._defaultManifest());
+    if (SpriteAtlasManager._manifestCache.has(url)) {
+      return Promise.resolve(SpriteAtlasManager._manifestCache.get(url));
+    }
     return fetch(url, { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
-      .then(json => (json && json.animations ? json : this._defaultManifest()))
+      .then(json => {
+        const res = (json && json.animations ? json : this._defaultManifest());
+        SpriteAtlasManager._manifestCache.set(url, res);
+        return res;
+      })
       .catch(() => this._defaultManifest());
   }
 
@@ -392,12 +405,15 @@ class SpriteAtlasManager {
     this.unbindResizeObserver();
     this.ready = false;
     this.loading = false;
-    this.atlas = null;
-    this.sleepStrip = null;
+    // 不强制清空 atlas/sleepStrip，保留给全局缓存复用
     this.canvas = null;
     this.ctx = null;
   }
 }
+
+// 静态资源缓存池（单例内存常驻，毫秒级跨画布迁移）
+SpriteAtlasManager._imgCache = new Map();
+SpriteAtlasManager._manifestCache = new Map();
 
 // 显式挂到 window：class 是词法全局，不挂 window 属性（兼容性与明确性）
 window.SpriteAtlasManager = SpriteAtlasManager;
