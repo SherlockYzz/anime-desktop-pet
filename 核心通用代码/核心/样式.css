@@ -1674,73 +1674,122 @@ body.web-mode-active .pet-overlay {
   box-shadow: 0 0 8px var(--glow-color);
 }
 
-/* 切换到网页模式按钮（角色下方居中） */
-.btn-switch-web {
+/* 桌宠底部控制栏（横向居中弹性工具条） */
+.pet-controls {
   position: absolute;
   left: 50%;
   top: 50%;
-  margin-left: -16px;
-  margin-top: 120px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  color: #888;
-  font-size: 16px;
-  line-height: 32px;
-  text-align: center;
-  cursor: pointer;
+  transform: translateX(-50%);
+  margin-top: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   z-index: 510;
-  backdrop-filter: blur(8px);
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 0;
-}
-.btn-switch-web::after {
-  content: '\2194';
-}
-.btn-switch-web:hover {
-  background: rgba(240,130,150,0.8);
-  color: white;
-  transform: scale(1.1);
+  pointer-events: auto;
 }
 
-/* 自动漫步按钮（切换按钮左侧） */
-.btn-toggle-wander {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  margin-left: -52px;
-  margin-top: 120px;
+.pet-control-btn {
   width: 32px;
   height: 32px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  color: #888;
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #777;
+  font-size: 15px;
   line-height: 32px;
   text-align: center;
   cursor: pointer;
-  z-index: 510;
   backdrop-filter: blur(8px);
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.btn-toggle-wander::after {
-  content: '\\1F43E';
-}
-.btn-toggle-wander:hover {
-  background: rgba(240,130,150,0.8);
+.pet-control-btn:hover {
+  background: rgba(240, 130, 150, 0.85);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.14);
+  box-shadow: 0 4px 12px rgba(240, 130, 150, 0.4);
 }
-.btn-toggle-wander.active {
-  background: rgba(240,130,150,0.95);
+.pet-control-btn.active {
+  background: rgba(217, 79, 79, 0.95);
   color: white;
-  box-shadow: 0 0 12px rgba(240,130,150,0.7);
+  box-shadow: 0 0 12px rgba(217, 79, 79, 0.7);
+  transform: scale(1.08);
+}
+
+.btn-toggle-work::after { content: '\1F4BC'; font-size: 14px; }
+.btn-toggle-sleep::after { content: '\1F319'; font-size: 14px; }
+.btn-toggle-wander::after { content: '\1F43E'; font-size: 14px; }
+.btn-pet-actions::after { content: '\2728'; font-size: 14px; }
+.btn-switch-web::after { content: '\2194'; font-size: 16px; font-weight: bold; }
+
+/* 动作百宝箱弹出面板 */
+.pet-action-menu {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  margin-top: 105px;
+  background: rgba(255, 250, 248, 0.96);
+  border: 1px solid rgba(217, 79, 79, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(180, 100, 100, 0.22);
+  backdrop-filter: blur(12px);
+  padding: 10px;
+  z-index: 520;
+  display: none;
+  width: 230px;
+  animation: petMenuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+.pet-action-menu.show {
+  display: block;
+}
+@keyframes petMenuFadeIn {
+  from { opacity: 0; transform: translate(-50%, -90%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+.pet-action-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #b83a3a;
+  margin-bottom: 8px;
+  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(217, 79, 79, 0.2);
+}
+.pet-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.pet-action-item {
+  border: 1px solid rgba(217, 79, 79, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  padding: 6px 2px;
+  font-size: 11px;
+  color: #5a3a3a;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.2s;
+}
+.pet-action-item:hover {
+  background: rgba(217, 79, 79, 0.12);
+  border-color: rgba(217, 79, 79, 0.4);
+  color: #b83a3a;
+  transform: translateY(-2px);
+}
+.pet-action-item .action-icon {
+  font-size: 16px;
 }
 
 /* ===== 形态切换：opacity 过渡（非 display 切换）===== */

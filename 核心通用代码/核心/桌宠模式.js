@@ -63,8 +63,15 @@ class PetMode {
       const isInteractive = target && (
         target.closest('#pet-character-area') ||
         target.closest('#pet-bubble-container') ||
+        target.closest('#pet-controls') ||
+        target.closest('#pet-action-menu') ||
+        target.closest('.pet-control-btn') ||
+        target.closest('.pet-action-item') ||
         target.closest('#btn-switch-web') ||
         target.closest('#btn-toggle-wander') ||
+        target.closest('#btn-toggle-work') ||
+        target.closest('#btn-toggle-sleep') ||
+        target.closest('#btn-pet-actions') ||
         target.closest('.pet-bubble')
       );
 
@@ -84,6 +91,7 @@ class PetMode {
     // ★ 拖拽 = 拖动整个桌宠窗口（桌面宠物应该跟随鼠标在整个桌面移动）
     area.addEventListener('mousedown', async (e) => {
       if (document.body.classList.contains('web-mode-active')) return;
+      if (e.button !== 0) return; // 仅左键拖动，右键留给百宝箱菜单
       e.preventDefault();
       this._dragging = true; this._moved = false;
       if (this._mouseIgnored) {
@@ -117,22 +125,73 @@ class PetMode {
     document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter(false, true));
     document.getElementById('btn-switch-web')?.addEventListener('click', () => this.exit(true));
     document.getElementById('btn-toggle-wander')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleWander(); });
+    document.getElementById('btn-toggle-work')?.addEventListener('click', (e) => { e.stopPropagation(); this._spriteCall('toggleWork'); });
+    document.getElementById('btn-toggle-sleep')?.addEventListener('click', (e) => { e.stopPropagation(); this._spriteCall('toggleSleep'); });
+    document.getElementById('btn-pet-actions')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleActionMenu(); });
 
-    // ★ 键盘：方向键 / WASD 四向移动，空格跳跃，E 切换工作，T 自动漫步
+    // 右键桌宠呼出姿态百宝箱
+    area.addEventListener('contextmenu', (e) => {
+      if (document.body.classList.contains('web-mode-active')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this._toggleActionMenu(true);
+    });
+
+    // 动作百宝箱点击项分发
+    document.getElementById('pet-action-menu')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.pet-action-item');
+      if (!item) return;
+      const action = item.dataset.action;
+      if (action === 'wander') {
+        this._toggleWander();
+      } else {
+        this._spriteCall(action);
+      }
+      this._toggleActionMenu(false);
+    });
+
+    // 点击外部关闭动作百宝箱
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#pet-action-menu') && !e.target.closest('#btn-pet-actions')) {
+        this._toggleActionMenu(false);
+      }
+    });
+
+    // ★ 键盘快捷键：
+    // - 方向键 / WASD 四向移动
+    // - 空格：跳跃
+    // - E：工作切换
+    // - Z：睡觉切换
+    // - T：自动漫步
+    // - 1~8：各种姿态切换
     const MOVE_KEYS = {
       ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
       a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down'
     };
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && document.body.classList.contains('web-mode-active')) { this.enter(); return; }
+      if (e.key === 'Escape') {
+        if (this._actionMenuOpen) { this._toggleActionMenu(false); return; }
+        if (document.body.classList.contains('web-mode-active')) { this.enter(); return; }
+      }
       if (document.body.classList.contains('web-mode-active')) return;
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+
       const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
       if (dir) { this._keys[dir] = true; e.preventDefault(); this._lastInteraction = Date.now(); return; }
       if (e.key === ' ') { e.preventDefault(); this._spriteCall('jump'); }
       else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); this._spriteCall('toggleWork'); }
+      else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); this._spriteCall('toggleSleep'); }
       else if (e.key === 't' || e.key === 'T') { e.preventDefault(); this._toggleWander(); }
+      else if (e.key === '1') { this._spriteCall('idle'); }
+      else if (e.key === '2') { this._spriteCall('wave'); }
+      else if (e.key === '3') { this._spriteCall('jump'); }
+      else if (e.key === '4') { this._toggleWander(); }
+      else if (e.key === '5') { this._spriteCall('wait'); }
+      else if (e.key === '6') { this._spriteCall('work'); }
+      else if (e.key === '7') { this._spriteCall('review'); }
+      else if (e.key === '8') { this._spriteCall('sleep'); }
     });
     document.addEventListener('keyup', (e) => {
       const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
@@ -345,35 +404,85 @@ class PetMode {
     const m = window.spriteAtlasManager;
     if (this._renderMode !== 'sprite' || !m || !m.ready) return;
     const cur = m.S.anim;
-    const movable = ['idle', 'sleep', 'look-row-9', 'look-row-10', 'running-left', 'running-right'];
+    const movable = ['idle', 'sleep', 'look-row-9', 'look-row-10', 'running-left', 'running-right', 'running'];
     if (!movable.includes(cur)) return; // 不打断挥手/跳跃等一次性动作
     if (dx < 0) { m.setAnim('running-left'); this._facing = 'left'; }
     else if (dx > 0) { m.setAnim('running-right'); this._facing = 'right'; }
     else if (dy !== 0) { m.setAnim(this._facing === 'left' ? 'running-left' : 'running-right'); }
   }
 
-  /** 移动结束：回到待机 */
+  /** 移动结束：回到待机（若处于工作状态则恢复工作姿态） */
   _endMove() {
     this._moving = false;
     const m = window.spriteAtlasManager;
-    if (this._renderMode === 'sprite' && m && m.ready) m.goIdle();
+    if (this._renderMode === 'sprite' && m && m.ready) {
+      if (m.S.work) {
+        m.work();
+      } else {
+        m.goIdle();
+      }
+    }
+    this._updateControlButtons();
   }
 
-  /** 调用精灵引擎动作（跳跃/工作切换等） */
+  /** 调用精灵引擎动作（跳跃/工作/睡觉/挥手/验收/受阻/等待等全套动作） */
   _spriteCall(action) {
     const m = window.spriteAtlasManager;
     if (!m || !m.ready) return;
-    if (action === 'jump') m.jump();
-    else if (action === 'toggleWork') m.toggleWork();
+    if (action === 'jump') {
+      m.jump();
+      this._showBubble('嘿呀！轻巧一跃~ ⚡');
+    } else if (action === 'toggleWork' || action === 'work') {
+      const isWork = (action === 'work') ? (m.work(), true) : m.toggleWork();
+      this._showBubble(isWork ? '进入专注工作模式啦，主人也要加油哦！💼' : '工作暂停，伸个懒腰休息下~ 🌸');
+    } else if (action === 'toggleSleep' || action === 'sleep') {
+      const isSleep = (action === 'sleep') ? (m.sleep(), true) : m.toggleSleep();
+      this._showBubble(isSleep ? '抱紧暖暖的狐狸尾巴，呼噜噜入睡咯……🌙' : '揉揉眼睛，主人我醒来啦！☀️');
+    } else if (action === 'wave') {
+      m.wave();
+      this._showBubble('主人好呀！若曦随时都在呢~ 👋');
+    } else if (action === 'review') {
+      m.review();
+      this._showBubble('成果已经准备好啦，主人请检阅！📜');
+    } else if (action === 'fail') {
+      m.fail();
+      this._showBubble('呜……受阻了，容若曦抱头缓一缓。😿');
+    } else if (action === 'wait') {
+      m.wait();
+      this._showBubble('歪头等待主人的新指令中……💭');
+    } else if (action === 'idle') {
+      m.goIdle();
+      this._showBubble('乖乖待命呼吸中~ 🌸');
+    }
     this._lastInteraction = Date.now();
+    this._updateControlButtons();
+  }
+
+  /** 切换动作百宝箱显示 */
+  _toggleActionMenu(show) {
+    const menu = document.getElementById('pet-action-menu');
+    if (!menu) return;
+    const next = (typeof show === 'boolean') ? show : !this._actionMenuOpen;
+    this._actionMenuOpen = next;
+    menu.classList.toggle('show', next);
+  }
+
+  /** 更新控制栏按钮激活状态 */
+  _updateControlButtons() {
+    const m = window.spriteAtlasManager;
+    const btnWork = document.getElementById('btn-toggle-work');
+    const btnSleep = document.getElementById('btn-toggle-sleep');
+    const btnWander = document.getElementById('btn-toggle-wander');
+    if (btnWork) btnWork.classList.toggle('active', !!(m && m.ready && m.S.work));
+    if (btnSleep) btnSleep.classList.toggle('active', !!(m && m.ready && m.S.anim === 'sleep'));
+    if (btnWander) btnWander.classList.toggle('active', !!this._wanderActive);
   }
 
   /** 自动漫步：随机左右走动（新功能） */
   _toggleWander(on) {
     const next = (typeof on === 'boolean') ? on : !this._wanderActive;
     if (next) this._startWander(); else this._stopWander();
-    const btn = document.getElementById('btn-toggle-wander');
-    if (btn) btn.classList.toggle('active', this._wanderActive);
+    this._updateControlButtons();
     this._showBubble(this._wanderActive ? '好耶，我可以在桌面上溜达啦~' : '那我乖乖待着。');
   }
 

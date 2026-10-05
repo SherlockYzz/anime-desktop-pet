@@ -382,6 +382,9 @@ class App {
     if (btn) btn.disabled = true;
     let el = null;
     try {
+      if (window.spriteAtlasManager?.ready) {
+        window.spriteAtlasManager.work();
+      }
       el = this.chat.createStreamMessage();
       const result = await window.mimoAPI.sendMessageStream(msg, false, (type, chunk, full) => {
         this.chat.updateStream(el, type, full);
@@ -391,11 +394,20 @@ class App {
       if (content) {
         this.chat.finalizeStream(el, content, thinking);
         window.live2dManager.updateByAIResponse(content);
+        if (window.spriteAtlasManager?.ready) {
+          window.spriteAtlasManager.review();
+        }
       } else {
         this.chat.finalizeStream(el, '(模型返回为空，请检查模型设置)');
         window.live2dManager.updateByAIResponse('');
+        if (window.spriteAtlasManager?.ready) {
+          window.spriteAtlasManager.fail();
+        }
       }
     } catch (err) {
+      if (window.spriteAtlasManager?.ready) {
+        window.spriteAtlasManager.fail();
+      }
       if (el) {
         if (err.message === '已停止生成') {
           this.chat.finalizeStream(el, el.mt.textContent || '(已停止生成)');

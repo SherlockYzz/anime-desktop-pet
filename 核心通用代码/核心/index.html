@@ -353,13 +353,33 @@
 
   <!-- 形态一（默认）：极简悬浮桌宠 -->
   <div class="pet-overlay" id="pet-overlay">
-    <div class="pet-character-area" id="pet-character-area">
+    <div class="pet-character-area" id="pet-character-area" title="右键打开动作百宝箱">
       <canvas id="pet-canvas"></canvas>
       <img id="pet-gif" class="pet-gif-img" src="" alt="">
     </div>
     <div class="pet-bubble-container" id="pet-bubble-container"></div>
-    <button class="btn-switch-web" id="btn-switch-web" title="切换到网页模式"></button>
-    <button class="btn-toggle-wander" id="btn-toggle-wander" title="自动漫步（T）"></button>
+    <div class="pet-controls" id="pet-controls">
+      <button class="pet-control-btn btn-toggle-work" id="btn-toggle-work" title="专注工作（E / 快捷键 6）"></button>
+      <button class="pet-control-btn btn-toggle-sleep" id="btn-toggle-sleep" title="抱尾睡觉（Z / 快捷键 8）"></button>
+      <button class="pet-control-btn btn-toggle-wander" id="btn-toggle-wander" title="自动漫步（T / 快捷键 4）"></button>
+      <button class="pet-control-btn btn-pet-actions" id="btn-pet-actions" title="动作百宝箱（右键桌宠）"></button>
+      <button class="pet-control-btn btn-switch-web" id="btn-switch-web" title="切换到网页模式"></button>
+    </div>
+    <!-- 动作百宝箱弹出面板 -->
+    <div class="pet-action-menu" id="pet-action-menu">
+      <div class="pet-action-title">✨ 若曦姿态百宝箱</div>
+      <div class="pet-action-grid">
+        <button class="pet-action-item" data-action="idle"><span class="action-icon">🌸</span>待机呼吸</button>
+        <button class="pet-action-item" data-action="work"><span class="action-icon">💼</span>专注工作</button>
+        <button class="pet-action-item" data-action="sleep"><span class="action-icon">🌙</span>抱尾睡觉</button>
+        <button class="pet-action-item" data-action="wander"><span class="action-icon">🐾</span>自由漫步</button>
+        <button class="pet-action-item" data-action="wave"><span class="action-icon">👋</span>挥手问候</button>
+        <button class="pet-action-item" data-action="jump"><span class="action-icon">⚡</span>蓄力跳跃</button>
+        <button class="pet-action-item" data-action="review"><span class="action-icon">📜</span>验收成果</button>
+        <button class="pet-action-item" data-action="fail"><span class="action-icon">😿</span>受阻沮丧</button>
+        <button class="pet-action-item" data-action="wait"><span class="action-icon">💭</span>等待确认</button>
+      </div>
+    </div>
   </div>
 
   <script src="CDN配置.js"></script>

@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
-  <img src="https://img.shields.io/badge/Version-5.0.0-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-5.1.0-8A2BE2?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/VRM-Three.js-green?style=for-the-badge" alt="VRM">
 </p>
 
@@ -162,6 +162,31 @@
 ---
 
 
+### v5.1.0 重磅升级：若曦全套精灵帧实装、动作百宝箱系统与平滑走动
+
+<table>
+<tr>
+  <td>🌙 <b>抱尾睡觉姿态实装</b></td>
+  <td>重构原生绿幕图片为 100% 透明 RGBA 6 帧精致动画，支持 Z 键一键入睡、闲置 30 秒自动抱尾入睡与任意操作自然唤醒</td>
+</tr>
+<tr>
+  <td>💼 <b>专注工作模式实装</b></td>
+  <td>E 键或一键切换伏案工作姿态，写代码/办公场景专注陪伴，移动结束自动恢复工作状态</td>
+</tr>
+<tr>
+  <td>🏃 <b>左右平滑走动修复</b></td>
+  <td>修复移动循环中高频重置第 0 帧导致的走动锁死 Bug，8 帧跑步动画丝滑流畅，四向移动与自动漫步表现生动自然</td>
+</tr>
+<tr>
+  <td>✨ <b>动作百宝箱与右键菜单</b></td>
+  <td>悬浮模式底部集成控制栏，右键桌宠一键呼出 9 大姿态面板（待机、工作、睡觉、漫步、挥手、跳跃、验收、沮丧、等待）</td>
+</tr>
+<tr>
+  <td>🤖 <b>AI 对话全状态姿态联动</b></td>
+  <td>聊天生成时自动进入专注工作写代码姿态，生成成功触发验收展示，报错触发沮丧叹气，赋予桌宠真实生命力</td>
+</tr>
+</table>
+
 ### v5.0.0 重磅升级：架构统一、渲染缓存优化与全生态 LLM 扩展
 
 <table>
@@ -300,6 +325,11 @@
   <td width="40" align="center">✅</td>
   <td><b>v5.0.0</b></td>
   <td>透明区域事件穿透 · 多屏幕自适应 · 精灵图集内存驻留 · 全生态大模型扩容 · 动态时空信标</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v5.1.0</b></td>
+  <td>若曦全套精灵帧实装 · 抱尾睡觉做梦姿态 · 专注工作姿态 · 姿态百宝箱与右键菜单 · 走动逻辑修复 · AI 姿态联动</td>
 </tr>
 <tr>
   <td width="40" align="center">🔄</td>

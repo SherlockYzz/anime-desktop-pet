@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-Electron 28 构建的二次元 AI 桌面宠物。技术栈：Electron + Vanilla JS + PIXI.js/Live2D + Three.js/VRM + 精灵帧引擎。包名 `megumi-desktop-pet` v5.0.0。
+Electron 28 构建的二次元 AI 桌面宠物。技术栈：Electron + Vanilla JS + PIXI.js/Live2D + Three.js/VRM + 精灵帧引擎。包名 `megumi-desktop-pet` v5.1.0。
 
 ---
 

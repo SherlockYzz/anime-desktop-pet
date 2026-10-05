@@ -253,27 +253,51 @@ class SpriteAtlasManager {
   // ============ 状态机 ============
   hasAnim(name) { return !!(this.LANE && this.LANE[name]); }
 
-  setAnim(name, onDone) {
+  setAnim(name, onDone, forceReset = false) {
     if (!this.hasAnim(name)) return;
+    if (this.S.anim === name && !forceReset) return;
     this.S.anim = name;
     this.S.frame = 0;
     this.S.elapsed = 0;
     this.S.onDone = null;
     const a = this.LANE[name];
-    if (!a.loop) this.S.onDone = onDone || (() => this.goIdle());
+    if (!a.loop) {
+      this.S.onDone = onDone || (() => {
+        if (this.S.work) {
+          this.setAnim('running');
+        } else {
+          this.goIdle();
+        }
+      });
+    }
     this.draw();
   }
 
   goIdle() { this.S.work = false; this.setAnim('idle'); }
-  wave() { this.S.work = false; this.setAnim('waving'); }
-  jump() { this.S.work = false; this.setAnim('jumping'); }
-  review() { this.S.work = false; this.setAnim('review'); }
-  fail() { this.setAnim('failed'); }
-  wait() { this.setAnim('waiting'); }
+  work() { this.S.work = true; this.setAnim('running'); }
+  sleep() { this.S.work = false; this.setAnim('sleep'); }
+  wave() { this.setAnim('waving', null, true); }
+  jump() { this.setAnim('jumping', null, true); }
+  review() { this.setAnim('review', null, true); }
+  fail() { this.setAnim('failed', null, true); }
+  wait() { this.setAnim('waiting', null, true); }
 
   toggleWork(on) {
-    this.S.work = (typeof on === 'boolean') ? on : !this.S.work;
-    this.setAnim(this.S.work ? 'running' : 'idle');
+    const next = (typeof on === 'boolean') ? on : !this.S.work;
+    this.S.work = next;
+    this.setAnim(next ? 'running' : 'idle', null, true);
+    return this.S.work;
+  }
+
+  toggleSleep(on) {
+    const isSleeping = this.S.anim === 'sleep';
+    const next = (typeof on === 'boolean') ? on : !isSleeping;
+    if (next) {
+      this.sleep();
+    } else {
+      this.goIdle();
+    }
+    return next;
   }
 
   advance() {
@@ -316,7 +340,7 @@ class SpriteAtlasManager {
           this.S.elapsed += dt;
           if (this.S.elapsed >= dur) { this.S.elapsed -= dur; if (this.S.elapsed > dur) this.S.elapsed = 0; this.advance(); }
         }
-        if (this.S.anim === 'idle' && !this.S.work && now - this.S.lastInput > this.IDLE_TIMEOUT) {
+        if (['idle', 'look-row-9', 'look-row-10'].includes(this.S.anim) && !this.S.work && now - this.S.lastInput > this.IDLE_TIMEOUT) {
           this.setAnim('sleep');
         }
       }
