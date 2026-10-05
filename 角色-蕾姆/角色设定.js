@@ -58,9 +58,9 @@ CHARACTER_REGISTRY.rem = {
   },
 
 
-  // VRM 配置
-  vrm: {
-    modelPath: '../../角色-蕾姆/蕾姆vrm.vrm',
+  // Live2D 配置
+  live2d: {
+    modelPath: '../../角色-蕾姆/Live2D模型/model.json',
   },
 
   // 原生CV语音配置（水濑祈原版语音包，共26段经典语音）

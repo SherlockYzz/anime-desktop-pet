@@ -68,17 +68,17 @@ class ActionMenuManager {
       rem: {
         title: '💙 蕾姆专属百宝箱',
         actions: [
-          { id: 'curtsey', label: '双手交叠·躬身致礼', icon: '👗', vrmAnim: 'wave', voice: '01', bubble: '欢迎回来。罗兹瓦尔宅邸的女仆蕾姆，随时听候吩咐。' },
-          { id: 'pray', label: '双手合十·胸前祈愿', icon: '🙏', vrmAnim: 'tap', voice: '03', bubble: '无论何时，蕾姆都会祈愿您平安顺遂。' },
-          { id: 'shy', label: '单手抚颊·害羞侧首', icon: '🌸', vrmAnim: 'happy', voice: '07', bubble: '被您这样温柔地看着，蕾姆的脸……好像有点发烫。' },
-          { id: 'fist', label: '屈臂握拳·前倾加油', icon: '👊', vrmAnim: 'nod', voice: '15', bubble: '不管是工作还是学习，蕾姆都会一直在身后支持您！' },
-          { id: 'happy', label: '双臂挥舞·欢欣跃动', icon: '✨', vrmAnim: 'jump', voice: '20', bubble: '能像这样陪在您的身边，蕾姆感到由衷的幸福。' },
-          { id: 'idle', label: '单手抚胸·静候吩咐', icon: '☕', vrmAnim: 'idle', voice: '02', bubble: '请问需要蕾姆为您泡一杯刚煮好的红茶吗？' }
+          { id: 'curtsey', label: '双手交叠·躬身致礼', icon: '👗', motion: 'flick_head', voice: '01', bubble: '欢迎回来。罗兹瓦尔宅邸的女仆蕾姆，随时听候吩咐。' },
+          { id: 'pray', label: '双手合十·胸前祈愿', icon: '🙏', motion: 'tap_body', voice: '03', bubble: '无论何时，蕾姆都会祈愿您平安顺遂。' },
+          { id: 'shy', label: '单手抚颊·害羞侧首', icon: '🌸', motion: 'talk', voice: '07', bubble: '被您这样温柔地看着，蕾姆的脸……好像有点发烫。' },
+          { id: 'fist', label: '屈臂握拳·前倾加油', icon: '👊', motion: 'tap_body', voice: '15', bubble: '不管是工作还是学习，蕾姆都会一直在身后支持您！' },
+          { id: 'happy', label: '双臂挥舞·欢欣跃动', icon: '✨', motion: 'flick_head', voice: '20', bubble: '能像这样陪在您的身边，蕾姆感到由衷的幸福。' },
+          { id: 'idle', label: '自然呼吸·侍立待机', icon: '☕', motion: 'idle', voice: '02', bubble: '请问需要蕾姆为您泡一杯刚煮好的红茶吗？' }
         ],
         touch: {
-          head: { vrmAnim: 'happy', voice: '05', bubble: '被摸头的感觉……好温暖，蕾姆最喜欢了。' },
-          body: { vrmAnim: 'tap', voice: '09', bubble: '主、主人？请问有什么事情要吩咐蕾姆吗？' },
-          rage: { vrmAnim: 'shake', voice: '18', bubble: '呜……请不要再捉弄蕾姆了，蕾姆也是会生气的哦！' }
+          head: { motion: 'flick_head', voice: '05', bubble: '被摸头的感觉……好温暖，蕾姆最喜欢了。' },
+          body: { motion: 'tap_body', voice: '09', bubble: '主、主人？请问有什么事情要吩咐蕾姆吗？' },
+          rage: { motion: 'tap_body', voice: '18', bubble: '呜……请不要再捉弄蕾姆了，蕾姆也是会生气的哦！' }
         }
       },
 

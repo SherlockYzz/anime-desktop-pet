@@ -114,10 +114,10 @@ app.whenReady().then(async () => {
     assert('2. 16向视线跟踪解析正常(上下左右皆可锁定)', !!rUp && !!rDown && !!rRight && !!rLeft);
 
     // 3. 大小滑动窗口功能 (80% ~ 200%)
-    petMode.setPetScale(1.25);
-    const scaleCss125 = document.documentElement.style.getPropertyValue('--pet-scale');
-    const scaleVal125 = document.getElementById('pet-scale-val');
-    assert('3. 设置缩放125%成功', (scaleCss125 || '').trim() === '1.25' && scaleVal125 && scaleVal125.textContent === '125%');
+    petMode.setPetScale(1.1);
+    const scaleCss11 = document.documentElement.style.getPropertyValue('--pet-scale');
+    const scaleVal11 = document.getElementById('pet-scale-val');
+    assert('3. 设置缩放110%成功', (scaleCss11 || '').trim() === '1.1' && scaleVal11 && scaleVal11.textContent === '110%');
 
     petMode.setPetScale(0.8);
     const scaleCss08 = document.documentElement.style.getPropertyValue('--pet-scale');
@@ -139,6 +139,7 @@ app.whenReady().then(async () => {
       const area = document.getElementById('pet-character-area');
       const petCanvas = document.getElementById('pet-canvas');
       const petSpriteCanvas = document.getElementById('pet-sprite-canvas');
+      const petVrmCanvas = document.getElementById('pet-vrm-canvas');
       const fallbackImg = area ? area.querySelector('.pet-fallback-img') : null;
 
       let isRendered = false;
@@ -150,7 +151,7 @@ app.whenReady().then(async () => {
         isRendered = petCanvas && petCanvas.style.display !== 'none' && !!petMode._model;
         desc = 'Live2D 正常渲染，模型存在';
       } else if (mode === 'vrm') {
-        isRendered = petCanvas && petCanvas.style.display !== 'none';
+        isRendered = petVrmCanvas && petVrmCanvas.style.display !== 'none';
         desc = 'VRM 正常渲染';
       } else if (fallbackImg) {
         isRendered = fallbackImg.style.display !== 'none' && fallbackImg.src && fallbackImg.src.length > 5;
@@ -173,6 +174,7 @@ app.whenReady().then(async () => {
       const mode = window.live2dManager ? window.live2dManager.currentRenderMode : null;
       const live2dCanvas = document.getElementById('live2d-canvas');
       const spriteCanvas = document.getElementById('sprite-canvas');
+      const vrmCanvas = document.getElementById('vrm-canvas');
       const fallbackDiv = document.getElementById('live2d-fallback');
       const fbImg = fallbackDiv ? fallbackDiv.querySelector('img') : null;
 
@@ -185,7 +187,7 @@ app.whenReady().then(async () => {
         isRendered = live2dCanvas && live2dCanvas.style.display !== 'none' && !!(window.live2dManager && window.live2dManager.model);
         desc = '网页模式 Live2D 正常渲染';
       } else if (mode === 'vrm') {
-        isRendered = live2dCanvas && live2dCanvas.style.display !== 'none';
+        isRendered = vrmCanvas && vrmCanvas.style.display !== 'none';
         desc = '网页模式 VRM 正常渲染';
       } else if (fallbackDiv) {
         isRendered = fallbackDiv.style.display !== 'none' && fbImg && fbImg.src && fbImg.src.length > 5;

@@ -149,25 +149,23 @@ app.whenReady().then(async () => {
     assert.strictEqual(res.parentAttached, true, '模型必须挂载在 stage 上');
   });
 
-  // 5. 蕾姆 (彻底无旧版 Live2D，以 3D VRM 运行)
-  await test('5. 蕾姆 (绝无旧版Live2D，正确加载VRM模型与动画)', async () => {
+  // 5. 蕾姆 (Live2D 模型与动作)
+  await test('5. 蕾姆 (Live2D 模式) 正常渲染与动作响应', async () => {
     const res = await win.webContents.executeJavaScript(`
       (async () => {
-        const char = CHARACTER_REGISTRY.rem;
-        const hasLive2D = Boolean(char.live2d);
         await window.mimoAPI.switchCharacter('rem');
         await window.app.petMode._loadCharacter();
+        const m = window.app.petMode?._model;
         return {
-          hasLive2dConfig: hasLive2D,
           renderMode: window.app.petMode?._renderMode,
-          vrmModelExists: Boolean(window.vrmManager?.vrm),
-          vrmConfigPath: char.vrm?.modelPath
+          hasModel: Boolean(m),
+          parentAttached: Boolean(m?.parent)
         };
       })()
     `);
-    assert.strictEqual(res.hasLive2dConfig, false, '蕾姆配置中绝不可有旧版 live2d 字段');
-    assert.strictEqual(res.renderMode, 'vrm', '蕾姆渲染模式必须为 vrm');
-    assert.strictEqual(res.vrmModelExists, true, '蕾姆 3D VRM 实体模型必须成功加载');
+    assert.strictEqual(res.renderMode, 'live2d', '蕾姆渲染模式必须为 live2d');
+    assert.strictEqual(res.hasModel, true, '蕾姆 Live2D 模型必须存在');
+    assert.strictEqual(res.parentAttached, true, '模型必须挂载在 stage 上');
   });
 
   // 6. 若曦 (精灵表) 桌宠

@@ -89,25 +89,25 @@ app.whenReady().then(async () => {
     assert.strictEqual(res.actionPlayed, true, '动作必须成功执行');
   });
 
-  // 2. 网页模式下蕾姆 VRM 3D 模型加载与动画触发
-  await test('2. 网页模式：蕾姆 3D VRM 加载与动作执行', async () => {
+  // 2. 网页模式下蕾姆 Live2D 模型加载与动画触发
+  await test('2. 网页模式：蕾姆 Live2D 加载与动作执行', async () => {
     const res = await win.webContents.executeJavaScript(`
       (async () => {
         await window.mimoAPI.switchCharacter('rem');
         const l2d = window.live2dManager;
         const success = await l2d.loadCharacterModel();
-        const animPlayed = window.actionMenuManager?.executeAction('rem', 'pray', { model: null });
+        const animPlayed = window.actionMenuManager?.executeAction('rem', 'pray', { model: l2d.model });
         return {
           renderMode: l2d.currentRenderMode,
-          hasVrm: Boolean(window.vrmManager?.vrm),
+          hasModel: Boolean(l2d.model),
           success,
           animPlayed
         };
       })()
     `);
-    assert.strictEqual(res.renderMode, 'vrm', '蕾姆网页模式应为 vrm');
-    assert.strictEqual(res.hasVrm, true, '蕾姆 3D VRM 模型必须存在');
-    assert.strictEqual(res.success, true, '蕾姆 VRM 必须加载成功');
+    assert.strictEqual(res.renderMode, 'live2d', '蕾姆网页模式应为 live2d');
+    assert.strictEqual(res.hasModel, true, '蕾姆 Live2D 模型必须存在');
+    assert.strictEqual(res.success, true, '蕾姆 Live2D 必须加载成功');
     assert.strictEqual(res.animPlayed, true, '蕾姆祈愿动作必须成功执行');
   });
 
