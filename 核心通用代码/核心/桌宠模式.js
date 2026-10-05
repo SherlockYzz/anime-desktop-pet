@@ -29,6 +29,7 @@ class PetMode {
     this._wanderSpeed = 1.4;
     this._wanderTimer = null;
     this._moveSpeed = 5;
+    this._mouseIgnored = false;
   }
 
   init(skipTransition) {
@@ -41,11 +42,54 @@ class PetMode {
     const area = document.getElementById('pet-character-area');
     if (!area) return;
 
+    // ★ 鼠标透明穿透判定：光标位于桌宠角色、气泡或功能按钮上时正常接收事件；位于透明背景时直接穿透给底层桌面
+    window.addEventListener('mousemove', (e) => {
+      if (document.body.classList.contains('web-mode-active')) {
+        if (this._mouseIgnored) {
+          window.electronAPI?.setIgnoreMouseEvents?.(false);
+          this._mouseIgnored = false;
+        }
+        return;
+      }
+      if (this._dragging) {
+        if (this._mouseIgnored) {
+          window.electronAPI?.setIgnoreMouseEvents?.(false);
+          this._mouseIgnored = false;
+        }
+        return;
+      }
+
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const isInteractive = target && (
+        target.closest('#pet-character-area') ||
+        target.closest('#pet-bubble-container') ||
+        target.closest('#btn-switch-web') ||
+        target.closest('#btn-toggle-wander') ||
+        target.closest('.pet-bubble')
+      );
+
+      if (isInteractive) {
+        if (this._mouseIgnored) {
+          window.electronAPI?.setIgnoreMouseEvents?.(false);
+          this._mouseIgnored = false;
+        }
+      } else {
+        if (!this._mouseIgnored) {
+          window.electronAPI?.setIgnoreMouseEvents?.(true, { forward: true });
+          this._mouseIgnored = true;
+        }
+      }
+    });
+
     // ★ 拖拽 = 拖动整个桌宠窗口（桌面宠物应该跟随鼠标在整个桌面移动）
     area.addEventListener('mousedown', async (e) => {
       if (document.body.classList.contains('web-mode-active')) return;
       e.preventDefault();
       this._dragging = true; this._moved = false;
+      if (this._mouseIgnored) {
+        window.electronAPI?.setIgnoreMouseEvents?.(false);
+        this._mouseIgnored = false;
+      }
       this._dragStart = { sx: e.screenX, sy: e.screenY, wx: 0, wy: 0 };
       try {
         const b = await window.electronAPI?.getWindowBounds?.();
@@ -176,6 +220,12 @@ class PetMode {
       this._stopIdleTimer();
       this._clearBubbles();
 
+      // 退出桌宠模式时，确保全局恢复鼠标交互（全窗口响应）
+      if (this._mouseIgnored) {
+        window.electronAPI?.setIgnoreMouseEvents?.(false);
+        this._mouseIgnored = false;
+      }
+
       document.body.classList.add('web-mode-active');
 
       setTimeout(() => {
@@ -238,10 +288,13 @@ class PetMode {
   }
 
   // === ★ 移动系统：精灵帧桌宠的跑/跳/四向移动 ===
-  /** 主循环：每帧根据按键/自动漫步计算位移并移动窗口 */
+  /** 主循环：每帧根据按键/自动漫步计算位移并移动窗口（整像素平滑节流） */
   _startMovementLoop() {
     if (this._moveRaf) return;
-    const step = () => {
+    let accX = 0, accY = 0;
+    let lastSendTime = 0;
+
+    const step = (timestamp) => {
       this._moveRaf = requestAnimationFrame(step);
       if (document.body.classList.contains('web-mode-active')) return;
       const k = this._keys;
@@ -255,10 +308,26 @@ class PetMode {
         dx = this._wanderDir * (this._wanderSpeed / this._moveSpeed);
       }
       if (dx || dy) {
-        window.electronAPI?.moveWindowBy?.(dx * this._moveSpeed, dy * this._moveSpeed);
         this._setMoveAnim(dx, dy);
         this._moving = true;
+        accX += dx * this._moveSpeed;
+        accY += dy * this._moveSpeed;
+
+        // 积累达到至少 1 像素且距离上次发送至少 16ms 时提交 IPC，有效避免高刷屏幕下每秒上百次 IPC 系统调用
+        if ((Math.abs(accX) >= 1 || Math.abs(accY) >= 1) && (timestamp - lastSendTime >= 16)) {
+          const moveX = Math.round(accX);
+          const moveY = Math.round(accY);
+          accX -= moveX;
+          accY -= moveY;
+          lastSendTime = timestamp;
+          window.electronAPI?.moveWindowBy?.(moveX, moveY);
+        }
       } else if (this._moving) {
+        if (Math.abs(accX) >= 0.5 || Math.abs(accY) >= 0.5) {
+          window.electronAPI?.moveWindowBy?.(Math.round(accX), Math.round(accY));
+          accX = 0;
+          accY = 0;
+        }
         this._endMove();
       }
     };

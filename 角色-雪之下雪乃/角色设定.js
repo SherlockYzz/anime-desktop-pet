@@ -55,10 +55,8 @@ CHARACTER_REGISTRY.yukino = {
     settingsBg: 'rgba(200, 215, 245, 0.35)',
   },
 
-  live2d: {
-    fallbackImage: '../../角色-雪之下雪乃/图片素材/封面.png',
-    modelPath: '../../角色-雪之下雪乃/Live2D模型/model.model3.json',
-  },
+  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  live2d: null,
 
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,

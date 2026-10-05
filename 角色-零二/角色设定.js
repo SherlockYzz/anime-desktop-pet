@@ -57,11 +57,8 @@ CHARACTER_REGISTRY.zerotwo = {
     settingsBg: 'rgba(248, 210, 225, 0.35)',
   },
 
-  // Live2D 配置（本地模型）
-  live2d: {
-    fallbackImage: '../../角色-零二/图片素材/封面.png',
-    modelPath: '../../角色-零二/Live2D模型/model.model3.json',
-  },
+  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  live2d: null,
 
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,

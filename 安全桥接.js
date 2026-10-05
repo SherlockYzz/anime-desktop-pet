@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onShowSettings: (callback) => ipcRenderer.on('show-settings', callback),
   updateTrayLabel: (label, avatarPath) => ipcRenderer.invoke('update-tray-label', label, avatarPath),
 
+  // ★ 鼠标穿透（透明区域穿透，实体区域交互）
+  setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
+
   // ★ 桌宠移动
   getWorkArea: () => ipcRenderer.invoke('get-work-area'),
   getWindowBounds: () => ipcRenderer.invoke('get-window-bounds'),

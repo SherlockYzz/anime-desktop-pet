@@ -65,13 +65,34 @@ function createWindow() {
   });
 }
 
-function createTray(label, avatarPath) {
-  currentTrayLabel = label || currentTrayLabel;
-  if (avatarPath) currentTrayAvatar = avatarPath;
+function createOrUpdateTray(label, avatarPath) {
+  if (label) currentTrayLabel = label;
+  if (avatarPath) {
+    const fullAvatar = path.isAbsolute(avatarPath) ? avatarPath : path.join(__dirname, avatarPath);
+    if (fs.existsSync(fullAvatar)) {
+      currentTrayAvatar = avatarPath;
+    }
+  }
 
-  if (tray) tray.destroy();
+  const iconPath = path.isAbsolute(currentTrayAvatar) ? currentTrayAvatar : path.join(__dirname, currentTrayAvatar);
 
-  tray = new Tray(path.join(__dirname, currentTrayAvatar));
+  if (!tray) {
+    try {
+      tray = new Tray(iconPath);
+      tray.on('double-click', () => {
+        if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
+      });
+    } catch (e) {
+      console.warn('[Tray] 创建托盘图标失败:', e);
+      return;
+    }
+  } else {
+    try {
+      tray.setImage(iconPath);
+    } catch (e) {
+      console.warn('[Tray] 更新托盘图片失败:', e);
+    }
+  }
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -99,14 +120,11 @@ function createTray(label, avatarPath) {
 
   tray.setToolTip(currentTrayLabel);
   tray.setContextMenu(contextMenu);
-  tray.on('double-click', () => {
-    if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
-  });
 }
 
 app.whenReady().then(() => {
   createWindow();
-  createTray('桌宠');
+  createOrUpdateTray('桌宠');
 
   globalShortcut.register('CommandOrControl+Shift+P', () => {
     if (mainWindow) {
@@ -128,7 +146,8 @@ app.on('will-quit', () => { globalShortcut.unregisterAll(); });
 
 // IPC
 ipcMain.handle('get-screen-size', () => {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const display = mainWindow ? screen.getDisplayMatching(mainWindow.getBounds()) : screen.getPrimaryDisplay();
+  const { width, height } = display.workAreaSize;
   return { width, height };
 });
 
@@ -136,9 +155,16 @@ ipcMain.handle('set-always-on-top', (event, flag) => {
   if (mainWindow) mainWindow.setAlwaysOnTop(flag);
 });
 
-// ★ 桌宠移动：工作区 / 窗口位置 / 移动窗口
+// ★ 鼠标穿透（透明区域忽略鼠标事件，悬浮角色实体与交互按钮时不忽略）
+ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+  if (!mainWindow) return;
+  mainWindow.setIgnoreMouseEvents(Boolean(ignore), options || { forward: true });
+});
+
+// ★ 桌宠移动：多显示器工作区自适应
 ipcMain.handle('get-work-area', () => {
-  const wa = screen.getPrimaryDisplay().workArea;
+  const display = mainWindow ? screen.getDisplayMatching(mainWindow.getBounds()) : screen.getPrimaryDisplay();
+  const wa = display.workArea;
   return { x: wa.x, y: wa.y, width: wa.width, height: wa.height };
 });
 
@@ -149,9 +175,11 @@ ipcMain.handle('get-window-bounds', () => {
   return { x, y, width, height };
 });
 
-/** 把窗口限制在工作区内，避免桌宠跑出屏幕 */
+/** 把窗口限制在当前匹配显示器的工作区内，避免桌宠跑出屏幕，且支持多显示器自由游走 */
 function clampToWorkArea(x, y, w, h) {
-  const wa = screen.getPrimaryDisplay().workArea;
+  const targetRect = { x: Math.round(x), y: Math.round(y), width: w, height: h };
+  const targetDisplay = screen.getDisplayMatching(targetRect) || screen.getPrimaryDisplay();
+  const wa = targetDisplay.workArea;
   const nx = Math.max(wa.x, Math.min(wa.x + wa.width - w, Math.round(x)));
   const ny = Math.max(wa.y, Math.min(wa.y + wa.height - h, Math.round(y)));
   return { x: nx, y: ny };
@@ -185,7 +213,7 @@ ipcMain.handle('close-window', () => {
 
 ipcMain.handle('update-tray-label', (event, label, avatarPath) => {
   const relPath = avatarPath ? avatarPath.replace(/^(\.\.\/)+/, '') : null;
-  createTray(label, relPath);
+  createOrUpdateTray(label, relPath);
 });
 
 // ===== 自定义角色 IPC =====

@@ -57,11 +57,8 @@ CHARACTER_REGISTRY.rem = {
     settingsBg: 'rgba(200, 225, 245, 0.35)',
   },
 
-  // Live2D 配置（本地模型）
-  live2d: {
-    fallbackImage: '../../角色-蕾姆/图片素材/封面.png',
-    modelPath: '../../角色-蕾姆/Live2D模型/model.model3.json',
-  },
+  // Live2D 配置（无 Live2D 模型，直达 VRM 3D 模型渲染）
+  live2d: null,
 
   // VRM 配置
   vrm: {
