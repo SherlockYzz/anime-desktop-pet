@@ -13,3 +13,13 @@ yarn.lock
 
 # Runtime data (created at runtime by custom character manager)
 自定义角色/
+
+# Scratch temporary media
+scratch/*.wav
+scratch/*.mp3
+scratch/source_audio/
+scratch/fixed_voices/
+scratch/fixed_final_voices/
+scratch/test_kato_sentences/
+scratch/preview_voices/
+scratch/test_dl/

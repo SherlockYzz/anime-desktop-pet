@@ -28,15 +28,15 @@ class ActionMenuManager {
         }
       },
 
-      // 2. 加藤惠（路人女主的养成方法 · 索尼官方 Live2D · 安野希世乃温柔声线）
+      // 2. 加藤惠（路人女主的养成方法 · 索尼官方一択彼女Live2D · 安野希世乃温柔原声）
       megumi: {
         title: '🌸 加藤惠动作百宝箱',
         actions: [
-          { id: 'fun', label: '身前搭手·开怀甜笑', icon: '😊', motion: 'I_FUN_W', expression: 'F_FUN', voice: '01', bubble: '欸嘿～今天的心情好像格外不错呢。' },
+          { id: 'fun', label: '身前搭手·治愈问候', icon: '😊', motion: 'I_FUN_W', expression: 'F_FUN', voice: '01', bubble: '你好，我是加藤惠。请多指教～今天的心情好像格外不错呢。' },
           { id: 'pout', label: '鼓嘴侧头·气鼓鼓', icon: '😤', motion: 'I_ANGRY_W', expression: 'F_ANGRY', voice: '02', bubble: '唔……又在做奇怪的事情了呢，真是拿你没办法。' },
           { id: 'surprise', label: '双手张开·后仰吃惊', icon: '😳', motion: 'I_SURPRISE_W', expression: 'F_SURPRISE', voice: '03', bubble: '呀！突然靠这么近……稍微有点吓到了呢。' },
           { id: 'shy', label: '垂首侧眸·委屈低语', icon: '🥺', motion: 'I_SAD_W', expression: 'F_SAD', voice: '04', bubble: '我的话，就算不说……你也应该明白吧？' },
-          { id: 'idle_sway', label: '身姿轻摆·发丝微拂', icon: '✨', motion: 'IDLING_02', expression: 'F_FUN', voice: '05', bubble: '稍微整理一下发型……你觉得现在的我怎么样？' },
+          { id: 'heroine', label: '深情告白·第一女主', icon: '💖', motion: 'IDLING_03', expression: 'F_FUN', voice: '05', bubble: '现在的我……能成为只属于你的第一女主角了吗？' },
           { id: 'gentle', label: '优雅微倾·脉脉注视', icon: '☕', motion: 'I_FUN_S', expression: 'F_DOWN', voice: '06', bubble: '只要能一直在你身边，作为女主角我也很开心哦。' }
         ],
         touch: {
@@ -46,16 +46,16 @@ class ActionMenuManager {
         }
       },
 
-      // 3. 惠惠（为美好的世界献上祝福！· Cubism 4 原版动画模型 · 高桥李依中二爆裂声线）
+      // 3. 惠惠（为美好的世界献上祝福！· 原版动画Live2D · 高桥李依爆裂原声）
       megumin: {
         title: '💥 惠惠爆裂百宝箱',
         actions: [
-          { id: 'explosion', label: '高举法杖·爆裂魔法！', icon: '💥', motion: '00_Skill_02', expression: '20_Expression_Serious_01', voice: '01', bubble: '比黑色更黑，比黑暗更暗的漆黑……Explosion！！' },
-          { id: 'chant', label: '魔法手势·咒文吟唱', icon: '🔮', motion: '00_Skill_01', expression: '20_Expression_Anger_01', voice: '02', bubble: '吾名惠惠！乃红魔族第一大魔导、爆裂魔法操纵者！' },
+          { id: 'tired', label: '脱力瘫软·待机休整', icon: '💫', motion: '00_Sad_01', expression: '20_Expression_Sad_01', voice: '01', bubble: '魔力耗尽动不了了啦！快背我回去，不然我就哭给你看！' },
+          { id: 'chant', label: '魔法手势·咒文吟唱', icon: '🔮', motion: '00_Skill_01', expression: '20_Expression_Anger_01', voice: '02', bubble: '吾名惠惠！乃红魔族第一大魔导、兼操纵爆裂魔法之人！' },
           { id: 'proud', label: '单手叉腰·得意夸耀', icon: '👑', motion: '00_Pride_01', expression: '20_Expression_Smile_01', voice: '03', bubble: '哼哼！见识到我红魔族首屈一指的天才实力了吧！' },
           { id: 'bound', label: '高举双手·开心欢呼', icon: '⭐', motion: '00_Happy_01', expression: '20_Expression_Smile_01', voice: '04', bubble: '今天也是精神满满的一天呢！要一起去放爆裂魔法吗？' },
-          { id: 'shame', label: '缩肩偏头·羞赧别过脸', icon: '😳', motion: '00_Shame_01', expression: '20_Expression_Shame_01', voice: '05', bubble: '突、突然摸我的帽子干嘛……这可是大魔导师的骄傲！' },
-          { id: 'cry', label: '揉眼跺脚·瘫软哭闹', icon: '😭', motion: '00_Cry_01', expression: '20_Expression_Sad_01', voice: '06', bubble: '魔力耗尽动不了了啦！快背我回去，不然我就哭给你看！' }
+          { id: 'magic', label: '单手扶帽·终极浪漫', icon: '🔥', motion: '00_Skill_01', expression: '20_Expression_Serious_01', voice: '05', bubble: '爆裂魔法才是人类智慧与浪漫的终极顶峰！' },
+          { id: 'explosion', label: '高举法杖·爆裂魔法！', icon: '💥', motion: '00_Skill_02', expression: '20_Expression_Serious_01', voice: '10', bubble: '比黑色更黑，比黑暗更深邃的漆黑……在此寄托吾之真红吧！Explosion！！' }
         ],
         touch: {
           head: { motion: '00_Shame_01', expression: '20_Expression_Shame_01', voice: '07', bubble: '把手拿开啦……红魔族是不会轻易屈服于摸头杀的！' },
@@ -82,16 +82,16 @@ class ActionMenuManager {
         }
       },
 
-      // 5. 初音未来（VOCALOID · 经典电子歌姬 · 藤田咲元气歌姬声线）
+      // 5. 初音未来（VOCALOID · 经典电子歌姬 · 藤田咲原声+PJSK官方CV声线）
       miku: {
         title: '🎵 初音未来百宝箱',
         actions: [
-          { id: 'shake', label: '甩双马尾·动感甩动', icon: '🎵', motion: 'miku_shake_01', voice: '02', bubble: '葱绿色的节拍在跳动！准备好和我一起演出了吗？' },
-          { id: 'wave', label: '躬身致意·元气招手', icon: '👋', motion: 'miku_m_01', voice: '03', bubble: '哈喽！世界第一的公主殿下登场咯～！' },
-          { id: 'heart', label: '左右晃动·舞台比心', icon: '💚', motion: 'miku_m_02', voice: '01', bubble: '将最纯净的心意，化作歌声传递到你的心底～♪' },
-          { id: 'shy', label: '歪头侧身·轻柔微笑', icon: '🌸', motion: 'miku_m_03', voice: '05', bubble: '听见你的掌声，心跳好像有点加快了呢……' },
-          { id: 'spin', label: '微仰节奏·舞台跃动', icon: '✨', motion: 'miku_m_04', voice: '04', bubble: '旋律在空气中回荡，一起跃动起来吧！' },
-          { id: 'idle', label: '自然侍立·歌姬待机', icon: '🎤', motion: 'miku_idle_01', voice: '06', bubble: '嘀嗒嘀嗒……灵感的旋律正在源源不断地涌现！' }
+          { id: 'shake', label: '甩双马尾·动感甩动', icon: '🎵', motion: 'miku_shake_01', voice: '02', bubble: '好慢哦！早就想快点见到你了！准备好和我一起演出吗？' },
+          { id: 'wave', label: '躬身致意·元气招手', icon: '👋', motion: 'miku_m_01', voice: '03', bubble: '哈喽！谢谢你能来看我！世界第一的公主殿下登场咯～！' },
+          { id: 'heart', label: '左右晃动·舞台比心', icon: '💚', motion: 'miku_m_02', voice: '01', bubble: '将最纯净的心意化作歌声传递～♪ 下一首也请多指教！' },
+          { id: 'shy', label: '歪头侧身·轻柔微笑', icon: '🌸', motion: 'miku_m_03', voice: '05', bubble: '诶嘿嘿～那个，要和我一起跳舞吗？……开玩笑的啦♪' },
+          { id: 'spin', label: '微仰节奏·舞台跃动', icon: '✨', motion: 'miku_m_04', voice: '04', bubble: '旋律在空气中回荡，想把歌声传达给更多的人！' },
+          { id: 'idle', label: '自然侍立·歌姬待机', icon: '🎤', motion: 'miku_idle_01', voice: '06', bubble: '嘀嗒嘀嗒……谢谢你的应援！灵感的旋律正在源源不断地涌现！' }
         ],
         touch: {
           head: { motion: 'miku_m_03', voice: '07', bubble: '摸摸头发～接收到了满满的元气充电！' },
@@ -150,6 +150,24 @@ class ActionMenuManager {
           body: { voice: '07', bubble: '有什么侍奉部的委托需要提出吗？' },
           rage: { voice: '08', bubble: '毫无常识的纠缠行为，请容我明确表示拒绝。' }
         }
+      },
+
+      // 9. 土间埋（干物妹！小埋 · 田中爱美原版CV原声声库 + 仓鼠斗篷Live2D）
+      umaru: {
+        title: '🐹 小埋干物妹百宝箱',
+        actions: [
+          { id: 'idle', label: '待机呼吸·仓鼠瘫倒', icon: '🐹', motion: 'umaru_idle', voice: '01', bubble: '吃饱喝足待机中~ 仓鼠披风最舒服啦！' },
+          { id: 'cola', label: '开怀畅饮·冰镇可乐', icon: '🥤', motion: 'rita_Live2D_001', voice: '02', bubble: '咕嘟咕嘟……哈！冰镇可乐加薯片，终极盛宴！' },
+          { id: 'game', label: '全服第一·通宵通关', icon: '🎮', motion: 'rita_Live2D_004', voice: '03', bubble: '全服第一高手UMR登场！今晚要通宵打通关！' },
+          { id: 'roll', label: '毛毛虫式·满地打滚', icon: '🌀', motion: 'rita_Live2D_008', voice: '04', bubble: '在榻榻米上像毛毛虫一样滚来滚去~ 打滚打滚！' },
+          { id: 'pout', label: '鼓嘴撒娇·要买手办', icon: '😤', motion: 'rita_Live2D_021', voice: '05', bubble: '欧尼酱大笨蛋！说好给小埋买最新限定手办的！' },
+          { id: 'happy', label: '手舞足蹈·欢呼雀跃', icon: '✨', motion: 'rita_Live2D_010', voice: '06', bubble: '哇哈哈！今天的快乐属于小埋！' }
+        ],
+        touch: {
+          head: { motion: 'rita_Live2D_002', voice: '07', bubble: '摸摸仓鼠耳朵~ 欧尼酱顺便给小埋拿一罐可乐嘛！' },
+          body: { motion: 'rita_Live2D_005', voice: '08', bubble: '戳我干嘛呀！小埋正在攻略关卡大BOSS呢！' },
+          rage: { motion: 'rita_Live2D_022', voice: '09', bubble: '呜哇啊啊！一直戳一直戳！小埋要满地打滚抗议啦！' }
+        }
       }
     };
   }
@@ -177,12 +195,15 @@ class ActionMenuManager {
           </button>
         `).join('')}
       </div>
-      <div class="pet-action-footer" style="display:flex;gap:6px;margin-top:8px;padding-top:6px;border-top:1px dashed rgba(217,79,79,0.2);">
-        <button class="pet-action-footer-btn btn-open-scale-from-menu" style="flex:1;padding:5px 6px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:3px;">
-          <span>📐</span> 调节大小
+      <div class="pet-action-footer" style="display:flex;gap:4px;margin-top:8px;padding-top:6px;border-top:1px dashed rgba(217,79,79,0.2);">
+        <button class="pet-action-footer-btn btn-open-scale-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span>📐</span> 大小
         </button>
-        <button class="pet-action-footer-btn btn-exit-pet-from-menu" style="flex:1;padding:5px 6px;font-size:11px;border-radius:6px;border:1px solid #d94f4f;background:#d94f4f;color:#fff;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:3px;">
-          <span>🔄</span> 切回网页
+        <button class="pet-action-footer-btn btn-open-shortcuts-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span>⌨️</span> 快捷键
+        </button>
+        <button class="pet-action-footer-btn btn-exit-pet-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid #d94f4f;background:#d94f4f;color:#fff;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span>🔄</span> 网页
         </button>
       </div>
     `;
@@ -193,6 +214,11 @@ class ActionMenuManager {
       if (e.target.closest('.btn-open-scale-from-menu')) {
         menu.classList.remove('show');
         window.app?.petMode?._toggleScaleMenu?.(true);
+        return;
+      }
+      if (e.target.closest('.btn-open-shortcuts-from-menu')) {
+        menu.classList.remove('show');
+        window.shortcutManager?.toggleMenu?.(true);
         return;
       }
       if (e.target.closest('.btn-exit-pet-from-menu')) {

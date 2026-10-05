@@ -55,10 +55,8 @@ CHARACTER_REGISTRY.takagi = {
     settingsBg: 'rgba(248, 220, 210, 0.35)',
   },
 
-  live2d: {
-    fallbackImage: '../../角色-高木同学/图片素材/封面.png',
-    modelPath: '../../角色-高木同学/Live2D模型/model.model3.json',
-  },
+  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  live2d: null,
 
   // 原生CV语音配置（高桥李依擅长捉弄俏皮少女语音包，共10段经典语音）
   voice: {

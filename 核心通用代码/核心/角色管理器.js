@@ -432,15 +432,23 @@ class CharacterManager {
 
   // 获取角色顺序
   getCharacterOrder() {
+    const defaultOrder = window.DEFAULT_CHARACTER_ORDER || ['ruoxi', 'megumi', 'rem', 'megumin', 'umaru', 'miku', 'yukino', 'takagi', 'zerotwo'];
     try {
       const saved = localStorage.getItem('character-order');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // 确保新增角色不会遗漏，并保持完整集合
+          const missing = defaultOrder.filter(id => !parsed.includes(id));
+          if (missing.length > 0) {
+            return [...defaultOrder];
+          }
+          return parsed;
+        }
       }
-      return [...(window.DEFAULT_CHARACTER_ORDER || ['ruoxi', 'megumi', 'megumin', 'rem', 'miku', 'takagi', 'zerotwo', 'yukino'])];
+      return [...defaultOrder];
     } catch {
-      return [...(window.DEFAULT_CHARACTER_ORDER || ['ruoxi', 'megumi', 'megumin', 'rem', 'miku', 'takagi', 'zerotwo', 'yukino'])];
+      return [...defaultOrder];
     }
   }
 

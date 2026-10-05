@@ -111,11 +111,11 @@ app.whenReady().then(async () => {
     assert.strictEqual(res.parentAttached, true, '模型必须挂载在 stage 上');
   });
 
-  // 3. 高木同学 (Live2D Cubism 5) 桌宠
-  await test('3. 高木同学 Live2D (桌宠模式) 正常渲染', async () => {
+  // 3. 土间埋 (Live2D Cubism 2) 桌宠
+  await test('3. 土间埋 Live2D (桌宠模式) 正常渲染', async () => {
     const res = await win.webContents.executeJavaScript(`
       (async () => {
-        await window.mimoAPI.switchCharacter('takagi');
+        await window.mimoAPI.switchCharacter('umaru');
         await window.app.petMode._loadCharacter();
         const m = window.app.petMode?._model;
         return {

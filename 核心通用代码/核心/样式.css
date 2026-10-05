@@ -1590,6 +1590,7 @@ body.web-mode-active .pet-overlay {
   justify-content: center;
   z-index: 502;
   cursor: grab;
+  overflow: visible;
 }
 .pet-character-area:active {
   cursor: grabbing;
@@ -1754,6 +1755,7 @@ body.web-mode-active .pet-overlay {
 
 .btn-pet-scale::after { content: '\1F50D'; font-size: 14px; }   /* 🔍 大小滑动窗口 */
 .btn-pet-actions::after { content: '\1F9F0'; font-size: 15px; } /* 🧰 动作百宝箱 */
+.btn-pet-shortcuts::after { content: '\2328'; font-size: 14px; } /* ⌨️ 快捷键管理 */
 .btn-switch-web::after { content: '\1F504'; font-size: 14px; }  /* 🔄 切回网页 */
 
 /* ===== 大小滑动窗口面板 ===== */
@@ -2765,3 +2767,348 @@ body.web-mode-active .loading-overlay.show {
   padding: 16px 0;
   font-style: italic;
 }
+
+/* ===== 快捷键一览与自定义管理面板 ===== */
+.pet-shortcuts-menu {
+  position: fixed;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  background: rgba(255, 252, 250, 0.98);
+  border: 1px solid rgba(217, 79, 79, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(180, 80, 80, 0.28);
+  backdrop-filter: blur(16px);
+  padding: 12px 14px;
+  z-index: 10005;
+  display: none;
+  width: 330px;
+  max-height: 440px;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.pet-shortcuts-menu.show {
+  display: flex;
+  flex-direction: column;
+  opacity: 1 !important;
+  animation: shortcutMenuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shortcutMenuFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes shortcutMenuCenterFadeIn {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.pet-shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(217, 79, 79, 0.25);
+  margin-bottom: 8px;
+}
+
+.pet-shortcuts-title {
+  font-size: 12.5px;
+  font-weight: bold;
+  color: #b83a3a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-close-shortcuts {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-close-shortcuts:hover {
+  color: #b83a3a;
+  background: rgba(217, 79, 79, 0.1);
+}
+
+.pet-shortcuts-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.shortcuts-status-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.shortcuts-status-pill.enabled {
+  background: rgba(80, 180, 100, 0.15);
+  color: #2b7a42;
+  border: 1px solid rgba(80, 180, 100, 0.3);
+}
+
+.shortcuts-status-pill.disabled {
+  background: rgba(220, 80, 80, 0.15);
+  color: #c03838;
+  border: 1px solid rgba(220, 80, 80, 0.3);
+}
+
+.shortcuts-actions-row {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+}
+
+.shortcut-btn-tool {
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 10px;
+  border: 1px solid rgba(217, 79, 79, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #5a3a3a;
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.shortcut-btn-tool:hover {
+  background: rgba(217, 79, 79, 0.1);
+  border-color: rgba(217, 79, 79, 0.4);
+}
+
+.shortcut-btn-tool.btn-warn {
+  color: #b83a3a;
+  border-color: rgba(217, 79, 79, 0.35);
+}
+
+.shortcut-btn-tool.btn-warn:hover {
+  background: rgba(217, 79, 79, 0.15);
+}
+
+.shortcut-btn-tool.btn-success {
+  color: #2b7a42;
+  border-color: rgba(80, 180, 100, 0.4);
+}
+
+.shortcut-btn-tool.btn-active-tool {
+  background: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+  font-weight: bold;
+}
+
+.pet-shortcuts-body {
+  overflow-y: auto;
+  max-height: 290px;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pet-shortcuts-body::-webkit-scrollbar {
+  width: 4px;
+}
+.pet-shortcuts-body::-webkit-scrollbar-thumb {
+  background: rgba(217, 79, 79, 0.25);
+  border-radius: 4px;
+}
+
+.shortcuts-disabled-notice {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #b91c1c;
+  line-height: 1.5;
+}
+
+.shortcut-group-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(217, 79, 79, 0.15);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.shortcut-group-card.sys-card {
+  background: rgba(245, 245, 250, 0.6);
+  border-color: rgba(140, 140, 180, 0.2);
+}
+
+.shortcut-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c3a3a;
+  margin-bottom: 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px dotted rgba(217, 79, 79, 0.15);
+}
+
+.shortcut-group-card.sys-card .shortcut-group-title {
+  color: #555577;
+}
+
+.shortcut-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcut-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 11.5px;
+}
+
+.shortcut-label {
+  color: #4a3a3a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcut-icon {
+  font-size: 12px;
+}
+
+.shortcut-keys-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.shortcut-kbd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ffffff;
+  border: 1px solid #d0c0c0;
+  border-bottom: 2px solid #b8a0a0;
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 10.5px;
+  font-family: 'Consolas', monospace;
+  font-weight: bold;
+  color: #443333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.shortcut-kbd-badge:hover {
+  border-color: #d94f4f;
+  background: #fff8f8;
+  color: #d94f4f;
+  transform: translateY(-1px);
+}
+
+.shortcut-kbd-badge.recording {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #b91c1c;
+  animation: kbdBlink 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes kbdBlink {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+  100% { transform: scale(1.05); box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+}
+
+.shortcut-kbd-badge.system-badge {
+  background: #f1f3f5;
+  border-color: #ced4da;
+  border-bottom-color: #adb5bd;
+  color: #495057;
+  cursor: default;
+}
+.shortcut-kbd-badge.system-badge:hover {
+  border-color: #ced4da;
+  color: #495057;
+  transform: none;
+}
+
+.badge-remove {
+  font-size: 12px;
+  line-height: 1;
+  color: #999;
+  padding: 0 1px;
+  border-radius: 3px;
+}
+.badge-remove:hover {
+  background: #fca5a5;
+  color: #7f1d1d;
+}
+
+.btn-add-shortcut-key {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px dashed #d0a0a0;
+  background: rgba(255, 255, 255, 0.6);
+  color: #a05050;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.btn-add-shortcut-key:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.shortcuts-footer-tips {
+  font-size: 10px;
+  color: #7a6a6a;
+  background: rgba(240, 235, 230, 0.5);
+  border-radius: 6px;
+  padding: 6px 8px;
+  line-height: 1.4;
+}
+
+/* 网页模式下居中弹出并加深阴影 */
+body.web-mode-active .pet-shortcuts-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  z-index: 10005;
+}
+
+body.web-mode-active .pet-shortcuts-menu.show {
+  animation: shortcutMenuCenterFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.btn-shortcuts-titlebar:hover {
+  background: var(--glow-color);
+  transform: scale(1.1);
+}
+
+

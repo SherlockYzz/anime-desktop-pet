@@ -63,7 +63,7 @@ CHARACTER_REGISTRY.megumin = {
     modelPath: '../../角色-惠惠/Live2D模型/1024100.model3.json',
   },
 
-  // 原生CV语音配置（高桥李依中二爆裂大魔导语音包，共10段经典语音）
+  // 原生CV语音配置（高桥李依官方原版动漫与Fantastic Days原声语音包，共10段经典名台词与交互语音）
   voice: {
     baseDir: '../../角色-惠惠/音频素材/',
     count: 10,

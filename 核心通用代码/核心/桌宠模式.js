@@ -160,6 +160,10 @@ class PetMode {
     document.getElementById('btn-pet-actions')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleActionMenu(); });
     document.getElementById('btn-pet-scale')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleScaleMenu(); });
     document.getElementById('btn-close-scale')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleScaleMenu(false); });
+    document.getElementById('btn-pet-shortcuts')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.shortcutManager?.toggleMenu?.();
+    });
     document.getElementById('pet-scale-slider')?.addEventListener('input', (e) => {
       this.setPetScale(parseFloat(e.target.value));
     });
@@ -208,13 +212,20 @@ class PetMode {
       this._toggleActionMenu(false);
     });
 
-    // 点击外部关闭动作百宝箱与大小滑动窗口
+    // 点击外部关闭动作百宝箱、大小滑动窗口与快捷键面板
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#pet-action-menu') && !e.target.closest('#btn-pet-actions')) {
         this._toggleActionMenu(false);
       }
       if (!e.target.closest('#pet-scale-menu') && !e.target.closest('#btn-pet-scale') && !e.target.closest('#btn-pet-action-scale')) {
         this._toggleScaleMenu(false);
+      }
+      if (!e.target.closest('#pet-shortcuts-menu') && 
+          !e.target.closest('#btn-pet-shortcuts') && 
+          !e.target.closest('.btn-open-shortcuts-from-menu') &&
+          !e.target.closest('#btn-shortcuts-titlebar') &&
+          !e.target.closest('#btn-open-shortcuts-settings')) {
+        window.shortcutManager?.toggleMenu?.(false);
       }
     });
 
@@ -227,20 +238,14 @@ class PetMode {
       }
     });
 
-    // ★ 键盘快捷键：
-    // - 方向键 / WASD 四向移动
-    // - 空格：跳跃
-    // - E：工作切换
-    // - Z：睡觉切换
-    // - T：自动漫步
-    // - Esc / F2：随时一键切回网页模式，防卡死
-    // - 1~8：各种姿态切换
+    // ★ 键盘快捷键系统（深度集成 ShortcutManager，支持一键解除/防打字模式/全键自定义）：
     const MOVE_KEYS = {
       ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
       a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down'
     };
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (window.shortcutManager?._menuOpen) { window.shortcutManager.toggleMenu(false); return; }
         if (this._scaleMenuOpen) { this._toggleScaleMenu(false); return; }
         if (this._actionMenuOpen) { this._toggleActionMenu(false); return; }
         if (!document.body.classList.contains('web-mode-active')) {
@@ -263,30 +268,141 @@ class PetMode {
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
 
-      const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
-      if (dir) { this._keys[dir] = true; e.preventDefault(); this._lastInteraction = Date.now(); return; }
-      if (e.key === ' ') { e.preventDefault(); this._spriteCall('jump'); }
-      else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); this._spriteCall('toggleWork'); }
-      else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); this._spriteCall('toggleSleep'); }
-      else if (e.key === 't' || e.key === 'T') { e.preventDefault(); this._toggleWander(); }
-      else if (e.key === 'b' || e.key === 'B') {
-        const on = this._toggleBubble();
-        if (on) this._showBubble('气泡台词已开启 💬');
+      // ★ 正在录制新自定义按键时，不触发桌宠动作
+      if (window.shortcutManager?.isRecording) return;
+
+      // ★ 核心功能：解除快捷键！如果用户已解除/停用快捷键，100% 阻断所有键盘响应，自由打字不冲突
+      if (window.shortcutManager && !window.shortcutManager.isEnabled()) return;
+
+      // 1. 移动键匹配（支持自定义快捷键与防打字模式过滤）
+      const moveDir = window.shortcutManager 
+        ? window.shortcutManager.getMovementDirection(e.key) 
+        : (MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()]);
+
+      if (moveDir) {
+        this._keys[moveDir] = true;
+        e.preventDefault();
+        this._lastInteraction = Date.now();
+        return;
       }
-      else if (e.key === '1') { this._spriteCall('idle'); }
-      else if (e.key === '2') { this._spriteCall('wave'); }
-      else if (e.key === '3') { this._spriteCall('jump'); }
-      else if (e.key === '4') { this._toggleWander(); }
-      else if (e.key === '5') { this._spriteCall('wait'); }
-      else if (e.key === '6') { this._spriteCall('work'); }
-      else if (e.key === '7') { this._spriteCall('review'); }
-      else if (e.key === '8') { this._spriteCall('sleep'); }
+
+      // 2. 交互动作与姿态直达（支持自定义快捷键）
+      const act = window.shortcutManager ? window.shortcutManager.getAction(e.key) : null;
+      if (act) {
+        e.preventDefault();
+        this._lastInteraction = Date.now();
+        this._handleShortcutAction(act);
+        return;
+      }
+
+      // 兜底原生键（若未挂载 shortcutManager）
+      if (!window.shortcutManager) {
+        if (e.key === ' ') { e.preventDefault(); this._handleShortcutAction('jump'); }
+        else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); this._handleShortcutAction('work'); }
+        else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); this._handleShortcutAction('sleep'); }
+        else if (e.key === 't' || e.key === 'T') { e.preventDefault(); this._handleShortcutAction('wander'); }
+        else if (e.key === 'b' || e.key === 'B') { e.preventDefault(); this._handleShortcutAction('bubble'); }
+        else if (e.key === '1') { this._handleShortcutAction('anim1'); }
+        else if (e.key === '2') { this._handleShortcutAction('anim2'); }
+        else if (e.key === '3') { this._handleShortcutAction('anim3'); }
+        else if (e.key === '4') { this._handleShortcutAction('anim4'); }
+        else if (e.key === '5') { this._handleShortcutAction('anim5'); }
+        else if (e.key === '6') { this._handleShortcutAction('anim6'); }
+        else if (e.key === '7') { this._handleShortcutAction('anim7'); }
+        else if (e.key === '8') { this._handleShortcutAction('anim8'); }
+      }
     });
+
     document.addEventListener('keyup', (e) => {
-      const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
+      const dir = window.shortcutManager 
+        ? window.shortcutManager.getMovementDirection(e.key) 
+        : (MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()]);
       if (dir) this._keys[dir] = false;
     });
     window.addEventListener('blur', () => { this._keys = { left: false, right: false, up: false, down: false }; });
+  }
+
+  /** 分发并执行快捷键触发的动作姿态（全面联动动画、气泡与原生CV语音） */
+  _handleShortcutAction(act) {
+    const char = window.characterManager?.getCurrentCharacter();
+    const charId = char?.id || 'ruoxi';
+    const menuMgr = window.actionMenuManager;
+    const actionsData = menuMgr?.getCharacterActions?.(charId);
+    const actionsList = actionsData?.actions || [];
+
+    // 1. 处理数字键姿态直达 (anim1 ~ anim8) -> 直接映射到当前角色百宝箱对应索引动作并播放语音
+    const animMatch = act.match(/^anim(\d+)$/);
+    if (animMatch) {
+      const idx = parseInt(animMatch[1], 10) - 1; // 0 ~ 7
+      if (menuMgr && actionsList[idx]) {
+        menuMgr.executeAction(charId, actionsList[idx].id, { model: this._model });
+        return;
+      }
+    }
+
+    // 2. 处理核心动作 (jump, work, sleep, wander, bubble)
+    switch (act) {
+      case 'jump': {
+        const found = actionsList.find(a => a.id === 'jump' || a.id.includes('jump') || a.id.includes('bound') || a.id.includes('happy'));
+        if (found && menuMgr) {
+          menuMgr.executeAction(charId, found.id, { model: this._model });
+        } else if (this._renderMode === 'sprite') {
+          this._spriteCall('jump');
+        } else {
+          this._showBubble('嘿呀！轻巧一跃~ ⚡');
+          window.characterManager?.playRandomVoice?.(charId);
+        }
+        break;
+      }
+      case 'work': {
+        const found = actionsList.find(a => a.id === 'work' || a.id.includes('work') || a.id.includes('fist') || a.id.includes('read'));
+        if (found && menuMgr && this._renderMode !== 'sprite') {
+          menuMgr.executeAction(charId, found.id, { model: this._model });
+        } else {
+          this._spriteCall('toggleWork');
+          if (this._renderMode !== 'sprite') {
+            this._showBubble('进入专注工作状态啦！💼');
+            window.characterManager?.playRandomVoice?.(charId);
+          }
+        }
+        break;
+      }
+      case 'sleep': {
+        const found = actionsList.find(a => a.id === 'sleep' || a.id.includes('sleep') || a.id.includes('tired'));
+        if (found && menuMgr && this._renderMode !== 'sprite') {
+          menuMgr.executeAction(charId, found.id, { model: this._model });
+        } else {
+          this._spriteCall('toggleSleep');
+          if (this._renderMode !== 'sprite') {
+            this._showBubble('呼噜噜……进入休息睡眠状态啦🌙');
+            window.characterManager?.playRandomVoice?.(charId);
+          }
+        }
+        break;
+      }
+      case 'wander': {
+        this._toggleWander();
+        break;
+      }
+      case 'bubble': {
+        const on = this._toggleBubble();
+        if (on) {
+          this._showBubble('气泡台词已开启 💬');
+          window.characterManager?.playRandomVoice?.(charId);
+        }
+        break;
+      }
+      default: {
+        if (menuMgr && actionsList.find(a => a.id === act)) {
+          menuMgr.executeAction(charId, act, { model: this._model });
+        } else if (this._renderMode === 'sprite') {
+          this._spriteCall(act);
+        } else {
+          window.characterManager?.playRandomVoice?.(charId);
+        }
+        break;
+      }
+    }
   }
 
   // === 形态切换 ===
@@ -552,6 +668,9 @@ class PetMode {
   _spriteCall(action) {
     const m = this._spriteAtlas || window.spriteAtlasManager;
     if (!m || !m.ready) return;
+    const char = window.characterManager?.getCurrentCharacter();
+    const charId = char?.id || 'ruoxi';
+
     if (action === 'jump') {
       m.jump();
       this._showBubble('嘿呀！轻巧一跃~ ⚡');
@@ -577,6 +696,30 @@ class PetMode {
       m.goIdle();
       this._showBubble('乖乖待命呼吸中~ 🌸');
     }
+
+    // ★ 触发原生CV语音联动
+    if (window.characterManager) {
+      const voiceMap = {
+        idle: '01',
+        work: '02',
+        toggleWork: '02',
+        sleep: '03',
+        toggleSleep: '03',
+        wander: '04',
+        wave: '05',
+        jump: '06',
+        review: '07',
+        fail: '08',
+        wait: '09'
+      };
+      const v = voiceMap[action];
+      if (v) {
+        window.characterManager.playVoice(charId, v);
+      } else {
+        window.characterManager.playRandomVoice(charId);
+      }
+    }
+
     this._lastInteraction = Date.now();
     this._updateControlButtons();
   }
@@ -671,21 +814,17 @@ class PetMode {
     // 1. 动态调整 Electron 窗口外框尺寸（保持底部居中对齐）
     window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
 
-    // 2. 同步 WebGL 视口与物理画布像素尺寸（双画布全量同步适配）
+    // 2. 同步 WebGL 视口与物理画布像素尺寸（由 Pixi/精灵引擎全权管理高分屏 DPR，杜绝硬设 canvas.width 导致显存腰斩）
     if (this._pixiApp && this._pixiApp.renderer) {
       this._pixiApp.renderer.resize(stageW, stageH);
     }
     const canvas = document.getElementById('pet-canvas');
-    if (canvas) {
-      canvas.width = stageW;
-      canvas.height = stageH;
+    if (canvas && (!this._pixiApp || !this._pixiApp.renderer)) {
       canvas.style.width = stageW + 'px';
       canvas.style.height = stageH + 'px';
     }
     const spriteCanvas = document.getElementById('pet-sprite-canvas');
     if (spriteCanvas) {
-      spriteCanvas.width = stageW;
-      spriteCanvas.height = stageH;
       spriteCanvas.style.width = stageW + 'px';
       spriteCanvas.style.height = stageH + 'px';
     }
@@ -722,16 +861,9 @@ class PetMode {
         try { this._model.updateTransform(); } catch (e) {}
       }
     } else if (this._renderMode === 'sprite') {
-      const spriteCanvas = document.getElementById('pet-sprite-canvas');
-      if (spriteCanvas) {
-        spriteCanvas.width = stageW;
-        spriteCanvas.height = stageH;
-        spriteCanvas.style.width = stageW + 'px';
-        spriteCanvas.style.height = stageH + 'px';
-      }
       const m = this._spriteAtlas || window.spriteAtlasManager;
       if (m && m.ready) {
-        m.resize(stageW, stageH);
+        m.resize();
         m.draw();
       }
     }
@@ -760,6 +892,14 @@ class PetMode {
     if (next) this._startWander(); else this._stopWander();
     this._updateControlButtons();
     this._showBubble(this._wanderActive ? '好耶，我可以在桌面上溜达啦~' : '那我乖乖待着。');
+    const char = window.characterManager?.getCurrentCharacter();
+    if (char && window.characterManager?.playVoice) {
+      if (char.id === 'ruoxi') {
+        window.characterManager.playVoice('ruoxi', '04');
+      } else {
+        window.characterManager.playRandomVoice(char.id);
+      }
+    }
   }
 
   _startWander() {
@@ -883,8 +1023,6 @@ class PetMode {
           const sFactor = this._petScale || 1.0;
           const stageW = Math.round(380 * sFactor);
           const stageH = Math.round(570 * sFactor);
-          canvas.width = stageW;
-          canvas.height = stageH;
           canvas.style.width = stageW + 'px';
           canvas.style.height = stageH + 'px';
 

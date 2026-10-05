@@ -63,7 +63,7 @@ CHARACTER_REGISTRY.miku = {
     modelPath: '../../角色-初音未来/Live2D模型/miku.model.json',
   },
 
-  // 原生CV语音配置（VOCALOID经典元气电子歌姬语音包，共10段经典语音）
+  // 原生CV语音配置（VOCALOID官方藤田咲原声+Project SEKAI原版语音包，共10段经典名台词与交互语音）
   voice: {
     baseDir: '../../角色-初音未来/音频素材/',
     count: 10,

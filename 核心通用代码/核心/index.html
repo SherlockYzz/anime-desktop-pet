@@ -16,6 +16,7 @@
     </div>
     <div class="titlebar-buttons">
       <button class="btn-back-pet" id="btn-back-pet" title="返回桌宠模式">桌宠</button>
+      <button class="btn-shortcuts-titlebar" id="btn-shortcuts-titlebar" title="快捷键一览与自定义 (⌨️ / F1)">⌨️</button>
       <button class="btn-character-select" id="btn-character-select" title="切换角色">&#x1f464;</button>
       <button class="btn-settings" id="btn-settings" title="settings">&#x2699;</button>
       <button class="btn-minimize" id="btn-minimize" title="minimize">_</button>
@@ -192,6 +193,16 @@
         <span id="opacity-value">95%</span>
       </div>
 
+      <!-- ★ 快捷键与防打字设置 -->
+      <div class="setting-section-divider"><span>快捷键与防打字设定</span></div>
+      <div class="setting-item">
+        <label>桌宠快捷键管理</label>
+        <button class="btn-open-shortcuts-settings" id="btn-open-shortcuts-settings" style="padding:6px 14px;border-radius:8px;border:1px solid var(--primary-color);background:rgba(217,79,79,0.1);color:var(--primary-color);font-size:12px;font-weight:bold;cursor:pointer;">⌨️ 打开快捷键一览与自定义</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-item-description">支持查看完整快捷键功能一览、一键解除全部快捷键（自由打字）、防打字模式（仅方向键控制）及自定义键位录制。</div>
+      </div>
+
       <!-- ★ 角色提示词编辑 -->
       <div class="setting-section-divider"><span>角色提示词设定</span></div>
       <div class="setting-item">
@@ -365,6 +376,7 @@
       <button class="pet-control-btn btn-toggle-sleep" id="btn-toggle-sleep" title="抱尾睡觉（Z / 快捷键 8）"></button>
       <button class="pet-control-btn btn-toggle-wander" id="btn-toggle-wander" title="自动漫步（T / 快捷键 4）"></button>
       <button class="pet-control-btn btn-pet-scale" id="btn-pet-scale" title="大小滑动窗口（缩放）"></button>
+      <button class="pet-control-btn btn-pet-shortcuts" id="btn-pet-shortcuts" title="快捷键一览与自定义 (⌨️)"></button>
       <button class="pet-control-btn btn-pet-actions" id="btn-pet-actions" title="动作百宝箱（右键桌宠）"></button>
       <button class="pet-control-btn btn-switch-web" id="btn-switch-web" title="切换到网页模式"></button>
     </div>
@@ -407,6 +419,9 @@
     </div>
   </div>
 
+  <!-- 快捷键一览与自定义弹出面板（全局直达，双形态通达） -->
+  <div class="pet-shortcuts-menu" id="pet-shortcuts-menu"></div>
+
   <!-- Live2D & Pixi 本地运行库（同步直载，杜绝异步竞争与脚本冲突） -->
   <script src="../lib/pixi.min.js"></script>
   <script src="../lib/live2d.min.js"></script>
@@ -423,6 +438,7 @@
   <script src="../../角色-若曦/角色设定.js"></script>
   <script src="../../角色-惠惠/角色设定.js"></script>
   <script src="../../角色-初音未来/角色设定.js"></script>
+  <script src="../../角色-土间埋/角色设定.js"></script>
   <script src="API服务商.js"></script>
   <script src="自定义角色管理器.js"></script>
   <script src="角色管理器.js"></script>
@@ -435,6 +451,7 @@
   <script src="代码编辑器.js"></script>
   <script src="设置管理器.js"></script>
   <script src="动作百宝箱.js"></script>
+  <script src="快捷键管理器.js"></script>
   <script src="桌宠模式.js"></script>
   <script src="主界面.js"></script>
 </body>
