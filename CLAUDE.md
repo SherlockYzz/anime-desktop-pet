@@ -139,6 +139,15 @@ npm run build    # 构建当前平台安装包
 - Live2D 加载失败 → 自动降级到 GIF 模式（`动态形象.gif`）
 - 显示模式：auto / gif / web
 
+### ⚡ 版本发布与桌面快捷方式铁律（用户硬性要求）
+每次版本升级与代码更新后，**必须且必定**执行以下两步闭环：
+1. 运行 `npm run build:win`（或 `electron-builder --dir`）重新打包 `dist/win-unpacked/AI桌宠.exe` 与安装包，确保编译包内代码为最新；
+2. 自动同步更新桌面快捷方式（`F:\Desktop\桌面收纳\AI 与大模型\AI桌宠.lnk`、`F:\Desktop\AI桌宠.lnk` 及备份）：
+   - `TargetPath`: `F:\Desktop\.DeskBox\文件夹\项目与开发\二次元桌宠项目\dist\win-unpacked\AI桌宠.exe`
+   - `WorkingDirectory`: `F:\Desktop\.DeskBox\文件夹\项目与开发\二次元桌宠项目\dist\win-unpacked`
+   - `Arguments`: `""`（不附加参数）
+   - `Description`: 必须同步更新为最新版本号与特性描述（如 `二次元AI桌宠 v6.1.1`），严禁残留旧版本号！
+
 ---
 
 ## 关键文件索引
