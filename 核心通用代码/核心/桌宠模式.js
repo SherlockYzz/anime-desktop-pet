@@ -12,12 +12,23 @@ class PetMode {
     this._everTransitioned = false;
     this._model = null;
     this._pixiApp = null;
-    this._renderMode = null; // 'live2d' | 'vrm' | 'gif'
+    this._renderMode = null; // 'live2d' | 'vrm' | 'sprite' | 'gif'
     this._idleTimer = null;
     this._lastInteraction = Date.now();
     // ★ 鼠标追踪
     this._mouseTrackHandler = null;
     this._mouseTrackEnabled = true; // 可配置
+
+    // ★ 移动系统（精灵帧桌宠：跑/跳/四向移动/自动漫步）
+    this._keys = { left: false, right: false, up: false, down: false };
+    this._moveRaf = null;
+    this._moving = false;
+    this._facing = 'right';
+    this._wanderActive = false;
+    this._wanderDir = 0;
+    this._wanderSpeed = 1.4;
+    this._wanderTimer = null;
+    this._moveSpeed = 5;
   }
 
   init(skipTransition) {
@@ -30,33 +41,60 @@ class PetMode {
     const area = document.getElementById('pet-character-area');
     if (!area) return;
 
-    // 拖拽
-    area.addEventListener('mousedown', (e) => {
+    // ★ 拖拽 = 拖动整个桌宠窗口（桌面宠物应该跟随鼠标在整个桌面移动）
+    area.addEventListener('mousedown', async (e) => {
       if (document.body.classList.contains('web-mode-active')) return;
-      const r = area.getBoundingClientRect();
-      this._dragStart = { x: e.clientX, y: e.clientY, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
-      this._dragging = true; this._moved = false;
       e.preventDefault();
+      this._dragging = true; this._moved = false;
+      this._dragStart = { sx: e.screenX, sy: e.screenY, wx: 0, wy: 0 };
+      try {
+        const b = await window.electronAPI?.getWindowBounds?.();
+        if (b) { this._dragStart.wx = b.x; this._dragStart.wy = b.y; }
+      } catch (err) { /* 忽略 */ }
     });
 
     document.addEventListener('mousemove', (e) => {
       if (!this._dragging) return;
-      const dx = e.clientX - this._dragStart.x, dy = e.clientY - this._dragStart.y;
+      // 用屏幕坐标计算位移，避免窗口移动后 clientX 反馈抖动
+      const dx = e.screenX - this._dragStart.sx, dy = e.screenY - this._dragStart.sy;
       if (!this._moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
       this._moved = true;
-      area.style.margin = '0';
-      area.style.left = (this._dragStart.cx + dx - area.clientWidth / 2) + 'px';
-      area.style.top = (this._dragStart.cy + dy - area.clientHeight / 2) + 'px';
+      window.electronAPI?.setWindowPosition?.(this._dragStart.wx + dx, this._dragStart.wy + dy);
+      if (dx < -2) this._setMoveAnim(-1, 0);
+      else if (dx > 2) this._setMoveAnim(1, 0);
+      this._lastInteraction = Date.now();
     });
 
-    document.addEventListener('mouseup', () => { this._dragging = false; });
+    document.addEventListener('mouseup', () => {
+      if (this._dragging && this._moved) this._endMove();
+      this._dragging = false;
+    });
 
     document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter(false, true));
     document.getElementById('btn-switch-web')?.addEventListener('click', () => this.exit(true));
+    document.getElementById('btn-toggle-wander')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleWander(); });
 
+    // ★ 键盘：方向键 / WASD 四向移动，空格跳跃，E 切换工作，T 自动漫步
+    const MOVE_KEYS = {
+      ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+      a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down'
+    };
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && document.body.classList.contains('web-mode-active')) this.enter();
+      if (e.key === 'Escape' && document.body.classList.contains('web-mode-active')) { this.enter(); return; }
+      if (document.body.classList.contains('web-mode-active')) return;
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+      const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
+      if (dir) { this._keys[dir] = true; e.preventDefault(); this._lastInteraction = Date.now(); return; }
+      if (e.key === ' ') { e.preventDefault(); this._spriteCall('jump'); }
+      else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); this._spriteCall('toggleWork'); }
+      else if (e.key === 't' || e.key === 'T') { e.preventDefault(); this._toggleWander(); }
     });
+    document.addEventListener('keyup', (e) => {
+      const dir = MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()];
+      if (dir) this._keys[dir] = false;
+    });
+    window.addEventListener('blur', () => { this._keys = { left: false, right: false, up: false, down: false }; });
   }
 
   // === 形态切换 ===
@@ -98,6 +136,7 @@ class PetMode {
         this._startIdleTimer();
         this._showBubble(window.characterManager.getRandomLine('boot'));
         this._startMouseTracking();
+        this._startMovementLoop();
         this._everTransitioned = true;
         this._safeUnlockTransition();
         return;
@@ -109,6 +148,7 @@ class PetMode {
       this._startIdleTimer();
       this._showBubble(window.characterManager.getRandomLine('boot'));
       this._startMouseTracking();
+      this._startMovementLoop();
       requestAnimationFrame(() => { this._safeUnlockTransition(); });
     } catch (e) {
       console.warn('[PetMode] 进入桌宠模式出错:', e);
@@ -125,6 +165,10 @@ class PetMode {
     this._transitioning = true;
     this._armTransitionLock();
     this._stopMouseTracking();
+    this._stopMovementLoop();
+    this._stopWander();
+    const wanderBtn = document.getElementById('btn-toggle-wander');
+    if (wanderBtn) wanderBtn.classList.remove('active');
 
     try {
       this.app.hideSettings?.();
@@ -137,12 +181,14 @@ class PetMode {
       setTimeout(() => {
         this._cleanupLive2D();
         this._cleanupVRM();
+        this._cleanupSprite();
         this._renderMode = null;
         const gif = document.getElementById('pet-gif');
         if (gif) { gif.src = ''; gif.style.display = 'none'; }
         const canvas = document.getElementById('pet-canvas');
         if (canvas) canvas.style.display = '';
-        window.live2dManager?.showFallback();
+        // ★ 切回网页模式时刷新聊天页角色显示（精灵表/模型/GIF），不要只显示封面
+        window.live2dManager?.switchToWebMode?.();
         this._safeUnlockTransition();
       }, 350);
     } catch (e) {
@@ -176,6 +222,8 @@ class PetMode {
       } else if (this._renderMode === 'live2d' && this._model) {
         // Live2D：聚焦视线
         try { this._model.focus(e.clientX - r.left, e.clientY - r.top); } catch (e) {}
+      } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
+        // 精灵表：16 向视线由引擎内部 document mousemove 处理，此处无需重复
       }
     };
 
@@ -187,6 +235,100 @@ class PetMode {
       document.removeEventListener('mousemove', this._mouseTrackHandler);
       this._mouseTrackHandler = null;
     }
+  }
+
+  // === ★ 移动系统：精灵帧桌宠的跑/跳/四向移动 ===
+  /** 主循环：每帧根据按键/自动漫步计算位移并移动窗口 */
+  _startMovementLoop() {
+    if (this._moveRaf) return;
+    const step = () => {
+      this._moveRaf = requestAnimationFrame(step);
+      if (document.body.classList.contains('web-mode-active')) return;
+      const k = this._keys;
+      let dx = 0, dy = 0;
+      if (k.left) dx -= 1;
+      if (k.right) dx += 1;
+      if (k.up) dy -= 1;
+      if (k.down) dy += 1;
+      // 无键盘输入时走自动漫步
+      if (!dx && !dy && this._wanderActive && this._wanderDir) {
+        dx = this._wanderDir * (this._wanderSpeed / this._moveSpeed);
+      }
+      if (dx || dy) {
+        window.electronAPI?.moveWindowBy?.(dx * this._moveSpeed, dy * this._moveSpeed);
+        this._setMoveAnim(dx, dy);
+        this._moving = true;
+      } else if (this._moving) {
+        this._endMove();
+      }
+    };
+    this._moveRaf = requestAnimationFrame(step);
+  }
+
+  _stopMovementLoop() {
+    if (this._moveRaf) { cancelAnimationFrame(this._moveRaf); this._moveRaf = null; }
+    this._moving = false;
+    this._keys = { left: false, right: false, up: false, down: false };
+  }
+
+  /** 移动时切换对应方向的跑步动画；方向键上下移动也复用跑步姿态 */
+  _setMoveAnim(dx, dy) {
+    const m = window.spriteAtlasManager;
+    if (this._renderMode !== 'sprite' || !m || !m.ready) return;
+    const cur = m.S.anim;
+    const movable = ['idle', 'sleep', 'look-row-9', 'look-row-10', 'running-left', 'running-right'];
+    if (!movable.includes(cur)) return; // 不打断挥手/跳跃等一次性动作
+    if (dx < 0) { m.setAnim('running-left'); this._facing = 'left'; }
+    else if (dx > 0) { m.setAnim('running-right'); this._facing = 'right'; }
+    else if (dy !== 0) { m.setAnim(this._facing === 'left' ? 'running-left' : 'running-right'); }
+  }
+
+  /** 移动结束：回到待机 */
+  _endMove() {
+    this._moving = false;
+    const m = window.spriteAtlasManager;
+    if (this._renderMode === 'sprite' && m && m.ready) m.goIdle();
+  }
+
+  /** 调用精灵引擎动作（跳跃/工作切换等） */
+  _spriteCall(action) {
+    const m = window.spriteAtlasManager;
+    if (!m || !m.ready) return;
+    if (action === 'jump') m.jump();
+    else if (action === 'toggleWork') m.toggleWork();
+    this._lastInteraction = Date.now();
+  }
+
+  /** 自动漫步：随机左右走动（新功能） */
+  _toggleWander(on) {
+    const next = (typeof on === 'boolean') ? on : !this._wanderActive;
+    if (next) this._startWander(); else this._stopWander();
+    const btn = document.getElementById('btn-toggle-wander');
+    if (btn) btn.classList.toggle('active', this._wanderActive);
+    this._showBubble(this._wanderActive ? '好耶，我可以在桌面上溜达啦~' : '那我乖乖待着。');
+  }
+
+  _startWander() {
+    if (this._wanderActive) return;
+    this._wanderActive = true;
+    const tick = () => {
+      if (!this._wanderActive) return;
+      this._wanderDir = Math.random() > 0.5 ? 1 : -1;
+      this._wanderSpeed = 0.9 + Math.random() * 0.9;
+      this._wanderTimer = setTimeout(() => {
+        if (!this._wanderActive) return;
+        this._wanderDir = 0;
+        this._endMove();
+        this._wanderTimer = setTimeout(tick, 1500 + Math.random() * 3500);
+      }, 1200 + Math.random() * 2500);
+    };
+    tick();
+  }
+
+  _stopWander() {
+    this._wanderActive = false;
+    this._wanderDir = 0;
+    if (this._wanderTimer) { clearTimeout(this._wanderTimer); this._wanderTimer = null; }
   }
 
   // === 角色加载（自动降级：Live2D > VRM > GIF，使用缓存检查）
@@ -213,6 +355,22 @@ class PetMode {
     this._showPetFallback();
 
     let loaded = false;
+
+    // ★ 精灵表角色（若曦）：ChatGPT Pets v2 精灵表 + 状态机 + 16 向视线
+    if (!loaded && window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(char)) {
+      try {
+        this._cleanupLive2D();
+        this._cleanupVRM();
+        const ok = await window.spriteAtlasManager.loadFor(char, canvas);
+        if (ok) {
+          canvas.style.display = '';
+          if (gif) gif.style.display = 'none';
+          loaded = true; this._renderMode = 'sprite';
+          const fb = document.querySelector('.pet-fallback-img');
+          if (fb) fb.remove();
+        }
+      } catch (e) { loaded = false; }
+    }
 
     // ★ 先检查 Live2D 模型文件是否存在，再决定是否加载 PIXI CDN
     if (char.live2d?.modelPath) {
@@ -309,6 +467,12 @@ class PetMode {
     const canvas = document.getElementById('pet-canvas');
     const gif = document.getElementById('pet-gif');
 
+    // ★ 幂等绑定：先移除上一次的监听器，避免多次进出桌宠模式后点击重复触发
+    if (this._clickHandler) {
+      canvas?.removeEventListener('mousedown', this._clickHandler);
+      gif?.removeEventListener('mousedown', this._clickHandler);
+    }
+
     const handler = (e) => {
       if (this._moved) return;
       this._clickCount++;
@@ -322,7 +486,12 @@ class PetMode {
         this._lastInteraction = Date.now();
       } else if (this._clickCount === 2) {
         this._clickCount = 0;
-        this.exit(true); // ★ 强制退出，避免transition锁卡住
+        if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
+          window.spriteAtlasManager.jump();
+          this._lastInteraction = Date.now();
+        } else {
+          this.exit(true); // ★ 强制退出，避免transition锁卡住
+        }
       } else {
         this._clickTimer = setTimeout(() => {
           if (this._clickCount === 1) {
@@ -335,6 +504,7 @@ class PetMode {
       }
     };
 
+    this._clickHandler = handler;
     if (canvas) canvas.addEventListener('mousedown', handler);
     if (gif) gif.addEventListener('mousedown', handler);
   }
@@ -342,6 +512,8 @@ class PetMode {
   _playTap() {
     if (this._renderMode === 'vrm' && window.vrmManager) {
       window.vrmManager.playAnimation('tap');
+    } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
+      window.spriteAtlasManager.wave();
     } else if (this._model) {
       this._model.motion('TapBody');
     }
@@ -370,7 +542,7 @@ class PetMode {
     this._idleTimer = setInterval(() => {
       if (Date.now() - this._lastInteraction >= 30000) {
         this._showBubble(window.characterManager.getRandomLine('idle'));
-        this._lastInteraction = Date.now();
+        if (this._renderMode !== 'sprite') this._lastInteraction = Date.now();
       }
     }, 10000);
   }
@@ -386,6 +558,12 @@ class PetMode {
     if (this._pixiApp) {
       if (this._model) { this._pixiApp.stage.removeChild(this._model); this._model.destroy(); this._model = null; }
       this._pixiApp.destroy(true); this._pixiApp = null;
+    }
+  }
+
+  _cleanupSprite() {
+    if (window.spriteAtlasManager && this._renderMode === 'sprite') {
+      window.spriteAtlasManager.destroy();
     }
   }
 

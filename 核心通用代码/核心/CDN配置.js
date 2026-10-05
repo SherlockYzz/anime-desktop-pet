@@ -1,9 +1,10 @@
-// 二次元桌宠 - CDN 资源配置
-// 集中管理所有 CDN URL，方便统一升级版本
+// 二次元桌宠 - 前端依赖资源配置（★ 2026-09-15 本地化：原 jsdelivr CDN 直连超时导致 Live2D/VRM 加载不稳定）
+// 集中管理所有依赖文件，方便统一升级版本
 window.CDN_CONFIG = {
-  pixi: 'https://cdn.jsdelivr.net/npm/pixi.js@7.3.3/dist/pixi.min.js',
-  pixiLive2d: 'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js',
-  three: 'https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js',
-  threeGltfLoader: 'https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/GLTFLoader.js',
-  threeVrm: 'https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.0.6/lib/three-vrm.js',
+  pixi: '../lib/pixi.min.js',
+  pixiLive2d: '../lib/pixi-live2d-display.min.js',
+  cubismCore: '../lib/live2dcubismcore.min.js',   // ★ Cubism4 核心运行时：加载 .moc3 模型必需
+  three: '../lib/three.min.js',
+  threeGltfLoader: '../lib/GLTFLoader.js',
+  threeVrm: '../lib/three-vrm.js',
 };

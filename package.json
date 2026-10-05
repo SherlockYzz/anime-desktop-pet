@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "2.0.0",
-  "description": "二次元AI桌宠 - 支持多角色切换、自定义角色、导入/导出的桌面宠物",
+  "version": "4.0.0",
+  "description": "二次元AI桌宠 - 精灵帧/Live2D 多角色桌面宠物，支持若曦精灵帧角色、桌面移动交互、自定义角色",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
@@ -16,7 +16,7 @@
     "live2d",
     "ai",
     "desktop-pet",
-    "mimo"
+    "mimo", "sprite-animation", "精灵帧"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -39,6 +39,7 @@
       "角色-零二/**/*",
       "角色-高木同学/**/*",
       "角色-雪之下雪乃/**/*",
+      "角色-若曦/**/*",
       "node_modules/**/*"
     ],
     "win": {

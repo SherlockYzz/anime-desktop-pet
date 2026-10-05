@@ -44,8 +44,12 @@ function createWindow() {
       nodeIntegration: false,
       backgroundThrottling: false,
       v8CacheOptions: 'code',
-      webSecurity: true,
-      allowRunningInsecureContent: false
+      // ★ 2026-09-16 必须放开 file:// 本地文件访问：pixi-live2d-display 用 XHR 加载 model3.json/moc3，
+      //    默认 webSecurity:true 会拦截 file:// 读取导致 Live2D 加载失败降级为封面图。桌宠为本地应用，风险可控。
+      webSecurity: false,
+      allowRunningInsecureContent: false,
+      allowFileAccessFromFileURLs: true,
+      allowUniversalAccessFromFileURLs: true
     }
   });
 
@@ -130,6 +134,42 @@ ipcMain.handle('get-screen-size', () => {
 
 ipcMain.handle('set-always-on-top', (event, flag) => {
   if (mainWindow) mainWindow.setAlwaysOnTop(flag);
+});
+
+// ★ 桌宠移动：工作区 / 窗口位置 / 移动窗口
+ipcMain.handle('get-work-area', () => {
+  const wa = screen.getPrimaryDisplay().workArea;
+  return { x: wa.x, y: wa.y, width: wa.width, height: wa.height };
+});
+
+ipcMain.handle('get-window-bounds', () => {
+  if (!mainWindow) return null;
+  const [x, y] = mainWindow.getPosition();
+  const [width, height] = mainWindow.getSize();
+  return { x, y, width, height };
+});
+
+/** 把窗口限制在工作区内，避免桌宠跑出屏幕 */
+function clampToWorkArea(x, y, w, h) {
+  const wa = screen.getPrimaryDisplay().workArea;
+  const nx = Math.max(wa.x, Math.min(wa.x + wa.width - w, Math.round(x)));
+  const ny = Math.max(wa.y, Math.min(wa.y + wa.height - h, Math.round(y)));
+  return { x: nx, y: ny };
+}
+
+ipcMain.on('move-window-by', (event, dx, dy) => {
+  if (!mainWindow) return;
+  const [x, y] = mainWindow.getPosition();
+  const [w, h] = mainWindow.getSize();
+  const p = clampToWorkArea(x + Number(dx || 0), y + Number(dy || 0), w, h);
+  mainWindow.setPosition(p.x, p.y);
+});
+
+ipcMain.on('set-window-position', (event, x, y) => {
+  if (!mainWindow) return;
+  const [w, h] = mainWindow.getSize();
+  const p = clampToWorkArea(x, y, w, h);
+  mainWindow.setPosition(p.x, p.y);
 });
 
 ipcMain.handle('minimize-window', () => {

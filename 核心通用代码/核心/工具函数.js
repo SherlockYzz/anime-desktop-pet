@@ -9,7 +9,8 @@ const CHARACTER_FOLDER_MAP = {
   yukino: '角色-雪之下雪乃',
   takagi: '角色-高木同学',
   rem: '角色-蕾姆',
-  zerotwo: '角色-零二'
+  zerotwo: '角色-零二',
+  ruoxi: '角色-若曦'
 };
 
 /** HTML转义：防止XSS注入 */

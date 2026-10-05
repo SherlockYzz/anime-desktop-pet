@@ -8,6 +8,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onShowSettings: (callback) => ipcRenderer.on('show-settings', callback),
   updateTrayLabel: (label, avatarPath) => ipcRenderer.invoke('update-tray-label', label, avatarPath),
 
+  // ★ 桌宠移动
+  getWorkArea: () => ipcRenderer.invoke('get-work-area'),
+  getWindowBounds: () => ipcRenderer.invoke('get-window-bounds'),
+  moveWindowBy: (dx, dy) => ipcRenderer.send('move-window-by', dx, dy),
+  setWindowPosition: (x, y) => ipcRenderer.send('set-window-position', x, y),
+
   // 自定义角色
   saveCustomCharacter: (data) => ipcRenderer.invoke('save-custom-character', data),
   getCustomCharacters: () => ipcRenderer.invoke('get-custom-characters'),

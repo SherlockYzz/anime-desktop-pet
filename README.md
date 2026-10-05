@@ -2,7 +2,7 @@
 
 # ✨ ReDame · 二次元AI桌宠
 
-**Live2D 动态形象 · 五大经典角色 · AI 智能聊天 · 原作台词集 · 关键词触发**
+**精灵帧 / Live2D 动态形象 · 六大角色 · AI 智能聊天 · 桌面移动交互 · 原作台词集 · 关键词触发**
 
 <br>
 
@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
-  <img src="https://img.shields.io/badge/Version-2.0.0-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-4.0.0-8A2BE2?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/VRM-Three.js-green?style=for-the-badge" alt="VRM">
 </p>
 
@@ -107,10 +107,30 @@
     <small>💜 毒舌傲娇 · 冰山美人</small>
   </td>
   <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%8B%A5%E6%9B%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #f472b6"><br>
+    <b>若曦</b><br>
+    <sub>精灵帧桌宠</sub><br>
+    <small>🌸 灵动元气 · 16 向视线 · 桌面漫步</small>
+  </td>
+</tr>
+<tr>
+  <td align="center" width="200">
     <i style="font-size:48px">➕</i><br>
     <b>自定义角色</b><br>
     <sub>等你来创造！</sub><br>
     <small>✨ 创建属于你的专属桌宠</small>
+  </td>
+  <td align="center" width="200">
+    <i style="font-size:48px">🌟</i><br>
+    <b>更多角色</b><br>
+    <sub>敬请期待</sub><br>
+    <small>🚀 初音未来、时崎狂三……</small>
+  </td>
+  <td align="center" width="200">
+    <i style="font-size:48px">🎮</i><br>
+    <b>桌宠小游戏</b><br>
+    <sub>计划中</sub><br>
+    <small>🧩 戳泡泡、养成等</small>
   </td>
 </tr>
 </table>
@@ -120,8 +140,10 @@
 
 | 特性 | 说明 |
 |------|------|
-| 🎭 **多角色切换** | 五大经典角色，每个角色独立主题色、独立人设、独立台词 |
+| 🎭 **多角色切换** | 六大角色（加藤惠、蕾姆、02、高木、雪乃、若曦），每个角色独立主题色、独立人设、独立台词 |
 | 🎨 **Live2D 动态形象** | 生动表情和动作，点击互动有反馈 |
+| 🖼️ **精灵帧引擎** | 精灵表逐帧动画：11 组动作、16 向视线追踪、睡眠/专注姿态 |
+| 🏃 **桌面移动** | 四向移动、跳跃、拖拽、自动漫步，桌宠在桌面上真实走动 |
 | 🧠 **AI 智能聊天** | 对接 AI 大模型，角色性格鲜明，记忆你的对话 |
 | 📚 **原作台词集** | 独立经典台词库，启动/点击/待机/告别时随机展示 |
 | ⚡ **关键词触发台词** | 聊天命中关键词自动触发台词，秒级响应 |
@@ -139,6 +161,35 @@
 
 ---
 
+
+### v4.0.0 重磅升级：若曦精灵帧桌宠
+
+<table>
+<tr>
+  <td>🎀 <b>新角色「若曦」</b></td>
+  <td>ChatGPT Pets v2 官方精灵表（1536×2288）· 11 组动作 · 16 向视线追踪 · 睡眠姿态</td>
+</tr>
+<tr>
+  <td>🖼️ <b>精灵帧引擎</b></td>
+  <td>全新 Sprite Atlas 渲染器，与 Live2D / VRM / GIF 同链共存，桌宠页与聊天页双端渲染</td>
+</tr>
+<tr>
+  <td>🏃 <b>桌面移动交互</b></td>
+  <td>方向键 / WASD 四向移动（窗口真实移动）· 空格跳跃 · 单击挥手 · 双击跳跃 · 拖拽移动</td>
+</tr>
+<tr>
+  <td>🐾 <b>自动漫步</b></td>
+  <td>一键或按 T 让角色自己在桌面上溜达，走走停停，随机转向，不跑出屏幕</td>
+</tr>
+<tr>
+  <td>💤 <b>姿态切换</b></td>
+  <td>E 键切换「专注工作」姿态 · 支持失败 / 等待 / 验收等情绪动作映射</td>
+</tr>
+<tr>
+  <td>📦 <b>本地化依赖</b></td>
+  <td>Live2D / Three.js / VRM 等运行库全部内置本地，离线可用，不再依赖 CDN</td>
+</tr>
+</table>
 
 ### v2.0.0 重磅升级
 
@@ -206,6 +257,11 @@
   <td width="40" align="center">✅</td>
   <td><b>v2.0.0</b></td>
   <td>新增雪之下雪乃、高木同学 · 原作台词集 · 关键词触发 · 角色顺序更换 · 恢复默认功能</td>
+</tr>
+<tr>
+  <td width="40" align="center">✅</td>
+  <td><b>v4.0.0</b></td>
+  <td>若曦精灵帧角色 · 精灵帧引擎 · 桌面移动交互 · 自动漫步 · 本地化依赖</td>
 </tr>
 <tr>
   <td width="40" align="center">🔄</td>
@@ -292,6 +348,12 @@ AI 提供三种回复模式，在设置面板切换，灵活平衡速度与深�
 | 点击 👤 | 切换角色 |
 | 单击角色 | 随机回应（优先从原作台词集选取） |
 | 连续点击 | 触发吐槽/小情绪 |
+| 方向键 / WASD | 四向移动桌宠（窗口真实移动） |
+| 空格 | 跳跃 |
+| 双击角色 | 跳跃 |
+| 拖拽角色 | 拖着桌宠走 |
+| `T` / 🐾 按钮 | 自动漫步 |
+| `E` 键 | 切换「专注工作」姿态 |
 | `Ctrl+Shift+P` | 显示/隐藏窗口 |
 
 > 长时间无操作时，角色会主动找你聊天哦！部分角色还有生日彩蛋~

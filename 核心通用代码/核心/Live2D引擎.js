@@ -71,6 +71,8 @@ class Live2DManager {
         document.head.appendChild(s);
       });
       addScript(window.CDN_CONFIG.pixi)
+        // ★ Cubism4 核心必须比 pixi-live2d-display 先加载，否则 .moc3 模型无法解析
+        .then(() => addScript(window.CDN_CONFIG.cubismCore))
         .then(() => addScript(window.CDN_CONFIG.pixiLive2d))
         .then(resolve)
         .catch(reject);
@@ -204,6 +206,15 @@ class Live2DManager {
       return false;
     }
 
+    // 清理上一角色的精灵表模式（若曦）
+    this._cleanupSpriteMode();
+
+    // 精灵表角色（若曦）：ChatGPT Pets v2 精灵表 + 状态机 + 16 向视线（优先级最高）
+    if (window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(character)) {
+      const spriteOk = await this.loadSpriteMode(character);
+      if (spriteOk) return true;
+    }
+
     // 第一优先：Live2D — 先缓存检查，避免不必要的HTTP请求
     if (character.live2d?.modelPath) {
       const exists = await window.characterManager.checkModelFileExists(character.live2d.modelPath);
@@ -304,6 +315,7 @@ class Live2DManager {
   // 加载指定路径的Live2D模型
   async loadCustomModel(modelPath, characterName) {
     try {
+      this._cleanupSpriteMode();
       if (this.model) {
         this.app.stage.removeChild(this.model);
         this.model.destroy();
@@ -339,6 +351,66 @@ class Live2DManager {
       // 恢复canvas显示
       const canvas = document.getElementById('live2d-canvas');
       if (canvas) canvas.style.display = '';
+    }
+  }
+
+  // 清理精灵表模式（若曦）
+  _cleanupSpriteMode() {
+    if (this.isSpriteMode) {
+      this.isSpriteMode = false;
+      if (window.spriteAtlasManager) window.spriteAtlasManager.destroy();
+      // 移除精灵专属画布，恢复 live2d-canvas 显示
+      const spriteCanvas = document.getElementById('sprite-canvas');
+      if (spriteCanvas) spriteCanvas.style.display = 'none';
+      const canvas = document.getElementById('live2d-canvas');
+      if (canvas) canvas.style.display = '';
+    }
+  }
+
+  // 精灵表模式：ChatGPT Pets v2 精灵表（若曦）— 逐帧动画 + 16 向视线
+  async loadSpriteMode(character) {
+    try {
+      if (!window.spriteAtlasManager || !SpriteAtlasManager.isSpriteCharacter(character)) return false;
+
+      // 清理其它渲染模式，释放 canvas 上的 WebGL 上下文
+      if (this.model) {
+        this.app.stage.removeChild(this.model);
+        this.model.destroy();
+        this.model = null;
+      }
+      if (this.app) { this.app.destroy(false); this.app = null; }
+      this._cleanupGifMode();
+      this._cleanupVrmMode();
+      const existingFallback = document.getElementById('live2d-fallback');
+      if (existingFallback) existingFallback.remove();
+
+      const canvas = document.getElementById('live2d-canvas');
+      const container = document.getElementById('live2d-container');
+      if (!container) return false;
+
+      // ★ 精灵表必须用独立的 2D 画布：live2d-canvas 已被 PIXI 创建为 WebGL 上下文，
+      //    同一 canvas 无法再获取 '2d' 上下文，会导致精灵画不上去。
+      if (canvas) canvas.style.display = 'none';
+      let spriteCanvas = document.getElementById('sprite-canvas');
+      if (!spriteCanvas) {
+        spriteCanvas = document.createElement('canvas');
+        spriteCanvas.id = 'sprite-canvas';
+        spriteCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;';
+        container.appendChild(spriteCanvas);
+      }
+      spriteCanvas.style.display = 'block';
+
+      const ok = await window.spriteAtlasManager.loadFor(character, spriteCanvas);
+      if (!ok) {
+        spriteCanvas.style.display = 'none';
+        if (canvas) canvas.style.display = '';
+        return false;
+      }
+      this.isSpriteMode = true;
+      this.currentRenderMode = 'sprite';
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -411,19 +483,22 @@ class Live2DManager {
     // Live2D 模式
     if (!this.model) return;
 
+    // ★ 动作映射改为“候选列表+逐个回退”：不同模型动作名不同（高木:Poke/Tease/Sleep... 旧模型:TapBody），按序尝试第一个存在的动作
     const animations = {
-      'tap': ['TapBody', 'TapHead', ''],
-      'happy': ['Idle', ''],
-      'idle': ['Idle', ''],
-      'wave': [''],
-      'normal': ['Idle', '']
+      'tap': ['Poke', 'TapBody', 'TapHead', 'Idle'],
+      'happy': ['Tease', 'TeaseSmile', 'Idle'],
+      'idle': ['Idle'],
+      'wave': ['Tease', 'Idle'],
+      'sleep': ['Sleep', 'Idle'],
+      'surprised': ['Surprised', 'Idle'],
+      'wakeup': ['WakeUp', 'Idle'],
+      'normal': ['Idle']
     };
 
     const animationList = animations[type] || animations['normal'];
-    const animation = animationList[Math.floor(Math.random() * animationList.length)];
-
-    if (animation && this.model.motion) {
-      this.model.motion(animation);
+    if (!this.model.motion) return;
+    for (const animation of animationList) {
+      try { this.model.motion(animation); break; } catch (e) {}
     }
 
     this.playExpression(type);
@@ -439,19 +514,26 @@ class Live2DManager {
     // Live2D 模式
     if (!this.model || !this.model.internalModel) return;
 
+    // ★ 表情映射同样改为候选回退：高木模型使用 Neutral/TeaseSmile/Wink/Blush 等命名，旧模型用 f01/f02/f04
     const expressions = {
-      'happy': 'f01',
-      'normal': 'f01',
-      'annoyed': 'f02',
-      'thinking': 'f04',
-      'idle': 'f01'
+      'happy': ['TeaseSmile', 'Smug', 'f01'],
+      'normal': ['Neutral', 'f01'],
+      'annoyed': ['Smug', 'Surprised', 'f02'],
+      'thinking': ['Neutral', 'f04'],
+      'blush': ['Blush', 'f01'],
+      'wink': ['Wink', 'f01'],
+      'sleep': ['Sleepy', 'f01'],
+      'surprised': ['Surprised', 'f01'],
+      'idle': ['Neutral', 'f01']
     };
 
-    const expression = expressions[type] || expressions['normal'];
+    const expressionList = expressions[type] || expressions['normal'];
 
     try {
       if (this.model.internalModel.motionManager) {
-        this.model.expression(expression);
+        for (const expression of expressionList) {
+          try { this.model.expression(expression); break; } catch (e) {}
+        }
       }
     } catch (e) {}
   }
@@ -472,6 +554,11 @@ class Live2DManager {
   }
 
   triggerIdle() {
+    if (this.isSpriteMode && window.spriteAtlasManager) {
+      window.spriteAtlasManager.triggerIdle();
+      this.updateMood('normal');
+      return;
+    }
     this.playAnimation('idle');
     this.updateMood('normal');
   }
@@ -484,6 +571,12 @@ class Live2DManager {
   }
 
   updateByAIResponse(text) {
+    // 精灵表模式（若曦）— 情绪驱动动作
+    if (this.isSpriteMode && window.spriteAtlasManager) {
+      window.spriteAtlasManager.updateByAIResponse(text);
+      return;
+    }
+
     // VRM 模式委托
     if (this.isVrmMode && window.vrmManager) {
       const emotion = analyzeAIContent(text);
@@ -499,6 +592,7 @@ class Live2DManager {
   }
 
   showFallback() {
+    this._cleanupSpriteMode();
     const container = document.getElementById('live2d-container');
     const coverPath = window.characterManager?.getCoverPath() || '封面.png';
 
@@ -552,6 +646,8 @@ class Live2DManager {
     }
     // 清理VRM
     this._cleanupVrmMode();
+    // 清理精灵表（若曦）
+    this._cleanupSpriteMode();
     // 清理GIF相关
     this.gifElement = null;
     this.isGifMode = false;
@@ -585,6 +681,9 @@ class Live2DManager {
 
   // 切换到GIF模式
   async switchToGifMode() {
+    // 清理精灵表（若曦）
+    this._cleanupSpriteMode();
+
     // 清理Live2D模型
     if (this.model) {
       this.app.stage.removeChild(this.model);
@@ -609,6 +708,13 @@ class Live2DManager {
     this._cleanupGifMode();
     // 清理VRM
     this._cleanupVrmMode();
+
+    // ★ 精灵表角色（若曦）：单例引擎被桌宠画布重新绑定过，需重新绑定到网页容器
+    const character = window.characterManager?.getCurrentCharacter();
+    if (window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(character)) {
+      this.loadSpriteMode(character);
+      return;
+    }
 
     // 重新加载模型（自动降级）
     if (this.isInitialized && this.app) {

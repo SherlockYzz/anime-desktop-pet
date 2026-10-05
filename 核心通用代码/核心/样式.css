@@ -1706,6 +1706,43 @@ body.web-mode-active .pet-overlay {
   transform: scale(1.1);
 }
 
+/* 自动漫步按钮（切换按钮左侧） */
+.btn-toggle-wander {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -52px;
+  margin-top: 120px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  color: #888;
+  font-size: 16px;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 510;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 0;
+}
+.btn-toggle-wander::after {
+  content: '\\1F43E';
+}
+.btn-toggle-wander:hover {
+  background: rgba(240,130,150,0.8);
+  color: white;
+  transform: scale(1.1);
+}
+.btn-toggle-wander.active {
+  background: rgba(240,130,150,0.95);
+  color: white;
+  box-shadow: 0 0 12px rgba(240,130,150,0.7);
+}
+
 /* ===== 形态切换：opacity 过渡（非 display 切换）===== */
 
 /* 形态一（默认）：隐藏所有网页 UI（opacity 方式） */
