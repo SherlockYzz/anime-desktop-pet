@@ -707,12 +707,24 @@ class PetMode {
   }
 
   _playTap() {
+    // ★ 触发角色原生CV随机语音（如蕾姆26段原生语音包）
+    window.characterManager?.playRandomVoice();
+
     if (this._renderMode === 'vrm' && window.vrmManager) {
       window.vrmManager.playAnimation('tap');
     } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
       window.spriteAtlasManager.wave();
     } else if (this._model) {
-      this._model.motion('TapBody');
+      // ★ 兼容不同 Live2D 模型的动作分组命名（高木/加藤惠/蕾姆/惠惠/初音）
+      const candidates = ['TapBody', 'tap_body', 'tap_head', 'Poke', 'Tease', '', 'null', 'idle', 'Idle'];
+      if (typeof this._model.motion === 'function') {
+        for (const anim of candidates) {
+          try {
+            const played = this._model.motion(anim);
+            if (played !== false) break;
+          } catch (e) {}
+        }
+      }
     }
   }
 

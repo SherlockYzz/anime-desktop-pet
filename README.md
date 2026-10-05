@@ -1,16 +1,17 @@
-<div align="center">
+﻿<div align="center">
 
 # ✨ ReDame · 二次元AI桌宠
 
-**精灵帧 / Live2D 动态形象 · 六大角色 · AI 智能聊天 · 桌面移动交互 · 原作台词集 · 关键词触发**
+**双核 Live2D (Cubism 2/4) · 原生CV声库 · 八大角色 · 3D VRM · 精灵帧互动 · AI 智能聊天**
 
 <br>
 
 <p>
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
-  <img src="https://img.shields.io/badge/Live2D-Cubism-ff69b4?style=for-the-badge" alt="Live2D">
-  <img src="https://img.shields.io/badge/Version-5.1.0-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4-ff69b4?style=for-the-badge" alt="Live2D">
+  <img src="https://img.shields.io/badge/Version-6.1.1-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Voice-Native%20CV-00cec9?style=for-the-badge" alt="Voice">
   <img src="https://img.shields.io/badge/VRM-Three.js-green?style=for-the-badge" alt="VRM">
 </p>
 
@@ -115,22 +116,42 @@
 </tr>
 <tr>
   <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E6%83%A0%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #e53935"><br>
+    <b>惠惠</b><br>
+    <sub>为美好的世界献上祝福！</sub><br>
+    <small>💥 爆裂魔法 · 中二天才 · 傲娇脱力</small>
+  </td>
+  <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%88%9D%E9%9F%B3%E6%9C%AA%E6%9D%A5/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="120" height="120" style="border-radius:50%;border:3px solid #39c5bb"><br>
+    <b>初音未来</b><br>
+    <sub>VOCALOID</sub><br>
+    <small>🎵 虚拟歌姬 · 葱绿双马尾 · 治愈元气</small>
+  </td>
+  <td align="center" width="200">
     <i style="font-size:48px">➕</i><br>
     <b>自定义角色</b><br>
     <sub>等你来创造！</sub><br>
     <small>✨ 创建属于你的专属桌宠</small>
   </td>
+</tr>
+<tr>
   <td align="center" width="200">
     <i style="font-size:48px">🌟</i><br>
     <b>更多角色</b><br>
     <sub>敬请期待</sub><br>
-    <small>🚀 初音未来、时崎狂三……</small>
+    <small>🚀 时崎狂三、阿尔托莉雅……</small>
   </td>
   <td align="center" width="200">
     <i style="font-size:48px">🎮</i><br>
     <b>桌宠小游戏</b><br>
     <sub>计划中</sub><br>
     <small>🧩 戳泡泡、养成等</small>
+  </td>
+  <td align="center" width="200">
+    <i style="font-size:48px">🎙️</i><br>
+    <b>原生CV声库</b><br>
+    <sub>已实装</sub><br>
+    <small>🔊 水濑祈原声语音等</small>
   </td>
 </tr>
 </table>
@@ -140,8 +161,9 @@
 
 | 特性 | 说明 |
 |------|------|
-| 🎭 **多角色切换** | 六大角色（加藤惠、蕾姆、02、高木、雪乃、若曦），每个角色独立主题色、独立人设、独立台词 |
-| 🎨 **Live2D 动态形象** | 生动表情和动作，点击互动有反馈 |
+| 🎭 **多角色切换** | 八大角色（加藤惠、蕾姆、02、高木、雪乃、若曦、惠惠、初音未来），每个角色独立主题色、独立人设、独立台词 |
+| 🎨 **双核 Live2D 动态形象** | 原生兼容 Cubism 2 (`.moc`) 与 Cubism 4 (`.moc3`) 双引擎，生动表情、全套动作、点击交互与视线跟随 |
+| 🔊 **原生CV声库系统** | 蕾姆 26 段原版水濑祈音频直出，点击互动、特定情境随机唤醒清澈治愈语音 |
 | 🖼️ **精灵帧引擎** | 精灵表逐帧动画：11 组动作、16 向视线追踪、睡眠/专注姿态 |
 | 🏃 **桌面移动** | 四向移动、跳跃、拖拽、自动漫步，桌宠在桌面上真实走动 |
 | 🧠 **AI 智能聊天** | 对接 AI 大模型，角色性格鲜明，记忆你的对话 |
@@ -161,6 +183,39 @@
 
 ---
 
+
+### v6.1.1 重磅升级：惠惠与初音未来实装 · 双核 Live2D 引擎 · 蕾姆原版 CV 声库 · 官方高画质模型更替
+
+<table>
+<tr>
+  <td>💥 <b>新角色「惠惠」实装</b></td>
+  <td>《为美好的世界献上祝福！》官方原版 Cubism 4 Live2D 动态模型 · 29 组生动动作 · 烈焰红魔爆裂主题 · 专属眼罩与法杖互动 · 爆裂魔法经典长咏唱台词库</td>
+</tr>
+<tr>
+  <td>🎵 <b>新角色「初音未来」实装</b></td>
+  <td>《VOCALOID》经典轻量 Cubism 2 Live2D 动态形象 · 8 组标志性动作与甩葱律动 · 未来感葱绿赛博配色 · 元气治愈歌姬系统提示词与专属台词集</td>
+</tr>
+<tr>
+  <td>🎭 <b>加藤惠 Live2D 原版重磅实装</b></td>
+  <td>《一択彼女 加藤恵》官方 Cubism 2 动态资产实装 · 16 组原版动作 · 多套生动微表情 · 彻底告别静态降级</td>
+</tr>
+<tr>
+  <td>💙 <b>蕾姆高画质 Live2D 更替</b></td>
+  <td>全面更替低画质模型，实装 2048 高分辨率贴图原版动态模型 · 35 组细腻动作与呼吸物理演算</td>
+</tr>
+<tr>
+  <td>🔊 <b>原生 CV 声库系统实装</b></td>
+  <td>蕾姆实装 26 段原版水濑祈 CV 语音包 · 桌面点击、互动、唤醒时随机播放清脆语音</td>
+</tr>
+<tr>
+  <td>⚡ <b>Live2D 双核引擎 (Dual-Runtime)</b></td>
+  <td>内置本地 `live2d.min.js` (Cubism 2) 与 `live2dcubismcore.min.js` (Cubism 4)，同时原生支持 `.moc` 与 `.moc3` 两种模型格式，零冲突丝滑切换</td>
+</tr>
+<tr>
+  <td>🛡️ <b>底层地基跨引擎自愈加固</b></td>
+  <td>PIXI Application 实例惰性重建保障 · 悬浮桌宠与主窗口切角色毫秒级同步 · 纯降级封面全事件冒泡修复 · 3D VRM 视锥宽高比畸变彻底根除</td>
+</tr>
+</table>
 
 ### v5.1.0 重磅升级：若曦全套精灵帧实装、动作百宝箱系统与平滑走动
 

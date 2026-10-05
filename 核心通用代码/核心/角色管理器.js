@@ -560,6 +560,27 @@ class CharacterManager {
     const c = this.currentCharacter;
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
+
+  /** 播放角色原生CV随机语音（若角色配置了语音包） */
+  playRandomVoice(charId) {
+    const char = charId ? this.registry[charId] : this.getCurrentCharacter();
+    if (!char?.voice?.baseDir || !char?.voice?.count) return null;
+    try {
+      if (this._currentAudio) {
+        this._currentAudio.pause();
+        this._currentAudio = null;
+      }
+      const idx = String(Math.floor(Math.random() * char.voice.count) + 1).padStart(2, '0');
+      const audioUrl = `${char.voice.baseDir}${idx}.wav`;
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.85;
+      audio.play().catch(() => {});
+      this._currentAudio = audio;
+      return audioUrl;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 window.characterManager = new CharacterManager();

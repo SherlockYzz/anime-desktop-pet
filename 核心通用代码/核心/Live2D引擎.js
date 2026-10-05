@@ -71,7 +71,8 @@ class Live2DManager {
         document.head.appendChild(s);
       });
       addScript(window.CDN_CONFIG.pixi)
-        // ★ Cubism4 核心必须比 pixi-live2d-display 先加载，否则 .moc3 模型无法解析
+        // ★ Cubism2 与 Cubism4 核心必须在 pixi-live2d-display 之前加载完毕
+        .then(() => addScript(window.CDN_CONFIG.cubism2Core))
         .then(() => addScript(window.CDN_CONFIG.cubismCore))
         .then(() => addScript(window.CDN_CONFIG.pixiLive2d))
         .then(resolve)
@@ -508,22 +509,31 @@ class Live2DManager {
     // Live2D 模式
     if (!this.model) return;
 
-    // ★ 动作映射改为“候选列表+逐个回退”：不同模型动作名不同（高木:Poke/Tease/Sleep... 旧模型:TapBody），按序尝试第一个存在的动作
+    // ★ 互动时触发角色原生CV语音
+    if (type === 'tap' || type === 'happy') {
+      window.characterManager?.playRandomVoice();
+    }
+
+    // ★ 动作映射改为“候选列表+逐个回退”：兼容各角色（高木/加藤惠/蕾姆/惠惠/初音未来）不同的动作命名
     const animations = {
-      'tap': ['Poke', 'TapBody', 'TapHead', 'Idle'],
-      'happy': ['Tease', 'TeaseSmile', 'Idle'],
-      'idle': ['Idle'],
-      'wave': ['Tease', 'Idle'],
-      'sleep': ['Sleep', 'Idle'],
-      'surprised': ['Surprised', 'Idle'],
-      'wakeup': ['WakeUp', 'Idle'],
-      'normal': ['Idle']
+      'tap': ['Poke', 'TapBody', 'tap_body', 'tap_head', 'TapHead', 'flick_head', '', 'null', 'Idle', 'idle'],
+      'happy': ['Tease', 'TeaseSmile', 'smile', 'flick_head', 'tap_body', '', 'null', 'Idle', 'idle'],
+      'idle': ['Idle', 'idle', 'null', ''],
+      'wave': ['Tease', 'wave', 'tap_body', 'Idle', 'idle'],
+      'sleep': ['Sleep', 'sleep', 'Idle', 'idle'],
+      'surprised': ['Surprised', 'surprised', 'Idle', 'idle'],
+      'wakeup': ['WakeUp', 'wakeup', 'Idle', 'idle'],
+      'normal': ['Idle', 'idle', 'null', '']
     };
 
     const animationList = animations[type] || animations['normal'];
-    if (!this.model.motion) return;
-    for (const animation of animationList) {
-      try { this.model.motion(animation); break; } catch (e) {}
+    if (typeof this.model.motion === 'function') {
+      for (const animation of animationList) {
+        try {
+          const res = this.model.motion(animation);
+          if (res !== false) break;
+        } catch (e) {}
+      }
     }
 
     this.playExpression(type);

@@ -57,12 +57,21 @@ CHARACTER_REGISTRY.rem = {
     settingsBg: 'rgba(200, 225, 245, 0.35)',
   },
 
-  // Live2D 配置（无 Live2D 模型，直达 VRM 3D 模型渲染）
-  live2d: null,
+  // Live2D 配置（原版 Live2D 动态形象）
+  live2d: {
+    fallbackImage: '../../角色-蕾姆/图片素材/封面.png',
+    modelPath: '../../角色-蕾姆/Live2D模型/model.json',
+  },
 
   // VRM 配置
   vrm: {
     modelPath: '../../角色-蕾姆/蕾姆vrm.vrm',
+  },
+
+  // 原生CV语音配置（水濑祈原版语音包，共26段经典语音）
+  voice: {
+    baseDir: '../../角色-蕾姆/音频素材/',
+    count: 26,
   },
 
   // 以下字段由运行时从 txt 文件加载填充

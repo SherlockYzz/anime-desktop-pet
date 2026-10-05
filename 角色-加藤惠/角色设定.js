@@ -57,8 +57,11 @@ CHARACTER_REGISTRY.megumi = {
     settingsBg: 'rgba(248, 230, 238, 0.35)',
   },
 
-  // 无 Live2D 模型（直达 动态形象.gif 渲染通道）
-  live2d: null,
+  // Live2D 模型配置（《一択彼女 加藤恵》官方原版 Live2D 动态模型）
+  live2d: {
+    fallbackImage: '../../角色-加藤惠/图片素材/封面.png',
+    modelPath: '../../角色-加藤惠/Live2D模型/katou_01.model.json',
+  },
 
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,

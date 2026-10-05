@@ -2,8 +2,9 @@
 // 集中管理所有依赖文件，方便统一升级版本
 window.CDN_CONFIG = {
   pixi: '../lib/pixi.min.js',
-  pixiLive2d: '../lib/pixi-live2d-display.min.js',
+  cubism2Core: '../lib/live2d.min.js',            // ★ Cubism2 核心运行时：加载 .moc 模型必需
   cubismCore: '../lib/live2dcubismcore.min.js',   // ★ Cubism4 核心运行时：加载 .moc3 模型必需
+  pixiLive2d: '../lib/pixi-live2d-display.min.js',
   three: '../lib/three.min.js',
   threeGltfLoader: '../lib/GLTFLoader.js',
   threeVrm: '../lib/three-vrm.js',

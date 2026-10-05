@@ -1,8 +1,8 @@
-# 二次元桌宠项目 CLAUDE.md
+﻿# 二次元桌宠项目 CLAUDE.md
 
 ## 项目简介
 
-Electron 28 构建的二次元 AI 桌面宠物。技术栈：Electron + Vanilla JS + PIXI.js/Live2D + Three.js/VRM + 精灵帧引擎。包名 `megumi-desktop-pet` v5.1.1。
+Electron 28 构建的二次元 AI 桌面宠物。技术栈：Electron + Vanilla JS + 双核 Live2D (Cubism 2/4) + Three.js/VRM + 精灵帧引擎 + 原生CV声库。包名 `megumi-desktop-pet` v6.1.1。
 
 ---
 
@@ -34,24 +34,30 @@ Electron 28 构建的二次元 AI 桌面宠物。技术栈：Electron + Vanilla 
 │   │   ├── 主界面.js          # App 主类（分阶段启动）
 │   │   ├── AI接口.js          # AI 流式 API 封装
 │   │   ├── API服务商.js       # API 提供商注册表
-│   │   ├── 角色管理器.js      # 角色切换/主题/台词三大模块
+│   │   ├── 角色管理器.js      # 角色切换/主题/台词三大模块/语音播放
 │   │   ├── 角色注册表.js      # 全局角色注册
 │   │   ├── 聊天管理器.js      # 消息渲染/流式输出/关键词触发
-│   │   ├── Live2D引擎.js      # PIXI.js Live2D 渲染
+│   │   ├── Live2D引擎.js      # PIXI.js + 双核 Live2D (Cubism 2/4) 渲染
 │   │   ├── VRM管理器.js       # Three.js VRM 渲染
-│   │   ├── 桌宠模式.js        # 悬浮挂件模式
+│   │   ├── 桌宠模式.js        # 悬浮挂件模式 + 原生语音触发
+│   │   ├── 精灵表引擎.js      # 若曦 ChatGPT Pets v2 动画状态机
 │   │   ├── 情绪分析.js        # 关键词情绪识别
 │   │   ├── 代码编辑器.js      # 代码编辑功能
 │   │   ├── 设置管理器.js      # 设置/主题/API/台词管理
 │   │   ├── 自定义角色管理器.js # 自定义角色 CRUD
-│   │   └── CDN配置.js         # CDN URL 集中管理
+│   │   └── CDN配置.js         # 本地/CDN 库集中管理
+│   ├── lib/
+│   │   └── live2d.min.js      # Cubism 2 本地底层运行时
 │   └── 第三方库/              # marked.min.js / highlight.min.js
 │
-├── 角色-加藤惠/              # 内建角色（同结构×5）
-├── 角色-蕾姆/
-├── 角色-零二/
-├── 角色-高木同学/
-└── 角色-雪之下雪乃/
+├── 角色-加藤惠/              # 内建角色 1（路人女主 · 官方 Live2D）
+├── 角色-蕾姆/                # 内建角色 2（从零开始 · 高清 Live2D + 26段CV语音 + VRM）
+├── 角色-零二/                # 内建角色 3（DARLING in the FRANXX）
+├── 角色-高木同学/            # 内建角色 4（擅长捉弄 · 官方 Live2D）
+├── 角色-雪之下雪乃/          # 内建角色 5（春物）
+├── 角色-若曦/                # 内建角色 6（ChatGPT Pets 精灵帧桌宠 · 动作百宝箱）
+├── 角色-惠惠/                # 内建角色 7（为美好的世界献上祝福 · 原版 Cubism 4 Live2D）
+└── 角色-初音未来/            # 内建角色 8（VOCALOID · 经典轻量 Live2D）
 ```
 
 ---
