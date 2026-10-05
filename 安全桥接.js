@@ -6,14 +6,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   onShowSettings: (callback) => ipcRenderer.on('show-settings', callback),
+  onToggleModeRequest: (callback) => ipcRenderer.on('toggle-mode-request', callback),
   updateTrayLabel: (label, avatarPath) => ipcRenderer.invoke('update-tray-label', label, avatarPath),
+
+  // ★ 本地文件检测
+  checkFileExists: (relPath) => ipcRenderer.invoke('check-file-exists', relPath),
 
   // ★ 鼠标穿透（透明区域穿透，实体区域交互）
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
 
-  // ★ 桌宠移动
+  // ★ 桌宠移动与尺寸缩放
   getWorkArea: () => ipcRenderer.invoke('get-work-area'),
   getWindowBounds: () => ipcRenderer.invoke('get-window-bounds'),
+  setWindowBounds: (bounds) => ipcRenderer.invoke('set-window-bounds', bounds),
   moveWindowBy: (dx, dy) => ipcRenderer.send('move-window-by', dx, dy),
   setWindowPosition: (x, y) => ipcRenderer.send('set-window-position', x, y),
 

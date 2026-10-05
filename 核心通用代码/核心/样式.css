@@ -73,6 +73,11 @@ body {
   -webkit-app-region: no-drag;
 }
 
+/* ★ 网页模式下彻底杜绝桌面图标穿透闪烁：采用实体主题底色 */
+body.web-mode-active {
+  background: var(--bg-color, #ffffff);
+}
+
 /* ===== 轻量背景装饰 ===== */
 body::before {
   content: '';
@@ -1571,15 +1576,15 @@ body.web-mode-active .pet-overlay {
   transition: opacity 0.3s ease, visibility 0s 0.3s;
 }
 
-/* 角色显示区域（可拖拽） */
+/* 角色显示区域（可拖拽 · 全身立绘舒展 · 支持大小滑动窗口缩放） */
 .pet-character-area {
   position: absolute;
   left: 50%;
   top: 50%;
-  margin-left: -140px;
-  margin-top: -170px;
-  width: 280px;
-  height: 280px;
+  margin-left: calc(-190px * var(--pet-scale, 1));
+  margin-top: calc(-285px * var(--pet-scale, 1));
+  width: calc(380px * var(--pet-scale, 1));
+  height: calc(570px * var(--pet-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1598,6 +1603,14 @@ body.web-mode-active .pet-overlay {
   cursor: pointer;
 }
 
+/* 精灵表 canvas（若曦专属 · 像素锐利 · 纯净通透） */
+#pet-sprite-canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 /* GIF图片 */
 .pet-gif-img {
   max-width: 100%;
@@ -1608,47 +1621,46 @@ body.web-mode-active .pet-overlay {
   display: none;
 }
 
-/* 文字气泡容器（右上角） */
+/* 文字气泡容器（顶端安全区，彻底避开人物面部） */
 .pet-bubble-container {
   position: absolute;
-  right: 16px;
-  top: 16px;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
   z-index: 503;
   pointer-events: none;
-  max-height: 300px;
+  max-width: 260px;
 }
 
-/* 文字气泡 */
+/* 文字气泡（精致小巧半透明胶囊，点击可即时消除） */
 .pet-bubble {
-  background: rgba(255, 255, 255, 0.92);
-  color: #333;
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 8px 14px;
-  border-radius: 14px;
-  max-width: 220px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #2c3e50;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 4px 10px;
+  border-radius: 12px;
+  max-width: 240px;
   word-break: break-word;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   position: relative;
-  pointer-events: none;
-  animation: bubble-in 0.3s ease-out;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: bubble-in 0.25s ease-out;
+  user-select: none;
 }
-.pet-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: 6px;
-  right: -6px;
-  border: 6px solid transparent;
-  border-left-color: rgba(255, 255, 255, 0.92);
-  border-bottom-color: rgba(255, 255, 255, 0.92);
+.pet-bubble:hover {
+  background: rgba(255, 255, 255, 0.98);
+  transform: scale(1.02);
 }
 .pet-bubble.bubble-fade-out {
-  animation: bubble-out 0.4s ease-in forwards;
+  animation: bubble-out 0.25s ease-in forwards;
 }
 
 @keyframes bubble-in {
@@ -1675,45 +1687,56 @@ body.web-mode-active .pet-overlay {
   box-shadow: 0 0 8px var(--glow-color);
 }
 
-/* 桌宠底部控制栏（横向居中弹性工具条） */
+/* 桌宠底部控制栏（缩放滑动窗、切回网页与动作百宝箱悬浮胶囊） */
 .pet-controls {
   position: absolute;
   left: 50%;
-  top: 50%;
+  bottom: 14px;
   transform: translateX(-50%);
-  margin-top: 118px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   z-index: 510;
   pointer-events: auto;
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 4px 8px;
+  border-radius: 24px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease;
+}
+.pet-controls:hover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
 }
 
 .pet-control-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.78);
-  color: #777;
-  font-size: 15px;
-  line-height: 32px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #555;
+  font-size: 16px;
+  line-height: 36px;
   text-align: center;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .pet-control-btn:hover {
-  background: rgba(240, 130, 150, 0.85);
+  background: rgba(240, 130, 150, 0.95);
   color: white;
-  transform: scale(1.14);
-  box-shadow: 0 4px 12px rgba(240, 130, 150, 0.4);
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(240, 130, 150, 0.5);
 }
 .pet-control-btn.active {
   background: rgba(217, 79, 79, 0.95);
@@ -1722,19 +1745,108 @@ body.web-mode-active .pet-overlay {
   transform: scale(1.08);
 }
 
-.btn-toggle-work::after { content: '\1F4BC'; font-size: 14px; }
-.btn-toggle-sleep::after { content: '\1F319'; font-size: 14px; }
-.btn-toggle-wander::after { content: '\1F43E'; font-size: 14px; }
-.btn-pet-actions::after { content: '\2728'; font-size: 14px; }
-.btn-switch-web::after { content: '\2194'; font-size: 16px; font-weight: bold; }
+/* 隐藏冗余控制按钮，桌面仅保留切回网页与动作百宝箱 */
+.btn-toggle-work,
+.btn-toggle-sleep,
+.btn-toggle-wander {
+  display: none !important;
+}
+
+.btn-pet-scale::after { content: '\1F50D'; font-size: 14px; }   /* 🔍 大小滑动窗口 */
+.btn-pet-actions::after { content: '\1F9F0'; font-size: 15px; } /* 🧰 动作百宝箱 */
+.btn-switch-web::after { content: '\1F504'; font-size: 14px; }  /* 🔄 切回网页 */
+
+/* ===== 大小滑动窗口面板 ===== */
+.pet-scale-menu {
+  position: absolute;
+  left: 50%;
+  bottom: 58px;
+  transform: translateX(-50%);
+  background: rgba(255, 250, 248, 0.96);
+  border: 1px solid rgba(217, 79, 79, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(180, 100, 100, 0.22);
+  backdrop-filter: blur(12px);
+  padding: 12px;
+  z-index: 520;
+  display: none;
+  width: 260px;
+  animation: petMenuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+.pet-scale-menu.show {
+  display: block;
+}
+.pet-scale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(217, 79, 79, 0.2);
+}
+.pet-scale-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #b83a3a;
+}
+.btn-close-scale {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #888;
+}
+.btn-close-scale:hover {
+  color: #b83a3a;
+}
+.pet-scale-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pet-scale-slider-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary-color, #d94f4f);
+  cursor: pointer;
+}
+.pet-scale-val {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--primary-color, #d94f4f);
+  min-width: 36px;
+  text-align: right;
+}
+.pet-scale-presets {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+}
+.scale-preset-btn {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 10px;
+  border: 1px solid rgba(217, 79, 79, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #5a3a3a;
+  transition: all 0.2s;
+  text-align: center;
+}
+.scale-preset-btn:hover, .scale-preset-btn.active {
+  background: var(--primary-color, #d94f4f);
+  color: white;
+  border-color: var(--primary-color, #d94f4f);
+}
 
 /* 动作百宝箱弹出面板 */
 .pet-action-menu {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -100%);
-  margin-top: 105px;
+  bottom: 58px;
+  transform: translateX(-50%);
   background: rgba(255, 250, 248, 0.96);
   border: 1px solid rgba(217, 79, 79, 0.25);
   border-radius: 14px;
@@ -1743,7 +1855,7 @@ body.web-mode-active .pet-overlay {
   padding: 10px;
   z-index: 520;
   display: none;
-  width: 230px;
+  width: 250px;
   animation: petMenuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
 }

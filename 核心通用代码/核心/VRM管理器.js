@@ -11,6 +11,7 @@ class VRMManager {
     this._animFrameId = null;
     this._onMouseMove = null;
     this._scriptsLoaded = false;
+    this._loadSeq = 0;
   }
 
   // 通过 script 标签动态加载 three.js 和 three-vrm（UMD 方式）
@@ -40,9 +41,21 @@ class VRMManager {
     try {
       await this.loadScripts();
 
-      const canvas = document.getElementById('live2d-canvas');
+      let canvas = document.getElementById('vrm-canvas');
       const container = document.getElementById('live2d-container');
+      if (!canvas && container) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'vrm-canvas';
+        canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer;';
+        container.appendChild(canvas);
+      }
       if (!canvas || !container) return false;
+
+      const live2dCanvas = document.getElementById('live2d-canvas');
+      if (live2dCanvas) live2dCanvas.style.display = 'none';
+      const spriteCanvas = document.getElementById('sprite-canvas');
+      if (spriteCanvas) spriteCanvas.style.display = 'none';
+      canvas.style.display = 'block';
 
       this._setupRenderer(canvas, container.clientWidth, container.clientHeight);
       this._setupScene(container.clientWidth, container.clientHeight);
@@ -63,7 +76,23 @@ class VRMManager {
     try {
       await this.loadScripts();
 
-      this._setupRenderer(petCanvas, width, height);
+      let canvas = petCanvas || document.getElementById('pet-vrm-canvas');
+      const area = document.getElementById('pet-character-area');
+      if (!canvas && area) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'pet-vrm-canvas';
+        canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer;';
+        area.appendChild(canvas);
+      }
+      if (!canvas) return false;
+
+      const pLive2d = document.getElementById('pet-canvas');
+      if (pLive2d) pLive2d.style.display = 'none';
+      const pSprite = document.getElementById('pet-sprite-canvas');
+      if (pSprite) pSprite.style.display = 'none';
+      canvas.style.display = 'block';
+
+      this._setupRenderer(canvas, width, height);
       this._setupScene(width, height);
       this._startLoop();
 
@@ -76,19 +105,23 @@ class VRMManager {
   }
 
   _setupRenderer(canvas, width, height) {
+    const w = Math.max(200, width || 380);
+    const h = Math.max(300, height || 570);
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       alpha: true,
       antialias: true
     });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(window.devicePixelRatio || 1);
     this.renderer.setClearColor(0x000000, 0);
   }
 
   _setupScene(width, height) {
     this.scene = new THREE.Scene();
-    const aspect = (width && height) ? (width / height) : 1;
+    const w = Math.max(200, width || 380);
+    const h = Math.max(300, height || 570);
+    const aspect = w / h;
     this.camera = new THREE.PerspectiveCamera(30, aspect, 0.1, 20);
     this.camera.position.set(0, 1.2, 2.5);
     this.camera.lookAt(0, 1, 0);
@@ -105,13 +138,15 @@ class VRMManager {
 
   // 加载 VRM 模型
   async loadModel(modelPath) {
-    if (!this.isInitialized) return false;
+    if (!this.isInitialized || !this.scene) return false;
+
+    const currentSeq = ++this._loadSeq;
 
     try {
       // 清除旧模型
       if (this.vrm) {
-        this.scene.remove(this.vrm.scene);
-        this.vrm.dispose();
+        if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
+        try { if (typeof this.vrm.dispose === 'function') this.vrm.dispose(); } catch (e) {}
         this.vrm = null;
       }
 
@@ -123,9 +158,17 @@ class VRMManager {
         loader.load(modelPath, resolve, undefined, reject);
       });
 
+      // 如果加载过程中已经被销毁或有新请求，安全放弃
+      if (this._loadSeq !== currentSeq || !this.isInitialized || !this.scene) {
+        if (gltf.userData?.vrm) {
+          try { gltf.userData.vrm.dispose(); } catch (e) {}
+        }
+        return false;
+      }
+
       this.vrm = gltf.userData.vrm;
 
-      if (this.vrm) {
+      if (this.vrm && this.scene) {
         this.scene.add(this.vrm.scene);
         this._fitCameraToModel();
         return true;
@@ -133,7 +176,9 @@ class VRMManager {
 
       return false;
     } catch (e) {
-      console.error('[VRM] 模型加载失败:', e);
+      if (this._loadSeq === currentSeq) {
+        console.error('[VRM] 模型加载失败:', e);
+      }
       return false;
     }
   }
@@ -262,14 +307,18 @@ class VRMManager {
       this._resizeHandler = null;
     }
     if (this.vrm) {
-      this.scene.remove(this.vrm.scene);
-      this.vrm.dispose();
+      if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
+      try { if (typeof this.vrm.dispose === 'function') this.vrm.dispose(); } catch (e) {}
       this.vrm = null;
     }
     if (this.renderer) {
-      this.renderer.dispose();
+      try { this.renderer.dispose(); } catch (e) {}
       this.renderer = null;
     }
+    const canvas = document.getElementById('vrm-canvas');
+    if (canvas) canvas.style.display = 'none';
+    const petCanvas = document.getElementById('pet-vrm-canvas');
+    if (petCanvas) petCanvas.style.display = 'none';
     this.scene = null;
     this.camera = null;
     this.isInitialized = false;

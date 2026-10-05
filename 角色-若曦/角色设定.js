@@ -57,12 +57,16 @@ CHARACTER_REGISTRY.ruoxi = {
     settingsBg: 'rgba(246, 226, 220, 0.35)',
   },
 
-  // 精灵表渲染配置（若曦专用 · 与网页版 pet_manifest 同源）
+  // 精灵表渲染配置（若曦专用 · 支持高清 2X 超清模态切换）
   sprite: {
     atlas: '../../角色-若曦/精灵表/若曦_pets_v2_atlas.png',
+    atlasHd: '../../角色-若曦/精灵表/若曦_pets_v2_atlas_hd.png',
     sleepStrip: '../../角色-若曦/精灵表/sleep.png',
+    sleepStripHd: '../../角色-若曦/精灵表/sleep_hd.png',
     manifest: '../../角色-若曦/精灵表/pet_manifest.json',
+    manifestHd: '../../角色-若曦/精灵表/pet_manifest_hd.json',
     cell: { w: 192, h: 208 },
+    cellHd: { w: 384, h: 416 },
     cols: 8,
     rows: 11,
   },
@@ -70,6 +74,13 @@ CHARACTER_REGISTRY.ruoxi = {
   // 无 Live2D / VRM，走精灵表渲染
   live2d: null,
   vrm: null,
+
+  // 原生CV语音配置（白狐仙灵动专属声线，共12段经典语音）
+  voice: {
+    baseDir: '../../角色-若曦/音频素材/',
+    count: 12,
+    format: 'mp3'
+  },
 
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,

@@ -5,8 +5,8 @@ const fs = require('fs');
 let mainWindow;
 let tray;
 let isQuitting = false;
-let currentTrayLabel = '桌宠';
-let currentTrayAvatar = '角色-加藤惠/图片素材/头像.png';
+let currentTrayLabel = '若曦';
+let currentTrayAvatar = '角色-若曦/图片素材/头像.png';
 
 // 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
@@ -102,6 +102,16 @@ function createOrUpdateTray(label, avatarPath) {
       }
     },
     {
+      label: '切换网页/桌宠模式',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+          mainWindow.webContents.send('toggle-mode-request');
+        }
+      }
+    },
+    {
       label: '设置',
       click: () => {
         if (mainWindow) { mainWindow.show(); mainWindow.webContents.send('show-settings'); }
@@ -175,13 +185,40 @@ ipcMain.handle('get-window-bounds', () => {
   return { x, y, width, height };
 });
 
+ipcMain.handle('set-window-bounds', (event, bounds) => {
+  if (!mainWindow || !bounds) return null;
+  const cur = mainWindow.getBounds();
+  const targetDisplay = screen.getDisplayMatching(cur) || screen.getPrimaryDisplay();
+  const wa = targetDisplay.workArea;
+
+  // ★ 严格上限保护：窗口尺寸绝不允许超过当前显示器工作区，留出安全边距确保切换键 100% 可见
+  const maxSafeW = Math.max(300, wa.width - 30);
+  const maxSafeH = Math.max(400, wa.height - 40);
+
+  const newW = Math.min(maxSafeW, Math.max(200, Math.round(bounds.width || cur.width)));
+  const newH = Math.min(maxSafeH, Math.max(300, Math.round(bounds.height || cur.height)));
+
+  // 保持底部与中心对齐（以人物脚底为锚点），且如果指定了坐标则优先使用
+  const newX = bounds.x !== undefined ? Math.round(bounds.x) : Math.round(cur.x + (cur.width - newW) / 2);
+  const newY = bounds.y !== undefined ? Math.round(bounds.y) : Math.round(cur.y + (cur.height - newH));
+
+  const p = clampToWorkArea(newX, newY, newW, newH);
+  mainWindow.setBounds({ x: p.x, y: p.y, width: newW, height: newH });
+  return mainWindow.getBounds();
+});
+
 /** 把窗口限制在当前匹配显示器的工作区内，避免桌宠跑出屏幕，且支持多显示器自由游走 */
 function clampToWorkArea(x, y, w, h) {
   const targetRect = { x: Math.round(x), y: Math.round(y), width: w, height: h };
   const targetDisplay = screen.getDisplayMatching(targetRect) || screen.getPrimaryDisplay();
   const wa = targetDisplay.workArea;
-  const nx = Math.max(wa.x, Math.min(wa.x + wa.width - w, Math.round(x)));
-  const ny = Math.max(wa.y, Math.min(wa.y + wa.height - h, Math.round(y)));
+  // 确保窗口边界绝不溢出工作区
+  const minX = wa.x;
+  const maxX = Math.max(wa.x, wa.x + wa.width - w);
+  const minY = wa.y;
+  const maxY = Math.max(wa.y, wa.y + wa.height - h);
+  const nx = Math.max(minX, Math.min(maxX, Math.round(x)));
+  const ny = Math.max(minY, Math.min(maxY, Math.round(y)));
   return { x: nx, y: ny };
 }
 
@@ -214,6 +251,18 @@ ipcMain.handle('close-window', () => {
 ipcMain.handle('update-tray-label', (event, label, avatarPath) => {
   const relPath = avatarPath ? avatarPath.replace(/^(\.\.\/)+/, '') : null;
   createOrUpdateTray(label, relPath);
+});
+
+// ★ 高性能文件存在性检测（彻底解决渲染进程 file:// 协议下 fetch HEAD 抛出 Failed to fetch 的致命问题）
+ipcMain.handle('check-file-exists', (event, relPath) => {
+  if (!relPath) return false;
+  try {
+    const basePath = path.join(__dirname, '核心通用代码', '核心');
+    const fullPath = path.resolve(basePath, relPath);
+    return fs.existsSync(fullPath);
+  } catch (e) {
+    return false;
+  }
 });
 
 // ===== 自定义角色 IPC =====

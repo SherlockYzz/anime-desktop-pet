@@ -120,18 +120,59 @@ class CharacterManager {
   async checkModelFileExists(path) {
     if (!path) return false;
     if (this._modelExistsCache.has(path)) return this._modelExistsCache.get(path);
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3000);
-      const resp = await fetch(path, { method: 'HEAD', signal: controller.signal });
-      clearTimeout(timer);
-      const exists = resp.ok;
-      this._modelExistsCache.set(path, exists);
-      return exists;
-    } catch {
-      this._modelExistsCache.set(path, false);
-      return false;
+
+    // ★ 优先通过原生 Electron IPC (fs.existsSync) 检测，彻底杜绝 file:// 协议下 fetch 抛出 Failed to fetch 的误判
+    if (window.electronAPI && typeof window.electronAPI.checkFileExists === 'function') {
+      try {
+        const exists = await window.electronAPI.checkFileExists(path);
+        this._modelExistsCache.set(path, !!exists);
+        return !!exists;
+      } catch (e) {
+        // 出错向下回退
+      }
     }
+
+    // ★ 浏览器环境或回退模式：使用 XHR (对 file:// 协议兼容性远优于 fetch HEAD)
+    return new Promise((resolve) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('HEAD', path, true);
+        xhr.timeout = 2000;
+        xhr.onload = () => {
+          const ok = (xhr.status >= 200 && xhr.status < 300) || (xhr.status === 0 && xhr.response !== null);
+          this._modelExistsCache.set(path, ok);
+          resolve(ok);
+        };
+        xhr.onerror = () => {
+          // 部分环境 HEAD 不允许，尝试 GET 嗅探
+          const xhrGet = new XMLHttpRequest();
+          xhrGet.open('GET', path, true);
+          xhrGet.timeout = 2000;
+          xhrGet.onload = () => {
+            const ok = (xhrGet.status >= 200 && xhrGet.status < 300) || (xhrGet.status === 0 && xhrGet.responseText && xhrGet.responseText.length > 0);
+            this._modelExistsCache.set(path, ok);
+            resolve(ok);
+          };
+          xhrGet.onerror = () => {
+            this._modelExistsCache.set(path, false);
+            resolve(false);
+          };
+          xhrGet.ontimeout = () => {
+            this._modelExistsCache.set(path, false);
+            resolve(false);
+          };
+          xhrGet.send();
+        };
+        xhr.ontimeout = () => {
+          this._modelExistsCache.set(path, false);
+          resolve(false);
+        };
+        xhr.send();
+      } catch (err) {
+        this._modelExistsCache.set(path, false);
+        resolve(false);
+      }
+    });
   }
 
   async precheckModelFiles() {
@@ -290,7 +331,9 @@ class CharacterManager {
     // ★ 等待自定义角色注册完成
     await this._customCharactersReady;
 
-    const savedId = localStorage.getItem('selected-character') || 'megumi';
+    // ★ 严格锁定：开机默认第一角色锁定为若曦（用户最高原则）
+    const savedId = 'ruoxi';
+    localStorage.setItem('selected-character', 'ruoxi');
 
     // ★ 阶段A：只加载核心（系统提示词），让UI尽快显示
     await this.loadCharacterSystemPromptOnly(savedId);
@@ -301,8 +344,7 @@ class CharacterManager {
       this.loadCharacterDialoguesInBackground(savedId).catch(() => {});
     }, 100);
 
-    // ★ 不再预缓存其他角色——改成按需加载，点击角色卡片时才预加载
-    return success ? savedId : 'megumi';
+    return success ? savedId : 'ruoxi';
   }
 
   async precacheCharacter(characterId) {
@@ -392,8 +434,14 @@ class CharacterManager {
   getCharacterOrder() {
     try {
       const saved = localStorage.getItem('character-order');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [...(window.DEFAULT_CHARACTER_ORDER || ['ruoxi', 'megumi', 'megumin', 'rem', 'miku', 'takagi', 'zerotwo', 'yukino'])];
+    } catch {
+      return [...(window.DEFAULT_CHARACTER_ORDER || ['ruoxi', 'megumi', 'megumin', 'rem', 'miku', 'takagi', 'zerotwo', 'yukino'])];
+    }
   }
 
   // 保存角色顺序
@@ -561,8 +609,8 @@ class CharacterManager {
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
 
-  /** 播放角色原生CV随机语音（若角色配置了语音包） */
-  playRandomVoice(charId) {
+  /** 播放指定编号或随机的角色原生CV语音 */
+  playVoice(charId, voiceIndex) {
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
@@ -570,8 +618,14 @@ class CharacterManager {
         this._currentAudio.pause();
         this._currentAudio = null;
       }
-      const idx = String(Math.floor(Math.random() * char.voice.count) + 1).padStart(2, '0');
-      const audioUrl = `${char.voice.baseDir}${idx}.wav`;
+      let idx;
+      if (voiceIndex !== undefined && voiceIndex !== null) {
+        idx = String(voiceIndex).padStart(2, '0');
+      } else {
+        idx = String(Math.floor(Math.random() * char.voice.count) + 1).padStart(2, '0');
+      }
+      const ext = char.voice.format || (char.id === 'rem' ? 'wav' : 'mp3');
+      const audioUrl = `${char.voice.baseDir}${idx}.${ext}`;
       const audio = new Audio(audioUrl);
       audio.volume = 0.85;
       audio.play().catch(() => {});
@@ -580,6 +634,11 @@ class CharacterManager {
     } catch (e) {
       return null;
     }
+  }
+
+  /** 播放角色原生CV随机语音 */
+  playRandomVoice(charId) {
+    return this.playVoice(charId, null);
   }
 }
 

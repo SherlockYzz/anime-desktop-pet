@@ -68,10 +68,12 @@ class MimoAPI {
       sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
     }
 
-    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，彻底解决本地小模型“只顾人设而忽略任务/逻辑”的问题）
+    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，强化逻辑、人设与响应速度）
     sys += `\n\n[交互与任务执行铁律 - 最高优先级]
-1. 任务交付第一：当用户输入包含明确请求（如翻译文本、解释词句、信息查阅、撰写分析、写代码、数学计算等具体任务）时，必须【立刻正面给出完整准确的执行答案/译文】，严禁反问“你想翻译什么/想问什么”、严禁假装不懂、严禁将用户已提供的内容当成未提供！
-2. 人设服从于内容：角色设定、口吻风格和动作描写是表达形式，绝不能成为回避任务的借口。正确的回答结构永远是：【直接输出准确答案/译文】并在行文中自然流露角色口吻与神态。`;
+1. 逻辑与任务第一：无论何时，首要前提是【正面、清晰、有逻辑地回应用户的话】！若包含具体任务（翻译、解答、计算、查阅、写代码等），必须立刻给出清晰准确的逻辑结论或答案，严禁答非所问、严禁装傻反问、严禁忽视用户逻辑。
+2. 深度融入人设：在确保逻辑严密、回答准确的前提下，将自身专属的人设性格、说话口吻、特有称呼以及动作神态（用英文小括号包裹）浑然天成地融入其中，做到“有脑子、有性格、鲜活真实”。
+3. 语速与轻快节奏：作为常驻桌面的桌宠，除代码和专题深度分析外，日常回复必须【精炼利落、言简意赅】（常规交流建议控制在 2~4 句话，80~150 字内），坚决杜绝拖沓车轱辘话，保持轻快敏捷的互动节奏，大幅提升交流效率。
+4. 语言规范铁律：所有回复必须【全程使用规范中文交流】！绝对严禁整句输出日语或其他外语（即使针对用户“不要说日语”的抗议，也必须用中文正面回答与道歉，严禁用日语道歉）。`;
 
     return sys;
   }
@@ -84,27 +86,28 @@ class MimoAPI {
 
   _getRequestParams(isCodeMode) {
     const mode = this._responseMode;
-    const params = { temperature: 0.7, max_tokens: 2048 };
+    const params = { temperature: 0.7, max_tokens: 1024 };
 
     switch (mode) {
       case 'instant':
         params.temperature = 0.5;
-        params.max_tokens = isCodeMode ? 4096 : 2048;
+        params.max_tokens = isCodeMode ? 4096 : 800;
         break;
       case 'balanced':
         params.temperature = 0.7;
-        params.max_tokens = isCodeMode ? 8192 : 2048;
+        params.max_tokens = isCodeMode ? 8192 : 1200;
         break;
       case 'deep':
         params.temperature = 0.8;
-        params.max_tokens = isCodeMode ? 16384 : 4096;
+        params.max_tokens = isCodeMode ? 16384 : 2048;
         break;
     }
 
-    // 本地模型或推理模型（如 DeepSeek-R1）适当收敛温度上限至 0.6，防止思考后转入正式回复时发散跑题
+    // 本地模型或推理模型（如 DeepSeek-R1）适当收敛温度上限至 0.6，防止思考后转入正式回复时发散跑题，并收敛 max_tokens 提升输出速度
     const isLocalOrR1 = this.provider === 'local' || (this.model && this.model.toLowerCase().includes('r1'));
-    if (isLocalOrR1 && params.temperature > 0.6) {
-      params.temperature = 0.6;
+    if (isLocalOrR1) {
+      if (params.temperature > 0.6) params.temperature = 0.6;
+      if (!isCodeMode && params.max_tokens > 1024) params.max_tokens = 1024;
     }
 
     return params;

@@ -26,6 +26,7 @@ class App {
     this.codeEditor = new CodeEditor(this);
     this.settings = new SettingsManager(this);
     this.petMode = new PetMode(this);
+    window.app = this;
 
     // 启动：分阶段进行
     this._initPhase1();
@@ -338,12 +339,12 @@ class App {
       this.chat.clearMessages();
       this.chat.addBootMessage(window.characterManager.getRandomLine('boot'));
       this.chat.updateAvatars();
-      const mode = window.live2dManager.getDisplayMode();
-      if (mode === 'gif') await window.live2dManager.switchToGifMode();
-      else await window.live2dManager.loadCharacterModel();
-
-      // ★ 关键修复：如果在桌宠挂件模式下切角色，同步重新加载桌宠悬浮窗的角色展示与控制按钮！
-      if (!document.body.classList.contains('web-mode-active') && this.petMode) {
+      const isWebMode = document.body.classList.contains('web-mode-active');
+      if (isWebMode) {
+        const mode = window.live2dManager.getDisplayMode();
+        if (mode === 'gif') await window.live2dManager.switchToGifMode();
+        else await window.live2dManager.loadCharacterModel();
+      } else if (this.petMode) {
         await this.petMode._loadCharacter();
         this.petMode._updateControlButtons();
       }

@@ -26,6 +26,7 @@
   <!-- Live2D模型容器 -->
   <div class="live2d-container" id="live2d-container">
     <canvas id="live2d-canvas"></canvas>
+    <canvas id="vrm-canvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer;"></canvas>
     <div class="mood-indicator" id="mood-indicator"></div>
   </div>
 
@@ -355,6 +356,7 @@
   <div class="pet-overlay" id="pet-overlay">
     <div class="pet-character-area" id="pet-character-area" title="右键打开动作百宝箱">
       <canvas id="pet-canvas"></canvas>
+      <canvas id="pet-sprite-canvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
       <img id="pet-gif" class="pet-gif-img" src="" alt="">
     </div>
     <div class="pet-bubble-container" id="pet-bubble-container"></div>
@@ -362,8 +364,29 @@
       <button class="pet-control-btn btn-toggle-work" id="btn-toggle-work" title="专注工作（E / 快捷键 6）"></button>
       <button class="pet-control-btn btn-toggle-sleep" id="btn-toggle-sleep" title="抱尾睡觉（Z / 快捷键 8）"></button>
       <button class="pet-control-btn btn-toggle-wander" id="btn-toggle-wander" title="自动漫步（T / 快捷键 4）"></button>
+      <button class="pet-control-btn btn-pet-scale" id="btn-pet-scale" title="大小滑动窗口（缩放）"></button>
       <button class="pet-control-btn btn-pet-actions" id="btn-pet-actions" title="动作百宝箱（右键桌宠）"></button>
       <button class="pet-control-btn btn-switch-web" id="btn-switch-web" title="切换到网页模式"></button>
+    </div>
+    <!-- 大小滑动窗口弹出面板 -->
+    <div class="pet-scale-menu" id="pet-scale-menu">
+      <div class="pet-scale-header">
+        <span class="pet-scale-title">📐 桌宠大小滑动窗口</span>
+        <button class="btn-close-scale" id="btn-close-scale" title="关闭">&#x2715;</button>
+      </div>
+      <div class="pet-scale-body">
+        <div class="pet-scale-slider-row">
+          <input type="range" id="pet-scale-slider" min="0.75" max="1.35" step="0.05" value="1.0">
+          <span class="pet-scale-val" id="pet-scale-val">100%</span>
+        </div>
+        <div class="pet-scale-presets">
+          <button class="scale-preset-btn" data-scale="0.8">80% 迷你</button>
+          <button class="scale-preset-btn" data-scale="0.9">90% 紧凑</button>
+          <button class="scale-preset-btn active" data-scale="1.0">100% 默认</button>
+          <button class="scale-preset-btn" data-scale="1.15">115% 舒展</button>
+          <button class="scale-preset-btn" data-scale="1.3">130% 超清</button>
+        </div>
+      </div>
     </div>
     <!-- 动作百宝箱弹出面板 -->
     <div class="pet-action-menu" id="pet-action-menu">
@@ -378,10 +401,17 @@
         <button class="pet-action-item" data-action="review"><span class="action-icon">📜</span>验收成果</button>
         <button class="pet-action-item" data-action="fail"><span class="action-icon">😿</span>受阻沮丧</button>
         <button class="pet-action-item" data-action="wait"><span class="action-icon">💭</span>等待确认</button>
+        <button class="pet-action-item" id="btn-pet-action-scale"><span class="action-icon">📐</span>调节尺寸</button>
+        <button class="pet-action-item" id="btn-toggle-hd"><span class="action-icon">✨</span>高清模态</button>
       </div>
     </div>
   </div>
 
+  <!-- Live2D & Pixi 本地运行库（同步直载，杜绝异步竞争与脚本冲突） -->
+  <script src="../lib/pixi.min.js"></script>
+  <script src="../lib/live2d.min.js"></script>
+  <script src="../lib/live2dcubismcore.min.js"></script>
+  <script src="../lib/pixi-live2d-display.min.js"></script>
   <script src="CDN配置.js"></script>
   <script src="工具函数.js"></script>
   <script src="角色注册表.js"></script>
@@ -404,6 +434,7 @@
   <script src="聊天管理器.js"></script>
   <script src="代码编辑器.js"></script>
   <script src="设置管理器.js"></script>
+  <script src="动作百宝箱.js"></script>
   <script src="桌宠模式.js"></script>
   <script src="主界面.js"></script>
 </body>

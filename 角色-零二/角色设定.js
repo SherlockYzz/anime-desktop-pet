@@ -60,6 +60,13 @@ CHARACTER_REGISTRY.zerotwo = {
   // 无 Live2D 模型（直达 封面.png 渲染通道）
   live2d: null,
 
+  // 原生CV语音配置（户松遥妖娆甜美达令御姐语音包，共10段经典语音）
+  voice: {
+    baseDir: '../../角色-零二/音频素材/',
+    count: 10,
+    format: 'mp3'
+  },
+
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,
   lines: {}

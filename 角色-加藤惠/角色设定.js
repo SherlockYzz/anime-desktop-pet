@@ -63,6 +63,13 @@ CHARACTER_REGISTRY.megumi = {
     modelPath: '../../角色-加藤惠/Live2D模型/katou_01.model.json',
   },
 
+  // 原生CV语音配置（安野希世乃风格经典语音包，共10段经典语音）
+  voice: {
+    baseDir: '../../角色-加藤惠/音频素材/',
+    count: 10,
+    format: 'mp3'
+  },
+
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,
   lines: {}

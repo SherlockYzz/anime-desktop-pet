@@ -54,6 +54,28 @@ class SpriteAtlasManager {
     return !!(character && character.sprite && (character.sprite.atlas || character.sprite.manifest));
   }
 
+  /** 当前是否开启若曦高清模态（默认开启） */
+  static isHdMode() {
+    return localStorage.getItem('ruoxi-hd-mode') !== 'false';
+  }
+
+  isHdMode() {
+    return SpriteAtlasManager.isHdMode();
+  }
+
+  /** 动态切换若曦高清/标准模态 */
+  async toggleHdMode(enable) {
+    const cur = SpriteAtlasManager.isHdMode();
+    const target = (typeof enable === 'boolean') ? enable : !cur;
+    localStorage.setItem('ruoxi-hd-mode', target ? 'true' : 'false');
+    const char = window.characterManager?.getCurrentCharacter();
+    if (char && SpriteAtlasManager.isSpriteCharacter(char) && this.canvas) {
+      await this.loadFor(char, this.canvas);
+      this.draw();
+    }
+    return target;
+  }
+
   // ============ 素材加载（静态内存缓存：切模式/切画布时 0ms 瞬间复用） ============
   _loadImg(src) {
     if (!src) return Promise.resolve(null);
@@ -72,7 +94,8 @@ class SpriteAtlasManager {
   }
 
   _loadManifest(character) {
-    const url = character?.sprite?.manifest;
+    const isHd = localStorage.getItem('ruoxi-hd-mode') !== 'false';
+    const url = (isHd && character?.sprite?.manifestHd) ? character.sprite.manifestHd : character?.sprite?.manifest;
     if (!url) return Promise.resolve(this._defaultManifest());
     if (SpriteAtlasManager._manifestCache.has(url)) {
       return Promise.resolve(SpriteAtlasManager._manifestCache.get(url));
@@ -145,12 +168,24 @@ class SpriteAtlasManager {
     const look = manifest.lookTracking || {};
     this.LOOK_RADIUS = look.radiusPx || 420;
 
-    const atlasUrl = cfg.atlas || (manifest.atlas && manifest.atlas.file);
-    const sleepUrl = cfg.sleepStrip || (priv.source ? priv.source : null);
+    const manifestUrl = cfg.manifest || '';
+    const manifestDir = manifestUrl.substring(0, manifestUrl.lastIndexOf('/') + 1);
+    const resolveRel = (p) => {
+      if (!p) return null;
+      if (/^(https?:|\/|\.\.\/)/.test(p)) return p;
+      return manifestDir ? manifestDir + p : p;
+    };
 
-    const [atlasImg, sleepImg] = await Promise.all([
+    const isHd = localStorage.getItem('ruoxi-hd-mode') !== 'false';
+    const atlasUrl = (isHd && cfg.atlasHd) ? cfg.atlasHd : (cfg.atlas || resolveRel(manifest.atlas && manifest.atlas.file));
+    const sleepUrl = (isHd && cfg.sleepStripHd) ? cfg.sleepStripHd : (cfg.sleepStrip || resolveRel(priv.source));
+
+    const baseAtlasUrl = cfg.atlas || resolveRel(manifest.atlas && manifest.atlas.file);
+
+    const [atlasImg, sleepImg, baseImg] = await Promise.all([
       this._loadImg(atlasUrl),
       sleepUrl ? this._loadImg(sleepUrl) : Promise.resolve(null),
+      baseAtlasUrl ? this._loadImg(baseAtlasUrl) : Promise.resolve(null),
     ]);
 
     if (!atlasImg) {
@@ -160,6 +195,7 @@ class SpriteAtlasManager {
     }
 
     this.atlas = atlasImg;
+    this.baseAtlas = baseImg || atlasImg;
     this.sleepStrip = sleepImg;
     this.ready = true;
     this.loading = false;
@@ -224,8 +260,8 @@ class SpriteAtlasManager {
   _cellBox(lane, frame) {
     const a = this.LANE[lane] || this.LANE['idle'];
     const col = (a.startCol || 0) + frame;
-    if (a.kind === 'private') return { img: this.sleepStrip, sx: col * this.CW, sy: 0 };
-    return { img: this.atlas, sx: col * this.CW, sy: a.row * this.CH };
+    if (a.kind === 'private') return { img: this.sleepStrip, sx: col * this.CW, sy: 0, cw: this.CW, ch: this.CH };
+    return { img: this.atlas, sx: col * this.CW, sy: a.row * this.CH, cw: this.CW, ch: this.CH };
   }
 
   draw() {
@@ -237,17 +273,22 @@ class SpriteAtlasManager {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const { img, sx, sy } = this._cellBox(this.S.anim, this.S.frame);
-    if (!img) return;
+    const cell = this._cellBox(this.S.anim, this.S.frame);
+    if (!cell || !cell.img) return;
 
-    // 等比缩放，居中；留少量安全边距
-    const pad = 0.06;
-    const scale = Math.min(vw / this.CW, vh / this.CH) * (1 - pad);
-    const dw = this.CW * scale, dh = this.CH * scale;
-    const dx = (vw - dw) / 2, dy = (vh - dh) / 2;
+    const cw = cell.cw || this.CW;
+    const ch = cell.ch || this.CH;
+
+    // 等比缩放，居中；留少量安全边距，整像素对齐消除亚像素模糊
+    const pad = 0.04;
+    const scale = Math.min(vw / cw, vh / ch) * (1 - pad);
+    const dw = Math.round(cw * scale);
+    const dh = Math.round(ch * scale);
+    const dx = Math.round((vw - dw) / 2);
+    const dy = Math.round((vh - dh) * 0.58);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, sx, sy, this.CW, this.CH, dx, dy, dw, dh);
+    ctx.drawImage(cell.img, cell.sx, cell.sy, cw, ch, dx, dy, dw, dh);
   }
 
   // ============ 状态机 ============
@@ -329,7 +370,6 @@ class SpriteAtlasManager {
 
   _step(now) {
     if (!this.ready) return;
-    this.resize();
     const dt = Math.min(now - this._last, 100);
     this._last = now;
     if (!this.S.paused) {
@@ -352,8 +392,10 @@ class SpriteAtlasManager {
   lookStep(mx, my) {
     if (!this.canvas) return null;
     const r = this.canvas.getBoundingClientRect();
-    const dx = mx - (r.left + r.width / 2);
-    const dy = my - (r.top + r.height / 2);
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height * 0.42; // 对准面部与眼睛中心，视线注视更符合直觉
+    const dx = mx - cx;
+    const dy = my - cy;
     if (Math.hypot(dx, dy) > this.LOOK_RADIUS) return null;
     const deg = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     const idx = Math.round(deg / 22.5) % 16;
@@ -362,19 +404,35 @@ class SpriteAtlasManager {
 
   bindInput() {
     this.unbindInput();
+    this._lookResumeTimer = null;
     this._onMouseMove = (e) => {
       if (!this.ready || !this.S.look || this.S.paused) return;
       if (!['idle', 'look-row-9', 'look-row-10'].includes(this.S.anim)) return;
       const r = this.lookStep(e.clientX, e.clientY);
       if (!r) {
-        if (this.S.anim !== 'idle') { this.S.anim = 'idle'; this.S.frame = 0; this.S.onDone = null; }
+        if (this.S.anim !== 'idle') {
+          this.S.anim = 'idle'; this.S.frame = 0; this.S.onDone = null;
+          this.draw();
+        }
         this.S.lookDeg = null; this.S.lookIdx = null;
+        if (this._lookResumeTimer) { clearTimeout(this._lookResumeTimer); this._lookResumeTimer = null; }
         return;
       }
       this.S.lookDeg = r.deg; this.S.lookIdx = r.idx;
       if (this.S.anim !== r.lane || this.S.frame !== r.frame) {
         this.S.anim = r.lane; this.S.frame = r.frame; this.S.onDone = null; this.S.elapsed = 0;
+        this.draw();
       }
+      // ★ 平滑注视：鼠标停顿 2500ms 后才轻柔恢复待机呼吸，彻底杜绝短暂停顿就剧烈跳帧抽搐
+      if (this._lookResumeTimer) clearTimeout(this._lookResumeTimer);
+      this._lookResumeTimer = setTimeout(() => {
+        if (['look-row-9', 'look-row-10'].includes(this.S.anim)) {
+          this.S.anim = 'idle';
+          this.S.frame = 0;
+          this.S.elapsed = 0;
+          this.draw();
+        }
+      }, 2500);
     };
     this._onInput = () => this.markInput();
     document.addEventListener('mousemove', this._onMouseMove);

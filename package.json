@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "6.1.1",
-  "description": "二次元AI桌宠 - 八大角色全阵容（加藤惠/高木同学/雪乃/蕾姆/零二/若曦/惠惠/初音未来）· 双核Live2D (Cubism 2/4) · 原生CV声库 · 3D VRM · 精灵帧引擎",
+  "version": "6.5.2",
+  "description": "二次元AI桌宠 v6.5.2 - 八大角色全阵容（若曦/加藤惠/惠惠/蕾姆/初音未来/高木同学/零二/雪乃）· 全身超清大舞台 · 动作百宝箱 · 双核Live2D (Cubism 2/5) · 原生CV声库 · 独立WebGL渲染隔离",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.ai-desktop-pet",
     "productName": "AI桌宠",
+    "asar": false,
     "directories": {
       "output": "dist"
     },

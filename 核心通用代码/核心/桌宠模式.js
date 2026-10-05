@@ -12,6 +12,7 @@ class PetMode {
     this._everTransitioned = false;
     this._model = null;
     this._pixiApp = null;
+    this._spriteAtlas = null;
     this._renderMode = null; // 'live2d' | 'vrm' | 'sprite' | 'gif'
     this._idleTimer = null;
     this._lastInteraction = Date.now();
@@ -30,10 +31,17 @@ class PetMode {
     this._wanderTimer = null;
     this._moveSpeed = 5;
     this._mouseIgnored = false;
+    // ★ 严守纪律：每次重新登录/打开程序时，必须强制恢复为默认窗口大小（1.0，即 400x600）
+    try { localStorage.removeItem('pet-scale'); } catch (e) {}
+    this._petScale = 1.0;
+    this._scaleMenuOpen = false;
   }
 
   init(skipTransition) {
+    try { localStorage.removeItem('pet-scale'); } catch (e) {}
+    this._petScale = 1.0;
     this._bindEvents();
+    this.setPetScale(1.0);
     this.enter(skipTransition);
   }
 
@@ -42,84 +50,106 @@ class PetMode {
     const area = document.getElementById('pet-character-area');
     if (!area) return;
 
-    // ★ 鼠标透明穿透判定：光标位于桌宠角色、气泡或功能按钮上时正常接收事件；位于透明背景时直接穿透给底层桌面
-    window.addEventListener('mousemove', (e) => {
-      if (document.body.classList.contains('web-mode-active')) {
-        if (this._mouseIgnored) {
-          window.electronAPI?.setIgnoreMouseEvents?.(false);
-          this._mouseIgnored = false;
-        }
-        return;
-      }
-      if (this._dragging) {
-        if (this._mouseIgnored) {
-          window.electronAPI?.setIgnoreMouseEvents?.(false);
-          this._mouseIgnored = false;
-        }
-        return;
-      }
+    // ★ 确保桌宠模式永远不穿透，保持 100% 鼠标交互捕获
+    window.electronAPI?.setIgnoreMouseEvents?.(false);
+    this._mouseIgnored = false;
 
-      const target = document.elementFromPoint(e.clientX, e.clientY);
-      const isInteractive = target && (
-        target.closest('#pet-character-area') ||
-        target.closest('#pet-bubble-container') ||
-        target.closest('#pet-controls') ||
-        target.closest('#pet-action-menu') ||
-        target.closest('.pet-control-btn') ||
-        target.closest('.pet-action-item') ||
-        target.closest('#btn-switch-web') ||
-        target.closest('#btn-toggle-wander') ||
-        target.closest('#btn-toggle-work') ||
-        target.closest('#btn-toggle-sleep') ||
-        target.closest('#btn-pet-actions') ||
-        target.closest('.pet-bubble')
-      );
+    // ★ 统一的鼠标按下/拖拽/点击状态机（彻底解耦拖拽与触碰交互）
+    let isDown = false;
+    let isDragging = false;
+    let startScreen = { x: 0, y: 0 };
+    let startWindow = { x: 0, y: 0 };
+    let downPart = 'body';
 
-      if (isInteractive) {
-        if (this._mouseIgnored) {
-          window.electronAPI?.setIgnoreMouseEvents?.(false);
-          this._mouseIgnored = false;
-        }
-      } else {
-        if (!this._mouseIgnored) {
-          window.electronAPI?.setIgnoreMouseEvents?.(true, { forward: true });
-          this._mouseIgnored = true;
-        }
-      }
-    });
-
-    // ★ 拖拽 = 拖动整个桌宠窗口（桌面宠物应该跟随鼠标在整个桌面移动）
     area.addEventListener('mousedown', async (e) => {
       if (document.body.classList.contains('web-mode-active')) return;
-      if (e.button !== 0) return; // 仅左键拖动，右键留给百宝箱菜单
-      e.preventDefault();
-      this._dragging = true; this._moved = false;
-      if (this._mouseIgnored) {
-        window.electronAPI?.setIgnoreMouseEvents?.(false);
-        this._mouseIgnored = false;
-      }
-      this._dragStart = { sx: e.screenX, sy: e.screenY, wx: 0, wy: 0 };
+      if (e.button !== 0) return; // 仅左键拖拽与点击，右键保留给动作百宝箱
+      isDown = true;
+      isDragging = false;
+      this._dragging = false;
+      this._moved = false;
+
+      const rect = area.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      downPart = (clickY < rect.height * 0.38) ? 'head' : 'body';
+
+      startScreen = { x: e.screenX, y: e.screenY };
       try {
         const b = await window.electronAPI?.getWindowBounds?.();
-        if (b) { this._dragStart.wx = b.x; this._dragStart.wy = b.y; }
-      } catch (err) { /* 忽略 */ }
+        if (b) { startWindow = { x: b.x, y: b.y }; }
+      } catch (err) {}
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (!this._dragging) return;
-      // 用屏幕坐标计算位移，避免窗口移动后 clientX 反馈抖动
-      const dx = e.screenX - this._dragStart.sx, dy = e.screenY - this._dragStart.sy;
-      if (!this._moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-      this._moved = true;
-      window.electronAPI?.setWindowPosition?.(this._dragStart.wx + dx, this._dragStart.wy + dy);
-      if (dx < -2) this._setMoveAnim(-1, 0);
-      else if (dx > 2) this._setMoveAnim(1, 0);
-      this._lastInteraction = Date.now();
+      if (!isDown) return;
+      const dx = e.screenX - startScreen.x;
+      const dy = e.screenY - startScreen.y;
+      const dist = Math.hypot(dx, dy);
+
+      // 位移超过 8 像素，判定为真正的主动拖拽
+      if (!isDragging && dist >= 8) {
+        isDragging = true;
+        this._dragging = true;
+        this._moved = true;
+        if (this._clickTimer) {
+          clearTimeout(this._clickTimer);
+          this._clickTimer = null;
+        }
+        this._clickCount = 0;
+      }
+
+      if (isDragging) {
+        window.electronAPI?.setWindowPosition?.(startWindow.x + dx, startWindow.y + dy);
+        if (dx < -2) this._setMoveAnim(-1, 0);
+        else if (dx > 2) this._setMoveAnim(1, 0);
+        this._lastInteraction = Date.now();
+      }
     });
 
-    document.addEventListener('mouseup', () => {
-      if (this._dragging && this._moved) this._endMove();
+    document.addEventListener('mouseup', (e) => {
+      if (!isDown) return;
+      const wasDragging = isDragging;
+      isDown = false;
+      isDragging = false;
       this._dragging = false;
+
+      if (wasDragging) {
+        this._endMove();
+        return;
+      }
+
+      // 未拖动：100% 触发点击事件！
+      if (e.target.closest('#pet-controls') || e.target.closest('#pet-action-menu')) return;
+
+      this._clickCount++;
+      if (this._clickTimer) clearTimeout(this._clickTimer);
+
+      if (this._clickCount >= 3) {
+        // 三连击：暴走抗议反馈
+        const cnt = this._clickCount;
+        this._clickCount = 0;
+        this._playTap('rage', cnt);
+        this._lastInteraction = Date.now();
+      } else if (this._clickCount === 2) {
+        // 双击：若曦跳跃，其它角色触发愉悦互动（绝不误退到网页模式）
+        this._clickCount = 0;
+        if (this._renderMode === 'sprite') {
+          this._spriteCall('jump');
+          this._lastInteraction = Date.now();
+        } else {
+          this._playTap('head', 2);
+          this._lastInteraction = Date.now();
+        }
+      } else {
+        // 单击：延迟 250ms 防抖等待双击
+        this._clickTimer = setTimeout(() => {
+          if (this._clickCount === 1) {
+            this._playTap(downPart, 1);
+            this._lastInteraction = Date.now();
+          }
+          this._clickCount = 0;
+        }, 250);
+      }
     });
 
     document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter(false, true));
@@ -128,6 +158,29 @@ class PetMode {
     document.getElementById('btn-toggle-work')?.addEventListener('click', (e) => { e.stopPropagation(); this._spriteCall('toggleWork'); });
     document.getElementById('btn-toggle-sleep')?.addEventListener('click', (e) => { e.stopPropagation(); this._spriteCall('toggleSleep'); });
     document.getElementById('btn-pet-actions')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleActionMenu(); });
+    document.getElementById('btn-pet-scale')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleScaleMenu(); });
+    document.getElementById('btn-close-scale')?.addEventListener('click', (e) => { e.stopPropagation(); this._toggleScaleMenu(false); });
+    document.getElementById('pet-scale-slider')?.addEventListener('input', (e) => {
+      this.setPetScale(parseFloat(e.target.value));
+    });
+    document.getElementById('pet-scale-menu')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const preset = e.target.closest('.scale-preset-btn');
+      if (preset && preset.dataset.scale) {
+        this.setPetScale(parseFloat(preset.dataset.scale));
+      }
+    });
+    document.getElementById('btn-pet-action-scale')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleActionMenu(false);
+      this._toggleScaleMenu(true);
+    });
+    document.getElementById('btn-toggle-hd')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      this._toggleActionMenu(false);
+      const isHd = await window.spriteAtlasManager?.toggleHdMode?.();
+      this._showBubble(isHd ? '若曦已切换到超清 2X 模态 ✨' : '若曦已切换到标准 1X 模态 🌸');
+    });
 
     // 右键桌宠呼出姿态百宝箱
     area.addEventListener('contextmenu', (e) => {
@@ -137,13 +190,17 @@ class PetMode {
       this._toggleActionMenu(true);
     });
 
-    // 动作百宝箱点击项分发
+    // 动作百宝箱点击项分发（深度支持所有角色动作、表情、台词与CV联动）
     document.getElementById('pet-action-menu')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const item = e.target.closest('.pet-action-item');
       if (!item) return;
       const action = item.dataset.action;
-      if (action === 'wander') {
+      if (!action) return;
+      const char = window.characterManager?.getCurrentCharacter();
+      if (window.actionMenuManager) {
+        window.actionMenuManager.executeAction(char?.id, action, { model: this._model });
+      } else if (action === 'wander') {
         this._toggleWander();
       } else {
         this._spriteCall(action);
@@ -151,10 +208,22 @@ class PetMode {
       this._toggleActionMenu(false);
     });
 
-    // 点击外部关闭动作百宝箱
+    // 点击外部关闭动作百宝箱与大小滑动窗口
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#pet-action-menu') && !e.target.closest('#btn-pet-actions')) {
         this._toggleActionMenu(false);
+      }
+      if (!e.target.closest('#pet-scale-menu') && !e.target.closest('#btn-pet-scale') && !e.target.closest('#btn-pet-action-scale')) {
+        this._toggleScaleMenu(false);
+      }
+    });
+
+    // ★ 托盘菜单模式切换直达响应
+    window.electronAPI?.onToggleModeRequest?.(() => {
+      if (document.body.classList.contains('web-mode-active')) {
+        this.enter(false, true);
+      } else {
+        this.exit(true);
       }
     });
 
@@ -164,6 +233,7 @@ class PetMode {
     // - E：工作切换
     // - Z：睡觉切换
     // - T：自动漫步
+    // - Esc / F2：随时一键切回网页模式，防卡死
     // - 1~8：各种姿态切换
     const MOVE_KEYS = {
       ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -171,8 +241,23 @@ class PetMode {
     };
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (this._scaleMenuOpen) { this._toggleScaleMenu(false); return; }
         if (this._actionMenuOpen) { this._toggleActionMenu(false); return; }
-        if (document.body.classList.contains('web-mode-active')) { this.enter(); return; }
+        if (!document.body.classList.contains('web-mode-active')) {
+          this.exit(true);
+          return;
+        } else {
+          this.enter();
+          return;
+        }
+      }
+      if (e.key === 'F2') {
+        if (!document.body.classList.contains('web-mode-active')) {
+          this.exit(true);
+        } else {
+          this.enter();
+        }
+        return;
       }
       if (document.body.classList.contains('web-mode-active')) return;
       const tag = (e.target && e.target.tagName) || '';
@@ -184,6 +269,10 @@ class PetMode {
       else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); this._spriteCall('toggleWork'); }
       else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); this._spriteCall('toggleSleep'); }
       else if (e.key === 't' || e.key === 'T') { e.preventDefault(); this._toggleWander(); }
+      else if (e.key === 'b' || e.key === 'B') {
+        const on = this._toggleBubble();
+        if (on) this._showBubble('气泡台词已开启 💬');
+      }
       else if (e.key === '1') { this._spriteCall('idle'); }
       else if (e.key === '2') { this._spriteCall('wave'); }
       else if (e.key === '3') { this._spriteCall('jump'); }
@@ -232,6 +321,8 @@ class PetMode {
     this.app.hideCharacterSelector?.();
 
     try {
+      window.electronAPI?.setIgnoreMouseEvents?.(false);
+      this._mouseIgnored = false;
       if (skipTransition || !this._everTransitioned) {
         document.body.classList.remove('web-mode-active');
         await this._loadCharacter();
@@ -287,7 +378,7 @@ class PetMode {
 
       document.body.classList.add('web-mode-active');
 
-      setTimeout(() => {
+      const doCleanup = () => {
         this._cleanupLive2D();
         this._cleanupVRM();
         this._cleanupSprite();
@@ -299,7 +390,14 @@ class PetMode {
         // ★ 切回网页模式时刷新聊天页角色显示（精灵表/模型/GIF），不要只显示封面
         window.live2dManager?.switchToWebMode?.();
         this._safeUnlockTransition();
-      }, 350);
+      };
+
+      if (force) {
+        doCleanup();
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        doCleanup();
+      }
     } catch (e) {
       console.warn('[PetMode] 退出桌宠模式出错:', e);
       document.body.classList.add('web-mode-active');
@@ -329,8 +427,33 @@ class PetMode {
           head.rotation.x = dy * 0.15;
         }
       } else if (this._renderMode === 'live2d' && this._model) {
-        // Live2D：聚焦视线
-        try { this._model.focus(e.clientX - r.left, e.clientY - r.top); } catch (e) {}
+        // Live2D：全版本双轨视线与头部跟踪（加藤惠/蕾姆/初音/惠惠/高木同学100%全覆盖）
+        try {
+          if (this._model.internalModel?.focusController) {
+            this._model.internalModel.focusController.focus(dx, -dy);
+          }
+          const cm = this._model.internalModel?.coreModel;
+          if (cm) {
+            // Cubism 2 (加藤惠, 蕾姆, 初音未来)
+            if (typeof cm.setParamFloat === 'function') {
+              cm.setParamFloat('PARAM_EYE_BALL_X', dx * 0.85);
+              cm.setParamFloat('PARAM_EYE_BALL_Y', -dy * 0.85);
+              cm.setParamFloat('PARAM_ANGLE_X', dx * 18);
+              cm.setParamFloat('PARAM_ANGLE_Y', -dy * 15);
+            }
+            // Cubism 4 / 5 (惠惠, 高木同学)
+            if (typeof cm.setParameterValueById === 'function' && typeof cm.getParameterIndex === 'function') {
+              const eyeX = cm.getParameterIndex('ParamEyeBallX') >= 0 ? 'ParamEyeBallX' : 'PARAM_EYE_BALL_X';
+              const eyeY = cm.getParameterIndex('ParamEyeBallY') >= 0 ? 'ParamEyeBallY' : 'PARAM_EYE_BALL_Y';
+              const angX = cm.getParameterIndex('ParamAngleX') >= 0 ? 'ParamAngleX' : 'PARAM_ANGLE_X';
+              const angY = cm.getParameterIndex('ParamAngleY') >= 0 ? 'ParamAngleY' : 'PARAM_ANGLE_Y';
+              cm.setParameterValueById(eyeX, dx * 0.85);
+              cm.setParameterValueById(eyeY, -dy * 0.85);
+              cm.setParameterValueById(angX, dx * 18);
+              cm.setParameterValueById(angY, -dy * 15);
+            }
+          }
+        } catch (e) {}
       } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
         // 精灵表：16 向视线由引擎内部 document mousemove 处理，此处无需重复
       }
@@ -401,7 +524,7 @@ class PetMode {
 
   /** 移动时切换对应方向的跑步动画；方向键上下移动也复用跑步姿态 */
   _setMoveAnim(dx, dy) {
-    const m = window.spriteAtlasManager;
+    const m = this._spriteAtlas || window.spriteAtlasManager;
     if (this._renderMode !== 'sprite' || !m || !m.ready) return;
     const cur = m.S.anim;
     const movable = ['idle', 'sleep', 'look-row-9', 'look-row-10', 'running-left', 'running-right', 'running'];
@@ -414,7 +537,7 @@ class PetMode {
   /** 移动结束：回到待机（若处于工作状态则恢复工作姿态） */
   _endMove() {
     this._moving = false;
-    const m = window.spriteAtlasManager;
+    const m = this._spriteAtlas || window.spriteAtlasManager;
     if (this._renderMode === 'sprite' && m && m.ready) {
       if (m.S.work) {
         m.work();
@@ -427,7 +550,7 @@ class PetMode {
 
   /** 调用精灵引擎动作（跳跃/工作/睡觉/挥手/验收/受阻/等待等全套动作） */
   _spriteCall(action) {
-    const m = window.spriteAtlasManager;
+    const m = this._spriteAtlas || window.spriteAtlasManager;
     if (!m || !m.ready) return;
     if (action === 'jump') {
       m.jump();
@@ -458,39 +581,177 @@ class PetMode {
     this._updateControlButtons();
   }
 
-  /** 切换动作百宝箱显示 */
+  /** 切换动作百宝箱显示（动态渲染当前角色专属姿态与动作列表） */
   _toggleActionMenu(show) {
     const menu = document.getElementById('pet-action-menu');
     if (!menu) return;
     const next = (typeof show === 'boolean') ? show : !this._actionMenuOpen;
     this._actionMenuOpen = next;
+    if (next) this._toggleScaleMenu(false);
+    if (next && window.actionMenuManager) {
+      const char = window.characterManager?.getCurrentCharacter();
+      window.actionMenuManager.renderMenu('pet-action-menu', char?.id, (actionId) => {
+        window.actionMenuManager.executeAction(char?.id, actionId, { model: this._model });
+        this._toggleActionMenu(false);
+      });
+    }
     menu.classList.toggle('show', next);
   }
 
-  /** 更新控制栏按钮激活状态（非精灵角色时自动精简工具栏） */
+  /** 计算当前屏幕的安全缩放上限，绝不允许窗口超出屏幕工作区导致切换键出屏 */
+  _calcMaxSafeScale() {
+    const availH = (window.screen?.availHeight || 900);
+    // 留出至少 70px 安全边距（顶部 20px，底部 50px 视觉缓冲），确保底部的控制栏和切换键 100% 在屏幕内可见
+    const maxSafeH = Math.max(480, availH - 70);
+    const scaleByScreen = Math.floor((maxSafeH / 600) * 100) / 100;
+    // 封顶在 1.35，且下限不低于 1.0
+    return Math.min(1.35, Math.max(1.0, scaleByScreen));
+  }
+
+  /** 同步缩放面板 UI 状态（滑动条与预设按钮） */
+  _syncScaleUI(s, maxSafe) {
+    const slider = document.getElementById('pet-scale-slider');
+    const valText = document.getElementById('pet-scale-val');
+    if (slider) {
+      slider.min = '0.75';
+      slider.max = maxSafe.toFixed(2);
+      slider.step = '0.05';
+      slider.value = s.toString();
+    }
+    if (valText) {
+      valText.textContent = Math.round(s * 100) + '%';
+    }
+
+    document.querySelectorAll('.scale-preset-btn').forEach(b => {
+      const bScale = parseFloat(b.dataset.scale);
+      if (bScale > maxSafe + 0.02) {
+        b.style.display = 'none';
+      } else {
+        b.style.display = '';
+        b.classList.toggle('active', Math.abs(bScale - s) < 0.04);
+      }
+    });
+  }
+
+  /** 切换大小滑动窗口显示 */
+  _toggleScaleMenu(show) {
+    const menu = document.getElementById('pet-scale-menu');
+    if (!menu) return;
+    const next = (typeof show === 'boolean') ? show : !this._scaleMenuOpen;
+    this._scaleMenuOpen = next;
+    if (next) {
+      this._toggleActionMenu(false);
+      this._syncScaleUI(this._petScale, this._calcMaxSafeScale());
+    }
+    menu.classList.toggle('show', next);
+  }
+
+  /** 恢复默认 100% 原始尺寸 */
+  resetPetScale() {
+    return this.setPetScale(1.0);
+  }
+
+  /** 设置桌宠整体显示尺寸（大小滑动窗口核心实现 · 严格等比例 + 屏幕安全保护） */
+  setPetScale(scale) {
+    const maxSafe = this._calcMaxSafeScale();
+    // 严格限制在 [0.75, maxSafe] 范围内，绝不允许越界
+    const s = Math.max(0.75, Math.min(maxSafe, parseFloat(scale) || 1.0));
+    this._petScale = s;
+    document.documentElement.style.setProperty('--pet-scale', s.toString());
+
+    // 同步 UI 状态
+    this._syncScaleUI(s, maxSafe);
+
+    // 计算外框与舞台画布的像素尺寸
+    const targetW = Math.round(400 * s);
+    const targetH = Math.round(600 * s);
+    const stageW = Math.round(380 * s);
+    const stageH = Math.round(570 * s);
+
+    // 1. 动态调整 Electron 窗口外框尺寸（保持底部居中对齐）
+    window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
+
+    // 2. 同步 WebGL 视口与物理画布像素尺寸（双画布全量同步适配）
+    if (this._pixiApp && this._pixiApp.renderer) {
+      this._pixiApp.renderer.resize(stageW, stageH);
+    }
+    const canvas = document.getElementById('pet-canvas');
+    if (canvas) {
+      canvas.width = stageW;
+      canvas.height = stageH;
+      canvas.style.width = stageW + 'px';
+      canvas.style.height = stageH + 'px';
+    }
+    const spriteCanvas = document.getElementById('pet-sprite-canvas');
+    if (spriteCanvas) {
+      spriteCanvas.width = stageW;
+      spriteCanvas.height = stageH;
+      spriteCanvas.style.width = stageW + 'px';
+      spriteCanvas.style.height = stageH + 'px';
+    }
+
+    // 3. 对当前活跃模型应用严格等比例缩放（Uniform Scale），杜绝局部衣服/光影撕裂
+    if (this._renderMode === 'live2d' && this._model) {
+      const im = this._model.internalModel;
+      if (!this._model._origDesignWidth) {
+        const rawW = (im && im.originalWidth > 0) ? im.originalWidth : (this._model.width > 0 ? this._model.width : 1000);
+        const rawH = (im && im.originalHeight > 0) ? im.originalHeight : (this._model.height > 0 ? this._model.height : 1000);
+        this._model._origDesignWidth = rawW;
+        this._model._origDesignHeight = rawH;
+        this._model._baseFitScale = Math.min(380 / rawW, 570 / rawH) * 0.95;
+      }
+
+      const baseFit = this._model._baseFitScale || (Math.min(380 / (this._model._origDesignWidth || 1000), 570 / (this._model._origDesignHeight || 1000)) * 0.95);
+      const uniformScale = baseFit * s;
+
+      // X 与 Y 轴严格等比例
+      this._model.scale.set(uniformScale, uniformScale);
+      this._model.anchor.set(0.5, 0.5);
+      this._model.position.set(stageW / 2, stageH / 2);
+
+      // 立即刷新 Live2D 投影矩阵与蒙版管理器（Clipping Manager）
+      if (im) {
+        try {
+          if (typeof im.resize === 'function') {
+            im.resize(stageW, stageH);
+          }
+          im.update(0, 0);
+        } catch (e) {}
+      }
+      if (this._model.parent && typeof this._model.updateTransform === 'function') {
+        try { this._model.updateTransform(); } catch (e) {}
+      }
+    } else if (this._renderMode === 'sprite') {
+      const spriteCanvas = document.getElementById('pet-sprite-canvas');
+      if (spriteCanvas) {
+        spriteCanvas.width = stageW;
+        spriteCanvas.height = stageH;
+        spriteCanvas.style.width = stageW + 'px';
+        spriteCanvas.style.height = stageH + 'px';
+      }
+      const m = this._spriteAtlas || window.spriteAtlasManager;
+      if (m && m.ready) {
+        m.resize(stageW, stageH);
+        m.draw();
+      }
+    }
+  }
+
+  /** 更新控制栏按钮激活状态（桌面保留缩放窗、切回网页与动作百宝箱） */
   _updateControlButtons() {
-    const char = window.characterManager?.getCurrentCharacter();
-    const isSprite = char && window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(char);
-    const m = window.spriteAtlasManager;
     const btnWork = document.getElementById('btn-toggle-work');
     const btnSleep = document.getElementById('btn-toggle-sleep');
     const btnWander = document.getElementById('btn-toggle-wander');
+    const btnScale = document.getElementById('btn-pet-scale');
     const btnActions = document.getElementById('btn-pet-actions');
+    const btnSwitchWeb = document.getElementById('btn-switch-web');
 
-    if (btnWork) {
-      btnWork.style.display = isSprite ? '' : 'none';
-      btnWork.classList.toggle('active', !!(isSprite && m && m.ready && m.S.work));
-    }
-    if (btnSleep) {
-      btnSleep.style.display = isSprite ? '' : 'none';
-      btnSleep.classList.toggle('active', !!(isSprite && m && m.ready && m.S.anim === 'sleep'));
-    }
-    if (btnActions) {
-      btnActions.style.display = isSprite ? '' : 'none';
-    }
-    if (btnWander) {
-      btnWander.classList.toggle('active', !!this._wanderActive);
-    }
+    if (btnWork) btnWork.style.display = 'none';
+    if (btnSleep) btnSleep.style.display = 'none';
+    if (btnWander) btnWander.style.display = 'none';
+    if (btnScale) btnScale.style.display = 'flex';
+    if (btnActions) btnActions.style.display = 'flex';
+    if (btnSwitchWeb) btnSwitchWeb.style.display = 'flex';
   }
 
   /** 自动漫步：随机左右走动（新功能） */
@@ -524,115 +785,286 @@ class PetMode {
     if (this._wanderTimer) { clearTimeout(this._wanderTimer); this._wanderTimer = null; }
   }
 
-  // === 角色加载（自动降级：Live2D > VRM > GIF，使用缓存检查）
-  // ★ 优化：先检查模型文件是否存在，再加载 CDN 脚本，避免无谓的 CDN 加载
+  // ★ 画布保活与双画布物理隔离：若曦独占 pet-sprite-canvas，Live2D 独占 pet-canvas
+  _ensureCanvases() {
+    const area = document.getElementById('pet-character-area');
+    if (!area) return null;
+    let canvas = document.getElementById('pet-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'pet-canvas';
+      canvas.style.cssText = 'width:100%;height:100%;pointer-events:auto;cursor:pointer;';
+      area.prepend(canvas);
+    }
+    let vrmCanvas = document.getElementById('pet-vrm-canvas');
+    if (!vrmCanvas) {
+      vrmCanvas = document.createElement('canvas');
+      vrmCanvas.id = 'pet-vrm-canvas';
+      vrmCanvas.style.cssText = 'display:none;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:auto;cursor:pointer;';
+      area.insertBefore(vrmCanvas, canvas.nextSibling);
+    }
+    let spriteCanvas = document.getElementById('pet-sprite-canvas');
+    if (!spriteCanvas) {
+      spriteCanvas = document.createElement('canvas');
+      spriteCanvas.id = 'pet-sprite-canvas';
+      spriteCanvas.style.cssText = 'display:none;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:auto;cursor:pointer;';
+      area.insertBefore(spriteCanvas, vrmCanvas.nextSibling);
+    }
+    let gif = document.getElementById('pet-gif');
+    if (!gif) {
+      gif = document.createElement('img');
+      gif.id = 'pet-gif';
+      gif.className = 'pet-gif-img';
+      gif.src = '';
+      gif.alt = '';
+      area.appendChild(gif);
+    }
+    return { area, canvas, vrmCanvas, spriteCanvas, gif };
+  }
+
+  // === 角色加载（双画布物理隔离 + 2048超清抗锯齿渲染 + 彻底清空旧残留） ===
   async _loadCharacter() {
-    // 清理之前的 fallback
-    const oldFallback = document.querySelector('.pet-fallback-img');
+    const nodes = this._ensureCanvases();
+    if (!nodes) return;
+    const { area, canvas, vrmCanvas, spriteCanvas, gif } = nodes;
+
+    // ★ 切换角色第一毫秒：彻底清空静态封面与残留遮盖层
+    const oldFallback = area.querySelector('.pet-fallback-img');
     if (oldFallback) oldFallback.remove();
+    if (gif) { gif.src = ''; gif.style.display = 'none'; }
 
     const char = window.characterManager?.getCurrentCharacter();
     if (!char) return;
 
-    const area = document.getElementById('pet-character-area');
-    if (area) {
-      area.style.margin = ''; area.style.left = '50%'; area.style.top = '50%';
-      area.style.marginLeft = '-140px'; area.style.marginTop = '-170px';
-    }
-
-    const canvas = document.getElementById('pet-canvas');
-    const gif = document.getElementById('pet-gif');
-    if (!canvas || !area) return;
-
-    // ★ 立即显示静态封面，让用户立刻看到角色（模型/GIF 加载完成后会自动替换）
+    // 显示当前角色静态封面作为无缝过渡（模型或精灵加载成功后立即清除）
     this._showPetFallback();
 
     let loaded = false;
 
-    // ★ 精灵表角色（若曦）：ChatGPT Pets v2 精灵表 + 状态机 + 16 向视线
+    // ① 精灵表角色（若曦）：白狐仙精灵帧桌宠 · 专用 2D 画布隔离
     if (!loaded && window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(char)) {
       try {
         this._cleanupLive2D();
         this._cleanupVRM();
-        const ok = await window.spriteAtlasManager.loadFor(char, canvas);
-        if (ok) {
-          canvas.style.display = '';
-          if (gif) gif.style.display = 'none';
-          loaded = true; this._renderMode = 'sprite';
-          const fb = document.querySelector('.pet-fallback-img');
-          if (fb) fb.remove();
-        }
-      } catch (e) { loaded = false; }
-    }
+        if (canvas) canvas.style.display = 'none';
+        if (gif) gif.style.display = 'none';
+        spriteCanvas.style.display = 'block';
 
-    // ★ 先检查 Live2D 模型文件是否存在，再决定是否加载 PIXI CDN
-    if (char.live2d?.modelPath) {
-      const exists = await window.characterManager.checkModelFileExists(char.live2d.modelPath);
-      if (exists) {
-        // 只有模型存在才加载 PIXI CDN
-        try {
-          await window.live2dManager.loadScripts();
-          this._pixiApp = new PIXI.Application({
-            view: canvas, width: area.clientWidth, height: area.clientHeight,
-            transparent: true, backgroundAlpha: 0, resizeTo: area,
-          });
-          this._model = await PIXI.live2d.Live2DModel.from(char.live2d.modelPath, { autoInteract: false, autoUpdate: true });
-          const s = Math.min(area.clientWidth / this._model.width, area.clientHeight / this._model.height) * 0.8;
-          this._model.scale.set(s); this._model.anchor.set(0.5, 0.5);
-          this._model.x = area.clientWidth / 2; this._model.y = area.clientHeight / 2;
-          this._pixiApp.stage.addChild(this._model);
-          canvas.style.display = ''; if (gif) gif.style.display = 'none';
-          loaded = true; this._renderMode = 'live2d';
-          // ★ 移除静态占位
-          const fb = document.querySelector('.pet-fallback-img');
-          if (fb) fb.remove();
-        } catch (e) { loaded = false; }
+        if (!this._spriteAtlas) {
+          this._spriteAtlas = new SpriteAtlasManager();
+        }
+        window.spriteAtlasManager = this._spriteAtlas;
+
+        const ok = await this._spriteAtlas.loadFor(char, spriteCanvas);
+        if (ok) {
+          loaded = true;
+          this._renderMode = 'sprite';
+          this._clearAllFallbacks(area);
+        }
+      } catch (e) {
+        console.warn('[PetMode] 精灵表加载异常:', e);
+        loaded = false;
       }
     }
 
-    // VRM — 使用缓存检查
+    // ② Live2D 模型（原画级 2048 超清抗锯齿渲染）
+    if (!loaded && char.live2d?.modelPath) {
+      const exists = await window.characterManager.checkModelFileExists(char.live2d.modelPath);
+      if (exists) {
+        try {
+          this._cleanupSprite();
+          this._cleanupVRM();
+          if (spriteCanvas) spriteCanvas.style.display = 'none';
+          if (gif) gif.style.display = 'none';
+          canvas.style.display = 'block';
+
+          await window.live2dManager.loadScripts();
+
+          const sFactor = this._petScale || 1.0;
+          const stageW = Math.round(380 * sFactor);
+          const stageH = Math.round(570 * sFactor);
+          canvas.width = stageW;
+          canvas.height = stageH;
+          canvas.style.width = stageW + 'px';
+          canvas.style.height = stageH + 'px';
+
+          if (!this._pixiApp) {
+            this._pixiApp = new PIXI.Application({
+              view: canvas,
+              width: stageW,
+              height: stageH,
+              transparent: true,
+              backgroundAlpha: 0,
+              antialias: true,
+              autoDensity: true,
+              resolution: window.devicePixelRatio || 1,
+            });
+          } else if (this._pixiApp.renderer) {
+            this._pixiApp.renderer.resize(stageW, stageH);
+          }
+
+          if (this._model) {
+            try { this._model.internalModel?.motionManager?.stopAllMotions?.(); } catch (e) {}
+            if (this._pixiApp.stage) this._pixiApp.stage.removeChild(this._model);
+            this._model.destroy({ children: true });
+            this._model = null;
+          }
+
+          this._model = await PIXI.live2d.Live2DModel.from(char.live2d.modelPath, {
+            autoInteract: true,
+            autoUpdate: true
+          });
+
+          // 固化原始固有设计尺寸（严禁以动态变化中的包围盒为基准）
+          const im = this._model.internalModel;
+          const rawW = (im && im.originalWidth > 0) ? im.originalWidth : (this._model.width > 0 ? this._model.width : 1000);
+          const rawH = (im && im.originalHeight > 0) ? im.originalHeight : (this._model.height > 0 ? this._model.height : 1000);
+          this._model._origDesignWidth = rawW;
+          this._model._origDesignHeight = rawH;
+          this._model._baseFitScale = Math.min(380 / rawW, 570 / rawH) * 0.95;
+
+          // 全身优雅比例渲染（严格等比例，X与Y完全一致，杜绝图层撕裂）
+          const uniformScale = this._model._baseFitScale * sFactor;
+          this._model.scale.set(uniformScale, uniformScale);
+          this._model.anchor.set(0.5, 0.5);
+          this._model.position.set(stageW / 2, stageH / 2);
+          this._model.interactive = true;
+
+          // 先将模型加入 stage，确保拥有有效父级节点
+          this._pixiApp.stage.addChild(this._model);
+
+          // 立即同步投影矩阵与蒙版系统
+          if (im) {
+            try {
+              if (typeof im.resize === 'function') {
+                im.resize(stageW, stageH);
+              }
+              im.update(0, 0);
+            } catch (e) {}
+          }
+          if (this._model.parent && typeof this._model.updateTransform === 'function') {
+            try { this._model.updateTransform(); } catch (e) {}
+          }
+
+          // 动态修复 Cubism 4/5 内部参数名映射（如惠惠等大写规范模型）
+          if (im && im.idParamEyeBallX && im.coreModel?.getParameterIndex) {
+            try {
+              if (im.coreModel.getParameterIndex('ParamEyeBallX') < 0 && im.coreModel.getParameterIndex('PARAM_EYE_BALL_X') >= 0) {
+                im.idParamEyeBallX = 'PARAM_EYE_BALL_X';
+                im.idParamEyeBallY = 'PARAM_EYE_BALL_Y';
+                im.idParamAngleX = 'PARAM_ANGLE_X';
+                im.idParamAngleY = 'PARAM_ANGLE_Y';
+                im.idParamAngleZ = 'PARAM_ANGLE_Z';
+                im.idParamBodyAngleX = 'PARAM_BODY_ANGLE_X';
+              }
+            } catch (e) {}
+          }
+
+          // 载入即启动待机呼吸与眨眼
+          if (window.actionMenuManager) {
+            window.actionMenuManager.playIdle(char.id, { model: this._model });
+          } else if (typeof this._model.motion === 'function') {
+            for (const idleName of ['idle', 'Idle', 'IDLING_01', 'Live2D_remu_idle', 'miku_idle_01', '']) {
+              try {
+                if (this._model.motion(idleName) !== false) break;
+              } catch (e) {}
+            }
+          }
+
+          loaded = true;
+          this._renderMode = 'live2d';
+          this._clearAllFallbacks(area);
+        } catch (e) {
+          console.warn('[PetMode] Live2D 加载异常:', e);
+          loaded = false;
+        }
+      }
+    }
+
+    // ③ VRM 模型
     if (!loaded && char.vrm?.modelPath && window.vrmManager) {
       const exists = await window.characterManager.checkModelFileExists(char.vrm.modelPath);
       if (exists) {
         try {
           this._cleanupLive2D();
-          canvas.style.display = ''; if (gif) gif.style.display = 'none';
-          canvas.width = area.clientWidth; canvas.height = area.clientHeight;
-          const ok = await window.vrmManager.initPet(canvas, area.clientWidth, area.clientHeight);
+          this._cleanupSprite();
+          if (canvas) canvas.style.display = 'none';
+          if (spriteCanvas) spriteCanvas.style.display = 'none';
+          if (gif) gif.style.display = 'none';
+          const petW = Math.max(200, area.clientWidth || 380);
+          const petH = Math.max(300, area.clientHeight || 570);
+          if (vrmCanvas) {
+            vrmCanvas.style.display = 'block';
+            vrmCanvas.width = petW;
+            vrmCanvas.height = petH;
+          }
+          const ok = await window.vrmManager.initPet(vrmCanvas, petW, petH);
           if (ok) {
             const modelOk = await window.vrmManager.loadModel(char.vrm.modelPath);
-            if (modelOk) { loaded = true; this._renderMode = 'vrm'; }
-            // ★ 移除静态占位
-            const fb2 = document.querySelector('.pet-fallback-img');
-            if (fb2) fb2.remove();
+            if (modelOk) {
+              loaded = true;
+              this._renderMode = 'vrm';
+              const fb = area.querySelector('.pet-fallback-img');
+              if (fb) fb.remove();
+            }
           }
-        } catch (e) { loaded = false; }
+        } catch (e) {
+          console.error('[PetMode VRM Error]', e);
+          loaded = false;
+        }
       }
     }
 
-    // GIF
-    if (!loaded) { this._renderMode = 'gif'; await this._loadGif(); }
+    // ④ GIF
+    if (!loaded) {
+      this._cleanupLive2D();
+      this._cleanupSprite();
+      this._cleanupVRM();
+      if (canvas) canvas.style.display = 'none';
+      if (spriteCanvas) spriteCanvas.style.display = 'none';
+      this._renderMode = 'gif';
+      await this._loadGif();
+    }
+
+    this._updateControlButtons();
   }
 
   async _loadGif() {
-    const path = window.live2dManager._getGifPath();
+    const path = window.live2dManager?._getGifPath?.();
     const canvas = document.getElementById('pet-canvas');
     const gif = document.getElementById('pet-gif');
-    if (!path || !gif) return;
+    if (!path || !gif) {
+      this._showPetFallback();
+      return;
+    }
     if (canvas) canvas.style.display = 'none';
 
     const ok = await new Promise(resolve => {
-      const timer = setTimeout(() => resolve(false), 8000);
+      const timer = setTimeout(() => resolve(false), 3000);
       gif.onload = () => { clearTimeout(timer); resolve(true); };
       gif.onerror = () => { clearTimeout(timer); resolve(false); };
       gif.src = path;
     });
     if (ok) {
       gif.style.display = 'block'; gif.style.visibility = 'visible'; gif.style.opacity = '1';
-      // ★ GIF 加载成功，移除静态占位
-      const fb = document.querySelector('.pet-fallback-img');
-      if (fb) fb.remove();
+      // ★ GIF 加载成功，彻底移除静态占位与遮盖层
+      this._clearAllFallbacks();
+    } else {
+      if (gif) { gif.src = ''; gif.style.display = 'none'; }
+      this._showPetFallback();
     }
+  }
+
+  /** 彻底清理一切降级封面与遮盖层，消灭残留图层遮挡 */
+  _clearAllFallbacks(area) {
+    const a = area || document.getElementById('pet-character-area');
+    if (a) {
+      a.querySelectorAll('.pet-fallback-img').forEach(el => el.remove());
+    }
+    const oldWebFb = document.getElementById('live2d-fallback');
+    if (oldWebFb) oldWebFb.remove();
+    const oldGif = document.getElementById('gif-fallback-container');
+    if (oldGif) oldGif.remove();
   }
 
   /** GIF 加载失败时显示静态封面 */
@@ -647,9 +1079,11 @@ class PetMode {
     const img = document.createElement('img');
     img.className = 'pet-fallback-img';
     img.src = coverPath;
-    img.style.cssText = 'width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;pointer-events:none;';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;pointer-events:none;z-index:10;display:block;';
     const canvas = document.getElementById('pet-canvas');
     if (canvas) canvas.style.display = 'none';
+    const spriteCanvas = document.getElementById('pet-sprite-canvas');
+    if (spriteCanvas) spriteCanvas.style.display = 'none';
     const gif = document.getElementById('pet-gif');
     if (gif) gif.style.display = 'none';
     area.appendChild(img);
@@ -657,65 +1091,26 @@ class PetMode {
 
   // === 点击交互 ===
   _bindClickEvents() {
-    const area = document.getElementById('pet-character-area');
-    const canvas = document.getElementById('pet-canvas');
-    const gif = document.getElementById('pet-gif');
-
-    // ★ 幂等绑定：先移除上一次的监听器，避免多次进出桌宠模式后点击重复触发
-    if (this._clickHandler) {
-      area?.removeEventListener('mousedown', this._clickHandler);
-      canvas?.removeEventListener('mousedown', this._clickHandler);
-      gif?.removeEventListener('mousedown', this._clickHandler);
-    }
-
-    const handler = (e) => {
-      if (e.button !== 0) return;
-      if (e.target.closest('#pet-controls') || e.target.closest('#pet-action-menu')) return;
-      if (this._moved) return;
-      this._clickCount++;
-      if (this._clickTimer) clearTimeout(this._clickTimer);
-
-      if (this._clickCount >= 3) {
-        this._clickCount = 0;
-        const s = Math.random() > 0.5 ? 'tsukkomi' : 'jealous';
-        this._showBubble(window.characterManager.getRandomLine(s));
-        this._playTap();
-        this._lastInteraction = Date.now();
-      } else if (this._clickCount === 2) {
-        this._clickCount = 0;
-        if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
-          window.spriteAtlasManager.jump();
-          this._lastInteraction = Date.now();
-        } else {
-          this.exit(true); // ★ 强制退出，避免transition锁卡住
-        }
-      } else {
-        this._clickTimer = setTimeout(() => {
-          if (this._clickCount === 1 && !this._moved) {
-            this._showBubble(window.characterManager.getRandomLine('click'));
-            this._playTap();
-            this._lastInteraction = Date.now();
-          }
-          this._clickCount = 0;
-        }, 300);
-      }
-    };
-
-    this._clickHandler = handler;
-    // 绑定至 area 容器，确保无论是 精灵表 / Live2D / VRM / GIF 还是静态降级封面，均可正常点击与双击
-    if (area) area.addEventListener('mousedown', handler);
+    // 统一点击与拖拽状态机已在 _bindEvents 中一次性完成绑定，此处保持幂等空实现
   }
 
-  _playTap() {
-    // ★ 触发角色原生CV随机语音（如蕾姆26段原生语音包）
-    window.characterManager?.playRandomVoice();
+  _playTap(part = 'body', clickCount = 1) {
+    const char = window.characterManager?.getCurrentCharacter();
+    const charId = char?.id || 'ruoxi';
 
+    // ★ 动作百宝箱触碰响应系统（摸头 / 戳身体 / 连击暴走）
+    if (window.actionMenuManager) {
+      window.actionMenuManager.handleTouch(charId, part, clickCount, { model: this._model });
+      return;
+    }
+
+    // 基础回退逻辑
+    window.characterManager?.playRandomVoice();
     if (this._renderMode === 'vrm' && window.vrmManager) {
       window.vrmManager.playAnimation('tap');
     } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
       window.spriteAtlasManager.wave();
     } else if (this._model) {
-      // ★ 兼容不同 Live2D 模型的动作分组命名（高木/加藤惠/蕾姆/惠惠/初音）
       const candidates = ['TapBody', 'tap_body', 'tap_head', 'Poke', 'Tease', '', 'null', 'idle', 'Idle'];
       if (typeof this._model.motion === 'function') {
         for (const anim of candidates) {
@@ -728,15 +1123,39 @@ class PetMode {
     }
   }
 
-  // === 气泡系统 ===
+  // === 气泡系统（轻巧不挡脸、点击即消、支持全局开关） ===
   _showBubble(text) {
+    if (this._bubbleEnabled === false) return;
     const c = document.getElementById('pet-bubble-container');
-    if (!c) return;
+    if (!c || !text) return;
+    // 杜绝堆叠：每次只保留最新单条气泡
+    this._clearBubbles();
     const b = document.createElement('div');
-    b.className = 'pet-bubble'; b.textContent = text;
+    b.className = 'pet-bubble';
+    b.textContent = text;
+    b.title = '点击即可关闭气泡';
+    // 点击即刻消除
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      b.classList.add('bubble-fade-out');
+      setTimeout(() => b.remove(), 250);
+    });
     c.appendChild(b);
-    setTimeout(() => { b.classList.add('bubble-fade-out'); setTimeout(() => b.remove(), 400); }, 3500);
-    while (c.children.length > 3) c.firstChild?.remove();
+    setTimeout(() => {
+      if (b.parentNode) {
+        b.classList.add('bubble-fade-out');
+        setTimeout(() => b.remove(), 250);
+      }
+    }, 2200);
+  }
+
+  /** 切换气泡台词显示/静音 */
+  _toggleBubble() {
+    this._bubbleEnabled = !this._bubbleEnabled;
+    if (!this._bubbleEnabled) {
+      this._clearBubbles();
+    }
+    return this._bubbleEnabled;
   }
 
   _clearBubbles() {
@@ -762,23 +1181,35 @@ class PetMode {
 
   resetIdle() { this._lastInteraction = Date.now(); }
 
-  // === 资源清理 ===
-  _cleanupLive2D() {
-    if (this._pixiApp) {
-      if (this._model) { this._pixiApp.stage.removeChild(this._model); this._model.destroy(); this._model = null; }
-      this._pixiApp.destroy(true); this._pixiApp = null;
+  // === 资源清理（安全垃圾回收，显存清道夫，绝不物理删除 DOM 画布，保持 PIXI Application 单例复用） ===
+  _cleanupLive2D(destroyPixi = false) {
+    if (this._model) {
+      if (this._pixiApp?.stage) this._pixiApp.stage.removeChild(this._model);
+      this._model.destroy({ children: true });
+      this._model = null;
+    }
+    if (destroyPixi && this._pixiApp) {
+      this._pixiApp.destroy(false); // ★ 绝对传 false，保留 DOM 画布节点！
+      this._pixiApp = null;
     }
   }
 
   _cleanupSprite() {
-    if (window.spriteAtlasManager && this._renderMode === 'sprite') {
+    if (this._spriteAtlas) {
+      this._spriteAtlas.destroy();
+      this._spriteAtlas = null;
+    } else if (window.spriteAtlasManager) {
       window.spriteAtlasManager.destroy();
     }
+    const sc = document.getElementById('pet-sprite-canvas');
+    if (sc) sc.style.display = 'none';
   }
 
   _cleanupVRM() {
-    if (this._renderMode === 'vrm' && window.vrmManager) {
+    if (window.vrmManager) {
       window.vrmManager.destroy();
     }
+    const vc = document.getElementById('pet-vrm-canvas');
+    if (vc) vc.style.display = 'none';
   }
 }

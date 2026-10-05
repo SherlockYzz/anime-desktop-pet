@@ -60,6 +60,13 @@ CHARACTER_REGISTRY.takagi = {
     modelPath: '../../角色-高木同学/Live2D模型/model.model3.json',
   },
 
+  // 原生CV语音配置（高桥李依擅长捉弄俏皮少女语音包，共10段经典语音）
+  voice: {
+    baseDir: '../../角色-高木同学/音频素材/',
+    count: 10,
+    format: 'mp3'
+  },
+
   // 以下字段由运行时从 txt 文件加载填充
   systemPrompt: null,
   lines: {}

@@ -1,4 +1,6 @@
 // 加藤惠桌宠 - Live2D管理器（本地模型版 + VRM支持）
+window.LAppDefine = window.LAppDefine || { DEBUG_LOG: false };
+
 class Live2DManager {
   constructor() {
     this.model = null;
@@ -46,10 +48,15 @@ class Live2DManager {
         height: container.clientHeight,
         transparent: true,
         backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution: window.devicePixelRatio || 1,
         resizeTo: container
       });
 
-      await this.loadCharacterModel();
+      if (document.body.classList.contains('web-mode-active')) {
+        await this.loadCharacterModel();
+      }
       this.isInitialized = true;
       window.addEventListener('resize', () => this.handleResize());
       return true;
@@ -84,13 +91,13 @@ class Live2DManager {
   _getGifPath() {
     const character = window.characterManager?.getCurrentCharacter();
     if (!character) return null;
-    // 从avatar或cover路径推导GIF路径
-    // avatar格式: ../../角色-加藤惠/图片素材/头像.png
-    const refPath = character.avatar || character.cover;
-    if (refPath) {
-      const match = refPath.match(/^(.*[/\\])[^/\\]+$/);
-      if (match) {
-        return match[1] + '动态形象.gif';
+    if (character.gif && typeof character.gif === 'string') return character.gif;
+    // 仅当角色类型明确包含 gif 时，才尝试从头像路径推导
+    if (character.type === 'gif' || character.gif) {
+      const refPath = character.avatar || character.cover;
+      if (refPath) {
+        const match = refPath.match(/^(.*[/\\])[^/\\]+$/);
+        if (match) return match[1] + '动态形象.gif';
       }
     }
     return null;
@@ -101,15 +108,11 @@ class Live2DManager {
     const gifPath = this._getGifPath();
     if (!gifPath) return false;
 
-    // ★ 快速检查 GIF 是否存在，避免无谓的 8 秒超时
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 2000);
-      const headResp = await fetch(gifPath, { method: 'HEAD', signal: ctrl.signal });
-      clearTimeout(t);
-      if (!headResp.ok) { this.showFallback(); return false; }
-    } catch {
-      this.showFallback(); return false;
+    // ★ 检查 GIF 是否存在，使用统一的 IPC / XHR 检测
+    const exists = await window.characterManager?.checkModelFileExists(gifPath);
+    if (!exists) {
+      this.showFallback();
+      return false;
     }
 
     try {
@@ -201,6 +204,12 @@ class Live2DManager {
 
   // 加载当前角色的模型（自动降级：Live2D > VRM > GIF > 静态图）
   async loadCharacterModel() {
+    // ★ 彻底清空旧角色残留元素，杜绝图层遮挡
+    const oldFallback = document.getElementById('live2d-fallback');
+    if (oldFallback) oldFallback.remove();
+    const oldGif = document.getElementById('gif-fallback-container');
+    if (oldGif) oldGif.remove();
+
     const character = window.characterManager?.getCurrentCharacter();
     if (!character) {
       this.showFallback();
@@ -256,32 +265,14 @@ class Live2DManager {
   // 加载 VRM 模型
   async _loadVrmModel(modelPath) {
     try {
-      // 清理之前的模式
       this._cleanupVrmMode();
       this._cleanupGifMode();
 
-      // 关键：销毁 pixi.js 的 Application，释放 canvas 上的 WebGL 上下文
-      // 否则 three.js 无法在同一个 canvas 上创建新的 WebGL context
-      if (this.app) {
-        if (this.model) {
-          this.app.stage.removeChild(this.model);
-          this.model.destroy();
-          this.model = null;
-        }
-        // destroy(false) = 保留 canvas 元素在 DOM 中，只销毁 WebGL context
-        this.app.destroy(false);
-        this.app = null;
-      }
-
-      // canvas 被 pixi destroy 后需要重新获取或确保元素还在
+      // 隐藏 Live2D 与 精灵表画布
       const canvas = document.getElementById('live2d-canvas');
-      const container = document.getElementById('live2d-container');
-      if (!canvas || !container) return false;
-
-      // 重置 canvas 尺寸，强制浏览器释放旧的 WebGL context
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      if (!canvas || !container) return false;
+      if (canvas) canvas.style.display = 'none';
+      const spriteCanvas = document.getElementById('sprite-canvas');
+      if (spriteCanvas) spriteCanvas.style.display = 'none';
 
       // 初始化 VRM 管理器
       const vrmManager = window.vrmManager;
@@ -293,12 +284,13 @@ class Live2DManager {
       const loaded = await vrmManager.loadModel(modelPath);
       if (!loaded) return false;
 
-      // 设置鼠标追踪
-      vrmManager.setupMouseTracking(container);
+      const container = document.getElementById('live2d-container');
+      if (container) vrmManager.setupMouseTracking(container);
 
       this.isVrmMode = true;
       return true;
     } catch (e) {
+      console.warn('[Live2D] 加载 VRM 异常:', e);
       return false;
     }
   }
@@ -311,15 +303,18 @@ class Live2DManager {
         window.vrmManager.destroy();
       }
     }
+    const vc = document.getElementById('vrm-canvas');
+    if (vc) vc.style.display = 'none';
   }
 
   // 确保 PIXI.Application 实例有效（从 VRM/精灵表切回时自愈重建）
   _ensurePixiApp() {
-    if (this.app) return;
+    this._cleanupVrmMode();
     const canvas = document.getElementById('live2d-canvas');
+    if (canvas) canvas.style.display = 'block';
+    if (this.app) return;
     const container = document.getElementById('live2d-container');
     if (!canvas || !container) return;
-    canvas.style.display = '';
     try {
       this.app = new PIXI.Application({
         view: canvas,
@@ -327,6 +322,9 @@ class Live2DManager {
         height: container.clientHeight || 600,
         transparent: true,
         backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution: window.devicePixelRatio || 1,
         resizeTo: container
       });
     } catch (e) {
@@ -337,13 +335,21 @@ class Live2DManager {
   // 加载指定路径的Live2D模型
   async loadCustomModel(modelPath, characterName) {
     try {
+      // ★ 彻底清空旧角色残留元素
+      const oldFallback = document.getElementById('live2d-fallback');
+      if (oldFallback) oldFallback.remove();
+      const oldGif = document.getElementById('gif-fallback-container');
+      if (oldGif) oldGif.remove();
+
       this._cleanupSpriteMode();
       this._ensurePixiApp();
       if (!this.app) throw new Error('PIXI Application 初始化失败');
 
+      // ★ 安全释放旧模型，不摧毁共享底图与着色器
       if (this.model) {
+        try { this.model.internalModel?.motionManager?.stopAllMotions?.(); } catch (e) {}
         if (this.app.stage) this.app.stage.removeChild(this.model);
-        this.model.destroy();
+        this.model.destroy({ children: true });
         this.model = null;
       }
 
@@ -353,16 +359,30 @@ class Live2DManager {
         autoUpdate: true
       });
 
-      // Live2D加载成功，清理GIF模式
+      // Live2D加载成功，清理GIF与Fallback模式
       this._cleanupGifMode();
+      const loadedFallback = document.getElementById('live2d-fallback');
+      if (loadedFallback) loadedFallback.remove();
 
-      this.setupModel();
+      // ★ 彻底根除空白画布 bug：显式恢复 canvas 显示与图层层级
+      const canvas = document.getElementById('live2d-canvas');
+      if (canvas) {
+        canvas.style.display = 'block';
+        canvas.style.zIndex = '2';
+      }
+      const spriteCanvas = document.getElementById('sprite-canvas');
+      if (spriteCanvas) spriteCanvas.style.display = 'none';
+
       this.app.stage.addChild(this.model);
+      this.setupModel();
       this.setupInteraction();
+      // ★ 载入即启动待机呼吸与眨眼
+      this.playAnimation('idle');
       return true;
     } catch (error) {
       console.warn('[Live2D] 加载模型异常:', error);
-      this._showModelNotFoundToast(characterName);
+      // ★ 降级时立即呈现超清封面图与原生交互，绝不留白
+      this.showFallback();
       return false;
     }
   }
@@ -384,7 +404,7 @@ class Live2DManager {
   _cleanupSpriteMode() {
     if (this.isSpriteMode) {
       this.isSpriteMode = false;
-      if (window.spriteAtlasManager) window.spriteAtlasManager.destroy();
+      if (this._spriteAtlas) this._spriteAtlas.destroy();
       // 移除精灵专属画布，恢复 live2d-canvas 显示
       const spriteCanvas = document.getElementById('sprite-canvas');
       if (spriteCanvas) spriteCanvas.style.display = 'none';
@@ -398,13 +418,13 @@ class Live2DManager {
     try {
       if (!window.spriteAtlasManager || !SpriteAtlasManager.isSpriteCharacter(character)) return false;
 
-      // 清理其它渲染模式，释放 canvas 上的 WebGL 上下文
+      // 清理其它渲染模式
       if (this.model) {
         if (this.app?.stage) this.app.stage.removeChild(this.model);
-        this.model.destroy();
+        this.model.destroy({ children: true });
         this.model = null;
       }
-      if (this.app) { this.app.destroy(false); this.app = null; }
+      // ★ 严禁销毁 this.app！保持全局单例复用，仅隐藏 live2d-canvas，避免 WebGL 上下文耗尽崩溃
       this._cleanupGifMode();
       this._cleanupVrmMode();
       const existingFallback = document.getElementById('live2d-fallback');
@@ -421,12 +441,17 @@ class Live2DManager {
       if (!spriteCanvas) {
         spriteCanvas = document.createElement('canvas');
         spriteCanvas.id = 'sprite-canvas';
-        spriteCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;';
+        spriteCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;z-index:2;';
         container.appendChild(spriteCanvas);
       }
       spriteCanvas.style.display = 'block';
+      spriteCanvas.style.zIndex = '2';
 
-      const ok = await window.spriteAtlasManager.loadFor(character, spriteCanvas);
+      if (!this._spriteAtlas) {
+        this._spriteAtlas = new SpriteAtlasManager();
+      }
+      window.spriteAtlasManager = this._spriteAtlas;
+      const ok = await this._spriteAtlas.loadFor(character, spriteCanvas);
       if (!ok) {
         spriteCanvas.style.display = 'none';
         if (canvas) canvas.style.display = '';
@@ -454,17 +479,50 @@ class Live2DManager {
     if (!this.model) return;
 
     const container = document.getElementById('live2d-container');
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const containerWidth = container.clientWidth || 300;
+    const containerHeight = container.clientHeight || 400;
 
-    const scaleX = containerWidth / this.model.width;
-    const scaleY = containerHeight / this.model.height;
-    const scale = Math.min(scaleX, scaleY) * 0.8;
+    const im = this.model.internalModel;
+    if (!this.model._origDesignWidth) {
+      const rawW = (im && im.originalWidth > 0) ? im.originalWidth : (this.model.width > 0 ? this.model.width : 1000);
+      const rawH = (im && im.originalHeight > 0) ? im.originalHeight : (this.model.height > 0 ? this.model.height : 1000);
+      this.model._origDesignWidth = rawW;
+      this.model._origDesignHeight = rawH;
+    }
 
-    this.model.scale.set(scale);
+    // ★ 严格等比例（两轴完全一致），固化原始设计基准，杜绝任何图层撕裂
+    const scale = Math.min(containerWidth / this.model._origDesignWidth, containerHeight / this.model._origDesignHeight) * 0.95;
+
+    this.model.scale.set(scale, scale);
     this.model.anchor.set(0.5, 0.5);
     this.model.x = containerWidth / 2;
     this.model.y = containerHeight / 2;
+
+    if (im) {
+      try {
+        if (typeof im.resize === 'function') {
+          im.resize(containerWidth, containerHeight);
+        }
+        im.update(0, 0);
+      } catch (e) {}
+    }
+    if (this.model.parent && typeof this.model.updateTransform === 'function') {
+      try { this.model.updateTransform(); } catch (e) {}
+    }
+
+    // 动态修复 Cubism 4/5 内部参数名映射（如惠惠等大写规范模型）
+    if (im && im.idParamEyeBallX && im.coreModel?.getParameterIndex) {
+      try {
+        if (im.coreModel.getParameterIndex('ParamEyeBallX') < 0 && im.coreModel.getParameterIndex('PARAM_EYE_BALL_X') >= 0) {
+          im.idParamEyeBallX = 'PARAM_EYE_BALL_X';
+          im.idParamEyeBallY = 'PARAM_EYE_BALL_Y';
+          im.idParamAngleX = 'PARAM_ANGLE_X';
+          im.idParamAngleY = 'PARAM_ANGLE_Y';
+          im.idParamAngleZ = 'PARAM_ANGLE_Z';
+          im.idParamBodyAngleX = 'PARAM_BODY_ANGLE_X';
+        }
+      } catch (e) {}
+    }
   }
 
   setupInteraction() {
@@ -473,19 +531,54 @@ class Live2DManager {
     this.model.interactive = true;
     this.model.buttonMode = true;
 
-    this.model.on('pointerdown', () => {
-      this.playAnimation('tap');
+    this.model.on('pointerdown', (e) => {
+      const char = window.characterManager?.getCurrentCharacter();
+      const rect = this.app?.view?.getBoundingClientRect?.();
+      const clientY = e?.data?.global?.y || 0;
+      const isHead = rect ? (clientY < rect.height * 0.4) : false;
+      if (window.actionMenuManager) {
+        window.actionMenuManager.handleTouch(char?.id, isHead ? 'head' : 'body', 1, { model: this.model });
+      } else {
+        this.playAnimation('tap');
+      }
     });
 
     if (this._onMouseMove) {
       document.removeEventListener('mousemove', this._onMouseMove);
     }
     this._onMouseMove = (e) => {
-      if (this.model && this.app) {
+      if (this.model && this.app && this.app.view) {
         const rect = this.app.view.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        this.model.focus(x, y);
+        if (rect.width > 0 && rect.height > 0) {
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const dx = (e.clientX - cx) / (rect.width / 2);
+          const dy = (e.clientY - cy) / (rect.height / 2);
+          try {
+            if (this.model.internalModel?.focusController) {
+              this.model.internalModel.focusController.focus(dx, -dy);
+            }
+            const cm = this.model.internalModel?.coreModel;
+            if (cm) {
+              if (typeof cm.setParamFloat === 'function') {
+                cm.setParamFloat('PARAM_EYE_BALL_X', dx * 0.85);
+                cm.setParamFloat('PARAM_EYE_BALL_Y', -dy * 0.85);
+                cm.setParamFloat('PARAM_ANGLE_X', dx * 18);
+                cm.setParamFloat('PARAM_ANGLE_Y', -dy * 15);
+              }
+              if (typeof cm.setParameterValueById === 'function' && typeof cm.getParameterIndex === 'function') {
+                const eyeX = cm.getParameterIndex('ParamEyeBallX') >= 0 ? 'ParamEyeBallX' : 'PARAM_EYE_BALL_X';
+                const eyeY = cm.getParameterIndex('ParamEyeBallY') >= 0 ? 'ParamEyeBallY' : 'PARAM_EYE_BALL_Y';
+                const angX = cm.getParameterIndex('ParamAngleX') >= 0 ? 'ParamAngleX' : 'PARAM_ANGLE_X';
+                const angY = cm.getParameterIndex('ParamAngleY') >= 0 ? 'ParamAngleY' : 'PARAM_ANGLE_Y';
+                cm.setParameterValueById(eyeX, dx * 0.85);
+                cm.setParameterValueById(eyeY, -dy * 0.85);
+                cm.setParameterValueById(angX, dx * 18);
+                cm.setParameterValueById(angY, -dy * 15);
+              }
+            }
+          } catch (err) {}
+        }
       }
     };
     document.addEventListener('mousemove', this._onMouseMove);
@@ -510,24 +603,53 @@ class Live2DManager {
     if (!this.model) return;
 
     // ★ 互动时触发角色原生CV语音
+    const char = window.characterManager?.getCurrentCharacter();
+    const charId = char?.id || 'ruoxi';
     if (type === 'tap' || type === 'happy') {
-      window.characterManager?.playRandomVoice();
+      window.characterManager?.playRandomVoice(charId);
+    }
+
+    if (window.actionMenuManager) {
+      const typeMap = {
+        tap: 'fun',
+        happy: 'fun',
+        surprised: 'surprise',
+        surprise: 'surprise',
+        pout: 'pout',
+        angry: 'pout',
+        shy: 'shy',
+        blush: 'blush',
+        sleep: 'sleep',
+        idle: 'idle',
+        wave: 'wave',
+        normal: 'idle'
+      };
+      const actId = typeMap[type];
+      const actList = window.actionMenuManager.getCharacterActions(charId)?.actions;
+      if (actId && actList?.some(a => a.id === actId)) {
+        window.actionMenuManager.executeAction(charId, actId, { model: this.model });
+        return;
+      }
     }
 
     // ★ 动作映射改为“候选列表+逐个回退”：兼容各角色（高木/加藤惠/蕾姆/惠惠/初音未来）不同的动作命名
     const animations = {
-      'tap': ['Poke', 'TapBody', 'tap_body', 'tap_head', 'TapHead', 'flick_head', '', 'null', 'Idle', 'idle'],
-      'happy': ['Tease', 'TeaseSmile', 'smile', 'flick_head', 'tap_body', '', 'null', 'Idle', 'idle'],
-      'idle': ['Idle', 'idle', 'null', ''],
-      'wave': ['Tease', 'wave', 'tap_body', 'Idle', 'idle'],
-      'sleep': ['Sleep', 'sleep', 'Idle', 'idle'],
-      'surprised': ['Surprised', 'surprised', 'Idle', 'idle'],
+      'tap': ['Poke', 'TapBody', 'tap_body', 'tap_head', 'TapHead', 'flick_head', 'I_FUN_W', '00_Happy_01', 'miku_m_01', '', 'null', 'Idle', 'idle'],
+      'happy': ['Tease', 'TeaseSmile', 'smile', 'flick_head', 'tap_body', 'I_FUN_W', '00_Happy_01', 'miku_m_02', '', 'null', 'Idle', 'idle'],
+      'idle': ['Idle', 'idle', 'IDLING_01', 'Live2D_remu_idle', 'miku_idle_01', 'null', ''],
+      'wave': ['Tease', 'wave', 'tap_body', 'miku_m_01', 'Idle', 'idle'],
+      'sleep': ['Sleep', 'sleep', 'Live2D_remu_idle', 'Idle', 'idle'],
+      'surprised': ['Surprised', 'surprised', 'I_SURPRISE_W', '00_Surprise_01', 'Idle', 'idle'],
       'wakeup': ['WakeUp', 'wakeup', 'Idle', 'idle'],
       'normal': ['Idle', 'idle', 'null', '']
     };
 
     const animationList = animations[type] || animations['normal'];
-    if (typeof this.model.motion === 'function') {
+    if (window.actionMenuManager) {
+      for (const animation of animationList) {
+        if (window.actionMenuManager.playModelMotion(this.model, animation)) break;
+      }
+    } else if (typeof this.model.motion === 'function') {
       for (const animation of animationList) {
         try {
           const res = this.model.motion(animation);
@@ -549,28 +671,36 @@ class Live2DManager {
     // Live2D 模式
     if (!this.model || !this.model.internalModel) return;
 
-    // ★ 表情映射同样改为候选回退：高木模型使用 Neutral/TeaseSmile/Wink/Blush 等命名，旧模型用 f01/f02/f04
+    // ★ 表情映射同样改为候选回退：加藤惠使用 F_FUN/F_ANGRY/F_SURPRISE/F_SAD，高木使用 Neutral/TeaseSmile/Wink/Blush，旧模型用 f01/f02/f04
     const expressions = {
-      'happy': ['TeaseSmile', 'Smug', 'f01'],
-      'normal': ['Neutral', 'f01'],
-      'annoyed': ['Smug', 'Surprised', 'f02'],
-      'thinking': ['Neutral', 'f04'],
-      'blush': ['Blush', 'f01'],
-      'wink': ['Wink', 'f01'],
+      'happy': ['F_FUN', 'TeaseSmile', 'Smug', 'f01'],
+      'normal': ['F_NOMAL', 'Neutral', 'f01'],
+      'annoyed': ['F_ANGRY', 'Smug', 'Surprised', 'f02'],
+      'angry': ['F_ANGRY', 'Smug', 'f02'],
+      'thinking': ['F_DOWN', 'Neutral', 'f04'],
+      'blush': ['F_FUN', 'Blush', 'f01'],
+      'wink': ['F_FUN', 'Wink', 'f01'],
       'sleep': ['Sleepy', 'f01'],
-      'surprised': ['Surprised', 'f01'],
-      'idle': ['Neutral', 'f01']
+      'surprised': ['F_SURPRISE', 'Surprised', 'f01'],
+      'sad': ['F_SAD', 'f03'],
+      'idle': ['F_NOMAL', 'Neutral', 'f01']
     };
 
     const expressionList = expressions[type] || expressions['normal'];
 
-    try {
-      if (this.model.internalModel.motionManager) {
-        for (const expression of expressionList) {
-          try { this.model.expression(expression); break; } catch (e) {}
-        }
+    if (window.actionMenuManager) {
+      for (const expression of expressionList) {
+        if (window.actionMenuManager.playModelExpression(this.model, expression)) break;
       }
-    } catch (e) {}
+    } else {
+      try {
+        if (this.model.internalModel.motionManager) {
+          for (const expression of expressionList) {
+            try { this.model.expression(expression); break; } catch (e) {}
+          }
+        }
+      } catch (e) {}
+    }
   }
 
   updateMood(mood) {
@@ -629,6 +759,7 @@ class Live2DManager {
   showFallback() {
     this._cleanupSpriteMode();
     const container = document.getElementById('live2d-container');
+    if (!container) return;
     const coverPath = window.characterManager?.getCoverPath() || '封面.png';
 
     // 移除已有的fallback元素
@@ -639,11 +770,13 @@ class Live2DManager {
     const existingGif = document.getElementById('gif-fallback-container');
     if (existingGif) existingGif.remove();
 
-    // 隐藏canvas
+    // 隐藏canvas与精灵表canvas
     const canvas = document.getElementById('live2d-canvas');
     if (canvas) canvas.style.display = 'none';
+    const spriteCanvas = document.getElementById('sprite-canvas');
+    if (spriteCanvas) spriteCanvas.style.display = 'none';
 
-    // 创建overlay方式的fallback图片
+    // 创建overlay方式的fallback图片，显式设置 z-index: 2 确保在四角光晕和装饰层之上
     const fallbackDiv = document.createElement('div');
     fallbackDiv.id = 'live2d-fallback';
     fallbackDiv.style.cssText = `
@@ -656,13 +789,20 @@ class Live2DManager {
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      z-index: 2;
     `;
     fallbackDiv.innerHTML = `<img src="${coverPath}" style="
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
       display: block;
+      pointer-events: auto;
+      cursor: pointer;
     ">`;
+    fallbackDiv.onclick = (e) => {
+      e.stopPropagation();
+      this.playAnimation('tap');
+    };
     container.appendChild(fallbackDiv);
 
     // 重置GIF模式状态
