@@ -67,6 +67,12 @@ class MimoAPI {
       const name = window.characterManager.getCurrentCharacter()?.name || '我';
       sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
     }
+
+    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，彻底解决本地小模型“只顾人设而忽略任务/逻辑”的问题）
+    sys += `\n\n[交互与任务执行铁律 - 最高优先级]
+1. 任务交付第一：当用户输入包含明确请求（如翻译文本、解释词句、信息查阅、撰写分析、写代码、数学计算等具体任务）时，必须【立刻正面给出完整准确的执行答案/译文】，严禁反问“你想翻译什么/想问什么”、严禁假装不懂、严禁将用户已提供的内容当成未提供！
+2. 人设服从于内容：角色设定、口吻风格和动作描写是表达形式，绝不能成为回避任务的借口。正确的回答结构永远是：【直接输出准确答案/译文】并在行文中自然流露角色口吻与神态。`;
+
     return sys;
   }
 
@@ -94,6 +100,13 @@ class MimoAPI {
         params.max_tokens = isCodeMode ? 16384 : 4096;
         break;
     }
+
+    // 本地模型或推理模型（如 DeepSeek-R1）适当收敛温度上限至 0.6，防止思考后转入正式回复时发散跑题
+    const isLocalOrR1 = this.provider === 'local' || (this.model && this.model.toLowerCase().includes('r1'));
+    if (isLocalOrR1 && params.temperature > 0.6) {
+      params.temperature = 0.6;
+    }
+
     return params;
   }
 

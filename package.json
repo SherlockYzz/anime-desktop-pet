@@ -43,7 +43,8 @@
       "node_modules/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "AI桌宠.ico"
     },
     "mac": {
       "target": "dmg"
