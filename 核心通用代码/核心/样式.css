@@ -493,6 +493,7 @@ body::before {
   line-height: 1.7;
   word-break: break-word;
   color: var(--text-color);
+  white-space: pre-wrap;
 }
 
 .message-text p { margin-bottom: 8px; }

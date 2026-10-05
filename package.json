@@ -1,6 +1,6 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "二次元AI桌宠 - 精灵帧/Live2D/3D VRM 多角色桌面宠物，支持透明穿透、多屏幕自适应、若曦全套精灵帧姿态与动作百宝箱",
   "main": "程序主入口.js",
   "scripts": {

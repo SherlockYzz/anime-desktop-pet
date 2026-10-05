@@ -45,7 +45,7 @@ class VRMManager {
       if (!canvas || !container) return false;
 
       this._setupRenderer(canvas, container.clientWidth, container.clientHeight);
-      this._setupScene();
+      this._setupScene(container.clientWidth, container.clientHeight);
       this._startLoop();
 
       this._resizeHandler = () => this._handleResize();
@@ -64,7 +64,7 @@ class VRMManager {
       await this.loadScripts();
 
       this._setupRenderer(petCanvas, width, height);
-      this._setupScene();
+      this._setupScene(width, height);
       this._startLoop();
 
       this.isInitialized = true;
@@ -86,9 +86,10 @@ class VRMManager {
     this.renderer.setClearColor(0x000000, 0);
   }
 
-  _setupScene() {
+  _setupScene(width, height) {
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
+    const aspect = (width && height) ? (width / height) : 1;
+    this.camera = new THREE.PerspectiveCamera(30, aspect, 0.1, 20);
     this.camera.position.set(0, 1.2, 2.5);
     this.camera.lookAt(0, 1, 0);
 

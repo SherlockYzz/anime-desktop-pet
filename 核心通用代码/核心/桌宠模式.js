@@ -467,15 +467,30 @@ class PetMode {
     menu.classList.toggle('show', next);
   }
 
-  /** 更新控制栏按钮激活状态 */
+  /** 更新控制栏按钮激活状态（非精灵角色时自动精简工具栏） */
   _updateControlButtons() {
+    const char = window.characterManager?.getCurrentCharacter();
+    const isSprite = char && window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(char);
     const m = window.spriteAtlasManager;
     const btnWork = document.getElementById('btn-toggle-work');
     const btnSleep = document.getElementById('btn-toggle-sleep');
     const btnWander = document.getElementById('btn-toggle-wander');
-    if (btnWork) btnWork.classList.toggle('active', !!(m && m.ready && m.S.work));
-    if (btnSleep) btnSleep.classList.toggle('active', !!(m && m.ready && m.S.anim === 'sleep'));
-    if (btnWander) btnWander.classList.toggle('active', !!this._wanderActive);
+    const btnActions = document.getElementById('btn-pet-actions');
+
+    if (btnWork) {
+      btnWork.style.display = isSprite ? '' : 'none';
+      btnWork.classList.toggle('active', !!(isSprite && m && m.ready && m.S.work));
+    }
+    if (btnSleep) {
+      btnSleep.style.display = isSprite ? '' : 'none';
+      btnSleep.classList.toggle('active', !!(isSprite && m && m.ready && m.S.anim === 'sleep'));
+    }
+    if (btnActions) {
+      btnActions.style.display = isSprite ? '' : 'none';
+    }
+    if (btnWander) {
+      btnWander.classList.toggle('active', !!this._wanderActive);
+    }
   }
 
   /** 自动漫步：随机左右走动（新功能） */
@@ -642,16 +657,20 @@ class PetMode {
 
   // === 点击交互 ===
   _bindClickEvents() {
+    const area = document.getElementById('pet-character-area');
     const canvas = document.getElementById('pet-canvas');
     const gif = document.getElementById('pet-gif');
 
     // ★ 幂等绑定：先移除上一次的监听器，避免多次进出桌宠模式后点击重复触发
     if (this._clickHandler) {
+      area?.removeEventListener('mousedown', this._clickHandler);
       canvas?.removeEventListener('mousedown', this._clickHandler);
       gif?.removeEventListener('mousedown', this._clickHandler);
     }
 
     const handler = (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('#pet-controls') || e.target.closest('#pet-action-menu')) return;
       if (this._moved) return;
       this._clickCount++;
       if (this._clickTimer) clearTimeout(this._clickTimer);
@@ -672,7 +691,7 @@ class PetMode {
         }
       } else {
         this._clickTimer = setTimeout(() => {
-          if (this._clickCount === 1) {
+          if (this._clickCount === 1 && !this._moved) {
             this._showBubble(window.characterManager.getRandomLine('click'));
             this._playTap();
             this._lastInteraction = Date.now();
@@ -683,8 +702,8 @@ class PetMode {
     };
 
     this._clickHandler = handler;
-    if (canvas) canvas.addEventListener('mousedown', handler);
-    if (gif) gif.addEventListener('mousedown', handler);
+    // 绑定至 area 容器，确保无论是 精灵表 / Live2D / VRM / GIF 还是静态降级封面，均可正常点击与双击
+    if (area) area.addEventListener('mousedown', handler);
   }
 
   _playTap() {

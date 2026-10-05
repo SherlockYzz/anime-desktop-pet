@@ -341,6 +341,13 @@ class App {
       const mode = window.live2dManager.getDisplayMode();
       if (mode === 'gif') await window.live2dManager.switchToGifMode();
       else await window.live2dManager.loadCharacterModel();
+
+      // ★ 关键修复：如果在桌宠挂件模式下切角色，同步重新加载桌宠悬浮窗的角色展示与控制按钮！
+      if (!document.body.classList.contains('web-mode-active') && this.petMode) {
+        await this.petMode._loadCharacter();
+        this.petMode._updateControlButtons();
+      }
+
       this.showToast(`已切换到 ${char.name}`);
     } finally { this._switchingChar = false; }
   }

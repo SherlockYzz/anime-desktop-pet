@@ -312,12 +312,36 @@ class Live2DManager {
     }
   }
 
+  // 确保 PIXI.Application 实例有效（从 VRM/精灵表切回时自愈重建）
+  _ensurePixiApp() {
+    if (this.app) return;
+    const canvas = document.getElementById('live2d-canvas');
+    const container = document.getElementById('live2d-container');
+    if (!canvas || !container) return;
+    canvas.style.display = '';
+    try {
+      this.app = new PIXI.Application({
+        view: canvas,
+        width: container.clientWidth || 400,
+        height: container.clientHeight || 600,
+        transparent: true,
+        backgroundAlpha: 0,
+        resizeTo: container
+      });
+    } catch (e) {
+      console.warn('[Live2D] 重建 PIXI Application 失败:', e);
+    }
+  }
+
   // 加载指定路径的Live2D模型
   async loadCustomModel(modelPath, characterName) {
     try {
       this._cleanupSpriteMode();
+      this._ensurePixiApp();
+      if (!this.app) throw new Error('PIXI Application 初始化失败');
+
       if (this.model) {
-        this.app.stage.removeChild(this.model);
+        if (this.app.stage) this.app.stage.removeChild(this.model);
         this.model.destroy();
         this.model = null;
       }
@@ -336,6 +360,7 @@ class Live2DManager {
       this.setupInteraction();
       return true;
     } catch (error) {
+      console.warn('[Live2D] 加载模型异常:', error);
       this._showModelNotFoundToast(characterName);
       return false;
     }
@@ -374,7 +399,7 @@ class Live2DManager {
 
       // 清理其它渲染模式，释放 canvas 上的 WebGL 上下文
       if (this.model) {
-        this.app.stage.removeChild(this.model);
+        if (this.app?.stage) this.app.stage.removeChild(this.model);
         this.model.destroy();
         this.model = null;
       }
@@ -686,7 +711,7 @@ class Live2DManager {
 
     // 清理Live2D模型
     if (this.model) {
-      this.app.stage.removeChild(this.model);
+      if (this.app?.stage) this.app.stage.removeChild(this.model);
       this.model.destroy();
       this.model = null;
     }
@@ -716,8 +741,8 @@ class Live2DManager {
       return;
     }
 
-    // 重新加载模型（自动降级）
-    if (this.isInitialized && this.app) {
+    // 重新加载模型（自动降级，会在需要时自愈重建 PIXI.Application）
+    if (this.isInitialized) {
       this.loadCharacterModel();
     } else {
       this.showFallback();
