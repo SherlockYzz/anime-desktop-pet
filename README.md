@@ -232,10 +232,11 @@
 
 ## 🚀 快速上手与运行
 
-### 方式一：使用 Windows 安装向导版（推荐 · 同学装了就能用）
+### 方式一：下载 Windows 安装向导版（推荐 · 同学双击就能装）
 
-- 📥 **安装包文件**：`dist/AI桌宠-v07.21-安装向导.exe`（或前往 [Releases 页面](https://github.com/SherlockYzz/anime-desktop-pet/releases) 下载）
-- 🪄 **向导式安装**：双击运行安装向导 -> 自由选择安装目录 -> 自动生成桌面快捷方式 `AI桌宠` -> 安装完成直接启动！
+- 📥 **直达下载（带中文安装向导）**：[AI桌宠-v07.21-安装向导.exe（点击直接下载）](https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe)
+- 📦 **版本发布页**：前往 [Releases 页面](https://github.com/SherlockYzz/anime-desktop-pet/releases) 查看全部资产与更新详情
+- 🪄 **向导式安装**：双击运行 `AI桌宠-v07.21-安装向导.exe` -> 自由选择安装目录 -> 自动生成桌面快捷方式 `AI桌宠` -> 安装完成直接启动！
 
 ### 方式二：从源码本地运行 / 打包
 
