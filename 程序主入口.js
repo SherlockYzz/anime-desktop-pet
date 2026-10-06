@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, screen, globalShortcut, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const { spawn, execSync } = require('child_process');
 
 let mainWindow;
 let tray;
@@ -487,3 +489,81 @@ ipcMain.handle('load-canonical-lines', async (event, folder) => {
     return [];
   }
 });
+
+// ===== 本地 Ollama 探测与自启动服务 =====
+
+/** 智能定位本地已安装的 ollama.exe */
+function findOllamaExe() {
+  const candidates = [
+    'F:\\开发工具\\Ollama\\ollama.exe',
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'),
+    path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Ollama', 'ollama.exe'),
+    path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Ollama', 'ollama.exe'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  try {
+    const stdout = execSync('where ollama', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const lines = stdout.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length > 0 && fs.existsSync(lines[0])) return lines[0];
+  } catch (e) {}
+  return null;
+}
+
+/** 探测本地 Ollama 服务是否正在监听 */
+function probeOllamaRunning(port = 11434, timeoutMs = 1200) {
+  return new Promise((resolve) => {
+    const req = http.get(`http://127.0.0.1:${port}/api/tags`, { timeout: timeoutMs }, (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
+
+// ★ 检测本地 Ollama 状态
+ipcMain.handle('detect-local-ollama', async () => {
+  const running = await probeOllamaRunning(11434);
+  const exePath = findOllamaExe();
+  return {
+    running,
+    installed: Boolean(exePath),
+    exePath: exePath || '',
+  };
+});
+
+// ★ 一键后台启动本地 Ollama
+ipcMain.handle('start-local-ollama', async () => {
+  const alreadyRunning = await probeOllamaRunning(11434);
+  if (alreadyRunning) {
+    return { success: true, message: 'Ollama 服务已在运行中' };
+  }
+
+  const exePath = findOllamaExe();
+  if (!exePath) {
+    return { success: false, message: '未找到本地 ollama.exe，请先下载安装 Ollama (ollama.com)' };
+  }
+
+  try {
+    const child = spawn(exePath, ['serve'], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    child.unref();
+
+    // 轮询等待端口启动（最多等 6 秒）
+    for (let i = 0; i < 12; i++) {
+      await new Promise(r => setTimeout(r, 500));
+      const up = await probeOllamaRunning(11434);
+      if (up) {
+        return { success: true, message: 'Ollama 服务已成功在后台启动！' };
+      }
+    }
+    return { success: true, message: '已发送启动指令，服务正在初始化...' };
+  } catch (err) {
+    return { success: false, message: `启动失败: ${err.message}` };
+  }
+});
+

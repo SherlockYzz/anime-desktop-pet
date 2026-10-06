@@ -1057,9 +1057,113 @@ body::before {
   align-items: center;
 }
 
+.setting-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.setting-label-row label {
+  margin-bottom: 0;
+}
+
+.btn-reset-url {
+  background: transparent;
+  border: none;
+  color: var(--primary-color);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-decoration: underline;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.btn-reset-url:hover {
+  opacity: 1;
+}
+
+.btn-refresh-models {
+  padding: 9px 12px;
+  background: var(--hover-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-refresh-models:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px var(--btn-send-shadow);
+}
+
+.local-service-bar {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: -8px;
+}
+
+.local-service-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.local-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #bbb;
+  display: inline-block;
+  transition: background 0.3s;
+}
+
+.local-status-dot.online {
+  background: #34c759;
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.6);
+}
+
+.local-status-dot.offline {
+  background: #ff3b30;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.4);
+}
+
+.btn-start-local {
+  margin-left: auto;
+  padding: 4px 10px;
+  background: var(--gradient-main);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 6px var(--btn-send-shadow);
+  transition: transform 0.2s;
+}
+
+.btn-start-local:hover {
+  transform: scale(1.05);
+}
+
 .setting-item-row select {
   flex: 1;
 }
+
 
 .btn-test-connection {
   padding: 8px 16px;

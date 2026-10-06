@@ -5,7 +5,32 @@ class SettingsManager {
     this.app = app;
     this.settings = this.load();
     this._bindPromptEvents();
+    this._bindApiControls();
   }
+
+  _bindApiControls() {
+    // 恢复默认地址
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-reset-url') {
+        this.resetBaseUrl();
+      }
+    });
+
+    // 动态拉取模型
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-refresh-models') {
+        this.refreshModels();
+      }
+    });
+
+    // 一键启动本地 Ollama 服务
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-start-local') {
+        this.startLocalService();
+      }
+    });
+  }
+
 
   _bindPromptEvents() {
     // 角色选择切换 → 加载对应提示词
@@ -551,7 +576,7 @@ class SettingsManager {
 
     const urlInput = document.getElementById('api-base-url');
     if (urlInput) {
-      urlInput.readOnly = providerId !== 'custom';
+      urlInput.readOnly = false; // ★ 绝不只读，允许用户按需配置国内代理、反代或本地端口
       urlInput.value = skipRestore
         ? (this.settings.baseUrl || p.baseUrl || '')
         : (p.baseUrl || '');
@@ -562,15 +587,182 @@ class SettingsManager {
       keyDiv.style.display = 'block';
       const keyInput = document.getElementById('api-key');
       if (keyInput) {
-        keyInput.placeholder = p.needsKey ? '输入你的API Key' : '本地模型无需API Key';
+        keyInput.placeholder = p.needsKey ? '输入你的 API Key' : '本地模型无需 API Key';
         keyInput.disabled = !p.needsKey;
         if (skipRestore) keyInput.value = this.settings.apiKey || '';
       }
     }
 
+    // 适配刷新模型按钮的文案与提示
+    const refreshBtn = document.getElementById('btn-refresh-models');
+    if (refreshBtn) {
+      refreshBtn.textContent = p.isLocal ? '🔄 刷新已装模型' : '🔄 刷新模型';
+      refreshBtn.title = p.isLocal ? '动态同步本地真实已下载的模型' : '动态拉取可用模型列表';
+    }
+
+    // 本地服务状态栏显示与检测
+    const localBar = document.getElementById('setting-local-service');
+    if (providerId === 'local') {
+      this._checkOllamaStatus();
+    } else {
+      if (localBar) localBar.style.display = 'none';
+    }
+
     const tr = document.getElementById('test-result');
     if (tr) { tr.className = 'test-result'; tr.textContent = ''; }
   }
+
+  /** 恢复当前提供商的官方推荐默认地址 */
+  resetBaseUrl() {
+    const providerId = document.getElementById('api-provider')?.value;
+    const p = window.getProvider(providerId);
+    const urlInput = document.getElementById('api-base-url');
+    if (p && urlInput) {
+      urlInput.value = p.baseUrl || '';
+      this.settings.baseUrl = p.baseUrl || '';
+      this.saveSilently();
+      const pureName = p.name.replace(/^[^\w\u4e00-\u9fa5]+/, '');
+      this.app.showToast(`已恢复 ${pureName} 推荐默认地址`);
+    }
+  }
+
+  /** 动态拉取当前提供商的可用模型列表 */
+  async refreshModels() {
+    const btn = document.getElementById('btn-refresh-models');
+    const providerId = document.getElementById('api-provider')?.value || 'local';
+    const baseUrl = document.getElementById('api-base-url')?.value;
+    const apiKey = document.getElementById('api-key')?.value;
+    const modelSel = document.getElementById('model-select');
+    if (!modelSel) return;
+
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 拉取中...'; }
+
+    try {
+      const models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+      if (models && models.length > 0) {
+        const currentVal = modelSel.value;
+        modelSel.innerHTML = '';
+        models.forEach(m => {
+          const o = document.createElement('option');
+          o.value = m.id;
+          o.textContent = m.name;
+          modelSel.appendChild(o);
+        });
+
+        const matched = models.some(m => m.id === currentVal);
+        modelSel.value = matched ? currentVal : models[0].id;
+        this.settings.model = modelSel.value;
+        this.saveSilently();
+        this.app.showToast(`✓ 已成功获取 ${models.length} 个模型！`);
+      } else {
+        if (providerId === 'local') {
+          this.app.showToast('未能检测到本地模型，请确认 Ollama 已启动且已下载模型');
+        } else {
+          this.app.showToast('未能获取到远程模型列表，请检查 API 地址或密钥');
+        }
+      }
+    } catch (err) {
+      this.app.showToast(`获取模型失败: ${err.message}`);
+    } finally {
+      if (btn) {
+        const isLocal = providerId === 'local' || providerId === 'lmstudio';
+        btn.disabled = false;
+        btn.textContent = isLocal ? '🔄 刷新已装模型' : '🔄 刷新模型';
+      }
+    }
+  }
+
+  /** 探测本地 Ollama 服务运行状态并更新 UI 指示灯 */
+  async _checkOllamaStatus() {
+    const bar = document.getElementById('setting-local-service');
+    const dot = document.getElementById('local-status-dot');
+    const txt = document.getElementById('local-status-text');
+    const btn = document.getElementById('btn-start-local');
+    if (!bar || !dot || !txt) return;
+
+    bar.style.display = 'block';
+    txt.textContent = '检测本地服务中...';
+    dot.className = 'local-status-dot';
+    if (btn) btn.style.display = 'none';
+
+    try {
+      let running = false;
+      let installed = true;
+
+      if (window.electronAPI?.detectLocalOllama) {
+        const res = await window.electronAPI.detectLocalOllama();
+        running = res.running;
+        installed = res.installed;
+      } else {
+        const resp = await fetch('http://127.0.0.1:11434/api/tags').catch(() => null);
+        running = Boolean(resp && resp.ok);
+      }
+
+      if (running) {
+        dot.className = 'local-status-dot online';
+        txt.textContent = '🟢 本地 Ollama 服务运行中 (127.0.0.1:11434)';
+        if (btn) btn.style.display = 'none';
+      } else {
+        dot.className = 'local-status-dot offline';
+        txt.textContent = installed ? '🔴 本地 Ollama 未启动' : '⚠️ 本机未检测到 Ollama 安装';
+        if (btn) {
+          btn.style.display = installed ? 'inline-block' : 'none';
+          btn.textContent = '🚀 一键启动服务';
+          btn.disabled = false;
+        }
+      }
+    } catch (e) {
+      dot.className = 'local-status-dot offline';
+      txt.textContent = '🔴 本地服务未运行';
+      if (btn) btn.style.display = 'inline-block';
+    }
+  }
+
+  /** 一键在后台启动本地 Ollama 服务 */
+  async startLocalService() {
+    const btn = document.getElementById('btn-start-local');
+    if (btn) { btn.disabled = true; btn.textContent = '🚀 启动中...'; }
+
+    try {
+      if (window.electronAPI?.startLocalOllama) {
+        const res = await window.electronAPI.startLocalOllama();
+        if (res.success) {
+          this.app.showToast('Ollama 服务已成功在后台启动！');
+          await this._checkOllamaStatus();
+          await this.refreshModels();
+        } else {
+          this.app.showToast(res.message || '启动失败');
+          await this._checkOllamaStatus();
+        }
+      } else {
+        this.app.showToast('请在终端运行 ollama serve 启动服务');
+      }
+    } catch (e) {
+      this.app.showToast(`启动出错: ${e.message}`);
+      await this._checkOllamaStatus();
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🚀 一键启动服务'; }
+    }
+  }
+
+  /** 静默保存配置（不弹 Toast，不关面板） */
+  saveSilently() {
+    const provider = document.getElementById('api-provider')?.value || 'local';
+    const baseUrl = (document.getElementById('api-base-url')?.value || '').replace(/\/+$/, '');
+    const apiKey = document.getElementById('api-key')?.value || '';
+    const model = provider === 'custom'
+      ? (document.getElementById('custom-model-input')?.value || '')
+      : (document.getElementById('model-select')?.value || '');
+
+    this.settings = {
+      ...this.settings,
+      provider, baseUrl, apiKey, model,
+      customModel: provider === 'custom' ? model : (this.settings.customModel || ''),
+    };
+    localStorage.setItem('megumi-pet-settings', JSON.stringify(this.settings));
+    this.apply();
+  }
+
 
   show() {
     const panel = document.getElementById('settings-panel');

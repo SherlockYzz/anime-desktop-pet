@@ -122,10 +122,23 @@
         <div class="setting-item-description" id="provider-description"></div>
       </div>
 
+      <!-- 本地 Ollama 服务状态栏（仅本地模型时显示） -->
+      <div class="setting-item local-service-bar" id="setting-local-service" style="display:none;">
+        <div class="local-service-status-row">
+          <span class="local-status-dot" id="local-status-dot"></span>
+          <span class="local-status-text" id="local-status-text">检测本地服务中...</span>
+          <button class="btn-start-local" id="btn-start-local" type="button" style="display:none;">🚀 一键启动服务</button>
+        </div>
+      </div>
+
       <!-- API 地址 -->
       <div class="setting-item" id="setting-base-url">
-        <label>API 地址</label>
+        <div class="setting-label-row">
+          <label>API 地址</label>
+          <button class="btn-reset-url" id="btn-reset-url" type="button" title="恢复官方推荐默认地址">恢复默认</button>
+        </div>
         <input type="text" id="api-base-url" placeholder="https://api.example.com/v1">
+        <div class="setting-item-description">支持自由修改为国内代理、第三方中转站或局域网私有端口</div>
       </div>
 
       <!-- API Key -->
@@ -141,14 +154,16 @@
           <select id="model-select">
             <!-- 由 renderer.js 动态生成 -->
           </select>
+          <button class="btn-refresh-models" id="btn-refresh-models" type="button" title="动态获取已下载/可用的模型列表">🔄 刷新模型</button>
         </div>
       </div>
 
       <!-- 自定义模型名（仅自定义提供商时显示） -->
       <div class="setting-item" id="setting-custom-model" style="display:none;">
         <label>自定义模型名</label>
-        <input type="text" id="custom-model-input" placeholder="输入模型名称">
+        <input type="text" id="custom-model-input" placeholder="输入模型名称（如 deepseek-chat 或 gpt-4o）">
       </div>
+
 
       <!-- 测试连接 -->
       <div class="setting-item">

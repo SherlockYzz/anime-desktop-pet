@@ -32,4 +32,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 原作台词集
   saveCanonicalLines: (folder, lines) => ipcRenderer.invoke('save-canonical-lines', folder, lines),
   loadCanonicalLines: (folder) => ipcRenderer.invoke('load-canonical-lines', folder),
+
+  // ★ 本地 Ollama 检测与一键启动
+  detectLocalOllama: () => ipcRenderer.invoke('detect-local-ollama'),
+  startLocalOllama: () => ipcRenderer.invoke('start-local-ollama'),
 });
+

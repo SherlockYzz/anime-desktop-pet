@@ -180,22 +180,23 @@ class MimoAPI {
       const apiThinking = msg.reasoning_content || msg.reasoning || '';
       const rawContent = msg.content || '';
 
-      if (!rawContent) {
+      if (!rawContent && !apiThinking) {
         this.conversationHistory.pop();
         throw new Error('模型返回了空内容，请检查模型是否正常工作');
       }
 
       let displayThinking = apiThinking;
-      let displayContent = rawContent;
-      if (!displayThinking && rawContent.length > 30) {
-        const split = this._splitThink(rawContent);
+      let displayContent = rawContent || apiThinking;
+      if (!displayThinking && displayContent.length > 30) {
+        const split = this._splitThink(displayContent);
         displayThinking = split.think;
-        displayContent = split.answer || rawContent;
+        displayContent = split.answer || displayContent;
       }
 
-      this.conversationHistory.push({ role: 'assistant', content: rawContent });
+      this.conversationHistory.push({ role: 'assistant', content: rawContent || apiThinking });
       return { thinking: displayThinking, content: displayContent };
     } catch (err) { throw err; }
+
   }
 
   // ★ 流式（带自动重试）
@@ -332,7 +333,11 @@ class MimoAPI {
     let displayThinking = reasoningText;
     let displayContent = contentText;
 
-    if (!displayThinking && displayContent.length > 30) {
+    if (!displayContent && displayThinking) {
+      // 兼容仅输出了思考内容的推理模型
+      displayContent = displayThinking;
+      displayThinking = '';
+    } else if (!displayThinking && displayContent.length > 30) {
       const split = this._splitThink(displayContent);
       displayThinking = split.think;
       displayContent = split.answer || displayContent;
@@ -345,12 +350,21 @@ class MimoAPI {
   // ★ 友好的中文错误信息
   _friendlyError(err, modelName) {
     const msg = err.message || '';
-    if (msg.includes('401') || msg.includes('Unauthorized')) return new Error('API Key 无效，请在设置中检查');
-    if (msg.includes('403') || msg.includes('Forbidden')) return new Error('API 权限不足，请检查 Key 是否有权限');
-    if (msg.includes('404') || msg.includes('Not Found')) return new Error(`模型「${modelName}」不存在或 API 地址有误`);
-    if (msg.includes('429') || msg.includes('Rate')) return new Error('请求过于频繁，请稍后再试');
-    if (msg.includes('超时') || msg.includes('timeout') || msg.includes('abort')) return new Error('连接超时，请检查网络或API地址');
-    if (msg.includes('fetch')) return new Error('无法连接到 API 服务器，请检查地址和网络');
+    if (msg.includes('401') || msg.includes('Unauthorized')) return new Error('API Key 无效或未授权，请在设置中检查密钥');
+    if (msg.includes('403') || msg.includes('Forbidden')) return new Error('API Key 权限不足或已被服务商限制');
+    if (msg.includes('404') || msg.includes('Not Found')) {
+      if (this.provider === 'local') {
+        return new Error(`本地 Ollama 未找到模型「${modelName}」，请点击【刷新模型】选择本机已下载模型`);
+      }
+      return new Error(`模型「${modelName}」不存在或 API 地址有误`);
+    }
+    if (msg.includes('429') || msg.includes('Rate')) return new Error('请求频次超限或账户余额不足，请稍后再试');
+    if (msg.includes('超时') || msg.includes('timeout') || msg.includes('abort')) return new Error('连接超时，请检查网络或 API 地址');
+    if (msg.includes('fetch') || msg.includes('Failed to fetch')) {
+      if (this.provider === 'local') return new Error('无法连接本地 Ollama 服务 (11434 端口)，请点击【启动本地服务】');
+      if (this.provider === 'lmstudio') return new Error('无法连接本地 LM Studio 服务 (1234 端口)，请在 LM Studio 中开启 Server');
+      return new Error('无法连接到 API 服务器，请检查网络环境或中转地址');
+    }
     return err;
   }
 
@@ -401,22 +415,103 @@ class MimoAPI {
     return { think: '', answer: text };
   }
 
+  // ★ 深度连通性测试（毫秒级测速 + 精确中文诊断）
   async testConnection() {
-    const body = { model: this.model, messages: [{ role: 'user', content: 'hi' }], max_tokens: 10, stream: false };
+    const startTime = Date.now();
+    const isLocalOllama = this.provider === 'local' || (this.baseUrl && this.baseUrl.includes('11434'));
+
+    if (this.needsApiKey() && !this.apiKey) {
+      return { success: false, message: '请先填写 API Key' };
+    }
+
+    // 1. 本地 Ollama 专属连通与模型嗅探
+    if (isLocalOllama) {
+      const rawRoot = this.baseUrl.replace(/\/v1\/?$/, '');
+      try {
+        const tagRes = await fetch(`${rawRoot}/api/tags`, { method: 'GET' });
+        if (!tagRes.ok) {
+          throw new Error(`Ollama 端口响应异常 HTTP ${tagRes.status}`);
+        }
+        const tagData = await tagRes.json();
+        const models = (tagData.models || []).map(m => m.model || m.name);
+        const latency = Date.now() - startTime;
+
+        if (models.length === 0) {
+          return {
+            success: false,
+            message: '本地 Ollama 服务已启动，但本机尚未安装任何模型！请先在终端运行 ollama pull qwen3:8b 下载模型。'
+          };
+        }
+
+        const currentModel = this.model || '';
+        const found = models.some(m => m === currentModel || m.startsWith(currentModel + ':') || currentModel.startsWith(m.split(':')[0]));
+        if (!found) {
+          return {
+            success: false,
+            message: `Ollama 连接成功但未找到模型「${currentModel}」。本机已安装: [${models.join(', ')}]，请点击【刷新模型】重新选择。`
+          };
+        }
+
+        return {
+          success: true,
+          message: `✓ 连接成功！已连通本地 Ollama（检测到 ${models.length} 个本地模型，响应延迟: ${latency}ms）`
+        };
+      } catch (err) {
+        return {
+          success: false,
+          message: '无法连接本地 11434 端口。本地 Ollama 服务未启动，请点击下方【🚀 启动本地服务】或先打开 Ollama。'
+        };
+      }
+    }
+
+    // 2. 外部供应商及其他服务商测试
+    const body = {
+      model: this.model,
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 15,
+      stream: false
+    };
+
     try {
       const res = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST', headers: this._buildHeaders(), body: JSON.stringify(body)
+        method: 'POST',
+        headers: this._buildHeaders(),
+        body: JSON.stringify(body)
       });
+      const latency = Date.now() - startTime;
+
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
-        throw new Error(e.error?.message || `HTTP ${res.status}`);
+        const rawErrMsg = e.error?.message || `HTTP ${res.status}`;
+        if (res.status === 401) {
+          throw new Error('API Key 无效或未授权，请检查密钥是否正确');
+        } else if (res.status === 403) {
+          throw new Error('API Key 权限不足或被限制访问');
+        } else if (res.status === 404) {
+          throw new Error(`模型「${this.model}」不存在或 API 地址不正确`);
+        } else if (res.status === 429) {
+          throw new Error('请求频次超限或账户余额不足 (HTTP 429)');
+        }
+        throw new Error(rawErrMsg);
       }
-      await res.json();
-      return { success: true, message: '连接成功' };
+
+      await res.json().catch(() => ({}));
+      return { success: true, message: `✓ 连接成功！模型响应正常（响应延迟: ${latency}ms）` };
     } catch (err) {
-      return { success: false, message: err.message };
+      let msg = err.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
+        if (this.provider === 'lmstudio') {
+          msg = '无法连接本地 1234 端口。请在 LM Studio 中进入 Local Server 页面并点击 Start Server。';
+        } else if (this.provider === 'openai' || this.provider === 'gemini') {
+          msg = '网络连接失败。如果您在中国大陆直连境外官方接口，请检查代理环境，或将 API 地址修改为国内中转代理。';
+        } else {
+          msg = '网络连接失败，请检查 API 地址是否拼写正确以及网络是否畅通。';
+        }
+      }
+      return { success: false, message: msg };
     }
   }
+
 
   abort() {
     if (this._currentController) {
