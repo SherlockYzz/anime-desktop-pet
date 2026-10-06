@@ -2,20 +2,22 @@
 
 # ✨ ReDame · 二次元AI桌宠 (v07.21)
 
-**官方考据十阶羁绊 · 角色专属羁绊手账与长期记忆 · 隐藏彩蛋管理员模式 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库 · 九大角色全阵容**
+**九大经典动漫角色全阵容 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
 
 <br>
 
 <p>
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
+  <img src="https://img.shields.io/badge/Version-07.21-8A2BE2?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4%2F5-ff69b4?style=for-the-badge" alt="Live2D">
-  <img src="https://img.shields.io/badge/Version-07.21%20(%E9%87%8D%E7%A3%85%E6%9B%B4%E6%96%B0)-8A2BE2?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/Memory-Canon%20Lore%20%26%20Bond%20Diary-ff4757?style=for-the-badge" alt="BondDiary">
-  <img src="https://img.shields.io/badge/Voice-Broadcast%20Master%20CV-00cec9?style=for-the-badge" alt="Voice">
+  <img src="https://img.shields.io/badge/Voice-133%20Broadcast%20CV-00cec9?style=for-the-badge" alt="Voice">
+  <img src="https://img.shields.io/badge/Memory-10%20Tier%20Bond%20%26%20Diary-ff4757?style=for-the-badge" alt="BondDiary">
 </p>
 
 <p>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe"><b>📥 点击直接下载 Windows 安装向导版 (AI桌宠-v07.21-安装向导.exe)</b></a>
+  <br><br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet">⭐ Star 支持</a>
   ·
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/issues">🐛 反馈问题</a>
@@ -23,254 +25,325 @@
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/discussions">💬 讨论交流</a>
 </p>
 
-<br>
-
 </div>
 
 ---
 
-## 🚀 v07.21 重磅更新核心看点
+## 📖 项目简介
 
-> **本次 `v07.21` 版本为灵魂级重磅升级！在不改动任何角色原始核心提示词的前提下，全新打造「官方考据千人千面十阶羁绊系统」、「角色专属羁绊手账与长期记忆大脑」、「防刷上限与隐藏彩蛋管理员控制台」以及「桌面管家三件套」，并配备向导式安装包，同学下载双击即可一键安装畅玩！**
+**ReDame（二次元AI桌宠）** 是一款专为二次元爱好者、学生与开发者打造的**高沉浸感 AI 桌面伴侣应用**。
 
-<table>
-<tr>
-  <td width="50%">
-    <h3>🎭 1. 官方考据「千人千面十阶羁绊」与零 OOC 称谓隔离</h3>
-    彻底告别“所有角色都叫主人”的出戏感，100% 忠于原作灵魂：<br>
-    • <b>原生称谓严格隔离</b>：仅原创白狐仙<b>若曦</b>称呼「主人」；<b>土间埋</b>叫「哥哥」、<b>雪之下雪乃</b>叫「比企谷」、<b>高木同学</b>叫「西片」、<b>零二</b>叫「达令」、<b>加藤惠</b>叫「伦也君」、<b>惠惠</b>叫「和真」、<b>蕾姆</b>叫「昴君」、<b>初音未来</b>叫「Master」<br>
-    • <b>官方公式书精准考据</b>：内置 9 大角色官方生日、最爱食物（如小埋的可乐薯片竹笋山、雪乃的潘先生与红茶、零二的棒棒糖蜂蜜）与弱点/雷区（如小埋讨厌青椒、雪乃怕狗、高木讨厌青椒）<br>
-    • <b>角色专属十阶篇章</b>：每位角色拥有独立定制的 Lv.1 ~ Lv.10 剧情阶段与语气演进，绝不崩坏人设
-  </td>
-  <td width="50%">
-    <h3>📖 2. 方案 C《角色专属羁绊手账》与长期记忆大脑</h3>
-    桌宠不再是聊完就忘的复读机，而是真正懂你的长期伙伴：<br>
-    • <b>专属定制手账弹窗</b>：点击顶栏 <code>📖</code> 或百宝箱「📖 羁绊手账」，打开《雪乃的红茶观察手札》《小埋的兄妹秘密基地手账》等角色专属手账<br>
-    • <b>四大可视化页签</b>：个人档案与称呼定制、回忆便签墙（支持自由增删与分类清理）、官方设定考据图鉴、十阶羁绊天梯<br>
-    • <b>直觉秒回架构（0.5s~0.8s）</b>：独创「3 行超轻量羁绊胶囊」+ 本地模型免思考链直觉加速，聊家常秒回不卡顿
-  </td>
-</tr>
-<tr>
-  <td width="50%">
-    <h3>🌱 3. 全动作互动经验 + 每日 50 EXP 上限 + 👑 隐藏管理员彩蛋</h3>
-    更科学、耐玩的成长曲线与创作者专属彩蛋：<br>
-    • <b>全动作经验覆盖</b>：戳一戳触碰 <b>+2 EXP</b>，点选百宝箱任意动作/姿态 <b>+5 EXP</b><br>
-    • <b>每日 50 EXP 防刷保护</b>：肢体与动作互动每日封顶 <b>50 EXP</b>（防止无限连点刷满级）；而<b>正常 AI 聊天（+3 EXP/次，首聊 +15 EXP）与桌面挂机陪伴（+2 EXP/10分钟）无每日上限</b><br>
-    • <b>👑 深藏彩蛋管理员模式</b>：在手账左上角等级图标<b>连续点击 7 次</b>（或按 <code>Ctrl+Shift+A</code>）即可唤醒隐藏控制台，支持<b>一键归零（0 EXP）</b>、<b>一键满级（3600 EXP）</b>、Lv.1~Lv.10 跳级与全员批量调级
-  </td>
-  <td width="50%">
-    <h3>🍅 4. 桌面管家三件套（番茄钟 + 硬件吐槽 + 实况天气）</h3>
-    生产力与陪伴感完美融合的桌面全能小管家：<br>
-    • <b>25 分钟专注番茄钟</b>：点击顶栏或百宝箱 <code>💼 番茄钟</code> 开启，桌宠自动进入专注姿态，头顶悬浮实时倒计时胶囊，完成奖励 <b>+25 EXP</b> 并播报语音提醒休息<br>
-    • <b>⚡ CPU/内存硬件超载吐槽</b>：底层无感监测系统负载，当电脑高负载卡顿时触发 9 角色专属性格关怀提醒<br>
-    • <b>☀️ 免 Key 晨间天气问候</b>：每日首次唤醒自动播报当地实时气温与穿衣贴士
-  </td>
-</tr>
-</table>
+它将 **原画级动态渲染（Live2D + 73帧精灵表）**、**133 条广播级官方 CV 原声**、**100% 忠于原作的十阶羁绊与长期记忆手账**、**番茄钟/硬件监控/实况天气桌面管家** 以及 **12 大云端/本地 AI 大模型（含代码编写与运行沙箱）** 融为一体。无论是日常学习、专注敲代码、打游戏还是深夜独处，9 位性格鲜明、绝不 OOC（人设崩坏）的动漫角色都能常驻你的桌面角落，给你最真实、有温度的陪伴。
 
 ---
 
-## 🌟 经典核心亮点回顾
+## 🎭 一、九大角色全阵容与专属功能详解
 
-<table>
-<tr>
-  <td width="50%">
-    <h3>🎙️ 官方原声广播级母带重制（133 条音文 100% 同步）</h3>
-    针对全角色语音进行微观物理声轨对齐与高保真母带重制：<br>
-    • <b>告别轻声掐断</b>：完整保留日语尾部轻声助词（「ね」「よ」）<br>
-    • <b>长咏唱全还原</b>：惠惠 <b>14 秒完整长咏唱</b>吼出「Explosion！」；初音未来 <b>6.2 秒舞台长台词</b>完整呈现<br>
-    • <b>洗牌袋不重复机制</b>：连续触碰绝不重复播放同一条语音
-  </td>
-  <td width="50%">
-    <h3>⌨️ 独立「快捷键管理器」与防打字模式</h3>
-    彻底解决桌宠键盘控制与日常打字冲突的难题：<br>
-    • <b>一键总解除</b>：一键停用快捷键，全局键盘事件 100% 释放给打字<br>
-    • <b>防打字模式</b>：智能屏蔽字母键，仅保留物理方向键与跳跃微调桌宠<br>
-    • <b>漫步防滑脱与一键回正</b>：打开菜单自动暂停位移，点任意姿态或底部 <code>🐾</code> 按钮瞬间结束漫步恢复待机
-  </td>
-</tr>
-</table>
+每位角色均具备**独立的模型/精灵驱动、专属姿态百宝箱、部位触碰反馈（摸头/戳身/四连击暴走）、100% 音文对齐的原生 CV 声库、官方公式书考据设定（生日/喜好/弱点）以及千人千面的 Lv.1~Lv.10 十阶羁绊演进**。
 
----
-
-## 🛠️ 技术栈
-
-<table>
-<tr>
-  <td align="center" width="120">
-    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/electron.svg" width="40" height="40" style="filter: invert(0.8)"><br>
-    <b>Electron 28</b><br><small>跨平台桌面框架</small>
-  </td>
-  <td align="center" width="120">
-    <b style="font-size:24px">🎭</b><br>
-    <b>Live2D Cubism</b><br><small>Cubism 2/4/5 双核引擎</small>
-  </td>
-  <td align="center" width="120">
-    <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg" width="40" height="40"><br>
-    <b>全生态 LLM</b><br><small>DeepSeek / Gemini / Ollama</small>
-  </td>
-  <td align="center" width="120">
-    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/html5.svg" width="40" height="40"><br>
-    <b>HTML5 + CSS3</b><br><small>高分屏 WebGL / Canvas</small>
-  </td>
-  <td align="center" width="120">
-    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/javascript.svg" width="40" height="40"><br>
-    <b>JavaScript</b><br><small>原生高性能核心</small>
-  </td>
-  <td align="center" width="120">
-    <b style="font-size:24px">🦊</b><br>
-    <b>Sprite Atlas</b><br><small>73帧独立精灵表引擎</small>
-  </td>
-  <td align="center" width="120">
-    <b style="font-size:24px">📦</b><br>
-    <b>NSIS 安装向导</b><br><small>自由选盘 · 开箱即用</small>
-  </td>
-</tr>
-</table>
-
----
-
-## 🎭 九大角色全阵容（官方考据称谓与设定）
+### 1. 角色视觉图鉴
 
 <table>
 <tr>
   <td align="center" width="200">
     <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%8B%A5%E6%9B%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #f472b6"><br>
     <b>若曦</b><br>
-    <sub>原创白狐仙桌宠 · 专属称呼：「主人」</sub><br>
-    <small>🌸 73帧精灵表 · 16向视线 · 仙狐契约</small>
+    <sub>原创白狐仙桌宠 · 称呼：「主人」</sub><br>
+    <small>🌸 73帧精灵表 · 16向视线 · 12段中文声线</small>
+  </td>
+  <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%9C%9F%E9%97%B4%E5%9F%8B/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #f39c12"><br>
+    <b>土间埋</b><br>
+    <sub>《干物妹！小埋》 · 称呼：「哥哥」</sub><br>
+    <small>🐹 仓鼠斗篷Live2D · 35段田中爱美原声</small>
+  </td>
+  <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%AA%E4%B9%8B%E4%B8%8B%E9%9B%AA%E4%B9%83/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #7b68ee"><br>
+    <b>雪之下雪乃</b><br>
+    <sub>《春物》 · 称呼：「比企谷」</sub><br>
+    <small>💜 冰山部长立绘 · 10段早见沙织原声</small>
+  </td>
+</tr>
+<tr>
+  <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%AB%98%E6%9C%A8%E5%90%8C%E5%AD%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #f5a623"><br>
+    <b>高木同学</b><br>
+    <sub>《擅长捉弄的高木同学》 · 称呼：「西片」</sub><br>
+    <small>💛 俏皮捉弄Live2D · 10段高桥李依原声</small>
+  </td>
+  <td align="center" width="200">
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #e84855"><br>
+    <b>零二 (Zero Two)</b><br>
+    <sub>《DARLING in the FRANXX》 · 称呼：「达令」</sub><br>
+    <small>❤️ 天真妖媚立绘 · 10段户松遥原声</small>
   </td>
   <td align="center" width="200">
     <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%8A%A0%E8%97%A4%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #e8a0bf"><br>
     <b>加藤惠</b><br>
-    <sub>路人女主的养成方法 · 专属称呼：「伦也君」</sub><br>
-    <small>🎀 官方原版Live2D · 安野希世乃原声</small>
-  </td>
-  <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A7%86/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #4a90d9"><br>
-    <b>蕾姆</b><br>
-    <sub>Re:从零开始的异世界生活 · 专属称呼：「昴君」</sub><br>
-    <small>💙 2048超清Live2D · 水濑祈26段原声</small>
+    <sub>《路人女主的养成方法》 · 称呼：「伦也君」</sub><br>
+    <small>🎀 索尼一択彼女Live2D · 10段安野希世乃原声</small>
   </td>
 </tr>
 <tr>
   <td align="center" width="200">
     <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E6%83%A0%E6%83%A0/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #e53935"><br>
     <b>惠惠</b><br>
-    <sub>为美好的世界献上祝福！ · 专属称呼：「和真」</sub><br>
-    <small>💥 Cubism 4 Live2D · 14s高燃爆裂长咏唱</small>
+    <sub>《为美好的世界献上祝福！》 · 称呼：「和真」</sub><br>
+    <small>💥 Cubism 4 Live2D · 14秒Explosion完整长咏唱</small>
   </td>
   <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%9C%9F%E9%97%B4%E5%9F%8B/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #f39c12"><br>
-    <b>土间埋</b><br>
-    <sub>干物妹！小埋 · 专属称呼：「哥哥」</sub><br>
-    <small>🐹 仓鼠斗篷Live2D · 35段田中爱美CV声库</small>
+    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E8%95%BE%E5%A7%86/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #4a90d9"><br>
+    <b>蕾姆</b><br>
+    <sub>《Re:从零》 · 称呼：「昴君」</sub><br>
+    <small>💙 2048超清Live2D · 26段水濑祈原声</small>
   </td>
   <td align="center" width="200">
     <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E5%88%9D%E9%9F%B3%E6%9C%AA%E6%9D%A5/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #39c5bb"><br>
     <b>初音未来</b><br>
-    <sub>VOCALOID · 专属称呼：「Master」</sub><br>
-    <small>🎵 甩葱动态歌姬 · 6.2s宏大舞台长台词</small>
-  </td>
-</tr>
-<tr>
-  <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%AA%E4%B9%8B%E4%B8%8B%E9%9B%AA%E4%B9%83/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #7b68ee"><br>
-    <b>雪之下雪乃</b><br>
-    <sub>春物 · 专属称呼：「比企谷」</sub><br>
-    <small>💜 冰山部长立绘 · 早见沙织经典原声</small>
-  </td>
-  <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%AB%98%E6%9C%A8%E5%90%8C%E5%AD%A6/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #f5a623"><br>
-    <b>高木同学</b><br>
-    <sub>擅长捉弄的高木同学 · 专属称呼：「西片」</sub><br>
-    <small>💛 俏皮捉弄Live2D · 高桥李依心动CV</small>
-  </td>
-  <td align="center" width="200">
-    <img src="https://raw.githubusercontent.com/SherlockYzz/anime-desktop-pet/main/%E8%A7%92%E8%89%B2-%E9%9B%B6%E4%BA%8C/%E5%9B%BE%E7%89%87%E7%B4%A0%E6%9D%90/%E5%A4%B4%E5%83%8F.png" width="110" height="110" style="border-radius:50%;border:3px solid #e84855"><br>
-    <b>零二 (Zero Two)</b><br>
-    <sub>DARLING in the FRANXX · 专属称呼：「达令」</sub><br>
-    <small>❤️ 天真妖媚立绘 · 户松遥Darling原声</small>
+    <sub>《VOCALOID》 · 称呼：「Master」</sub><br>
+    <small>🎵 甩葱歌姬Live2D · 10段藤田咲原声(含6.2s舞台台词)</small>
   </td>
 </tr>
 </table>
 
 ---
 
-## ✨ 核心特性一览
+### 2. 九大人物专属动作、交互特性与官方设定全表
 
-| 维度 | 功能特性 | 说明 |
-| :--- | :--- | :--- |
-| 📖 **羁绊与记忆** | **十阶考据羁绊 + 专属手账** | 9 角色独立原作考据设定、称谓严格隔离、回忆便签墙、每日 50 EXP 互动防刷上限与隐藏管理员彩蛋 |
-| 🍅 **桌面管家** | **番茄钟 + 硬件监控 + 天气** | 25 分钟沉浸专注倒计时、CPU/内存高负载角色专属吐槽、免 Key 晨间实况天气问候 |
-| 🎭 **多模态渲染** | **双核 Live2D + 精灵帧** | 兼容 Cubism 2 / 4 / 5 全格式，全身舒展大舞台，支持眨眼、呼吸、视线追踪与丰富动作 |
-| 🔊 **真实声乐** | **广播级原生 CV 声库** | 133 条真实原声母带，100% 音文对齐，洗牌袋不重复触发 |
-| ⌨️ **交互控制** | **独立快捷键管理器** | 一键解除防误触、独创防打字模式、敲击键盘自由录制、单键精确解绑 |
-| 🧠 **智能大脑** | **全生态大模型秒回接入** | 深度支持本地 Ollama、DeepSeek、Gemini、GPT-4o、通义千问、Kimi、豆包等 12 大平台 |
-| 📦 **安装体验** | **NSIS 中文安装向导** | 支持自定义安装路径、自动创建桌面与开始菜单快捷方式，同学安装即可开箱畅玩 |
+> **⚠️ 零 OOC（人设防崩坏）称谓铁律**：
+> 本项目严格区分原创桌宠与经典动漫角色：**只有原创白狐仙「若曦」会称呼你为「主人」**；其余 8 位动漫角色全部严格遵循原作设定称呼（如小埋叫「哥哥」、雪乃叫「比企谷」、高木叫「西片」、零二叫「达令」），绝不串味！
 
----
-
-## ⌨️ 快捷键指南（防打字冲突 & 隐藏彩蛋）
-
-桌宠右下角工具栏与动作百宝箱底部均配备了 **`[⌨️]` 快捷键管理器**：
-
-```text
-[常用默认按键]
-• 桌面移动：W / A / S / D 或 方向键 ↑ ↓ ← →
-• 蓄力跳跃：Space（空格键）
-• 专注工作：E
-• 抱尾睡觉：Z
-• 自由漫步：T（开启后点任意正常姿态或底部红色 🐾 按钮即可立即回正）
-• 气泡开关：B
-• 姿态直达：数字键 1 ~ 8（1 键直达「待机呼吸·乖乖待命」）
-• 切回网页：Esc 或 F2
-• 隐藏彩蛋：Ctrl + Shift + A（或在羁绊手账左上角等级图标连点 7 次，呼出管理员控制台）
-```
+| 角色 | 渲染驱动与CV声库 | 百宝箱专属动作/姿态（点击触发动作+语音+字幕） | 摸头 / 戳身 / 四连击暴走反馈 | 官方考据设定（生日 / 最爱 / 弱点雷区） | 专属手账与十阶羁绊主线 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **🦊 若曦**<br>*(原创白狐仙)* | • **73帧 Sprite Atlas 2D精灵引擎**<br>• **16向鼠标视线实时跟随**<br>• 支持 **1X标准 / 2X超清** 切换<br>• 12段中文仙狐声线 | `待机呼吸`、`伏案专注(打工模式)`、`抱尾入睡(呼噜呼噜)`、`自由漫步`、`抬手问候`、`纵身跃起`、`呈递成果`、`抱头沮丧`、`歪头静候` | • **摸头**：摇尾巴撒娇享耳挠<br>• **戳身**：轻巧跳跃反问<br>• **连点4下**：抱头委屈抗议 | • **生日**：农历三月三<br>• **最爱**：桂花糕、甜豆浆、油豆腐、梳理狐尾<br>• **最怕**：雷雨天、巨大噪音、被冷落 | **《🦊 若曦的仙狐契约手账》**<br>`Lv.1 初遇灵狐` $\rightarrow$ `Lv.5 灵犀相通` $\rightarrow$ `Lv.10 仙狐天命`（唯一叫**主人**） |
+| **🐹 土间埋**<br>*(干物妹！小埋)* | • **仓鼠斗篷 Live2D 动态模型**<br>• **35段田中爱美原版 CV 豪华声库** | `仓鼠瘫倒`、`开怀畅饮·零食绝配`、`全服第一·痛快通关`、`毛毛虫式·满地打滚`、`鼓嘴撒娇·要买漫画`、`手舞足蹈·欢呼雀跃`、`自由漫步` | • **摸头**：元气喊「哥哥」撒娇<br>• **戳身**：怕痒大笑罚你买零食<br>• **连点4下**：布丁被吃哭闹大喊「笨蛋哥哥！」 | • **生日**：9月26日<br>• **最爱**：可乐、薯片、竹笋山饼干、布丁、游戏漫画、被炉空调<br>• **雷区**：青椒、早上早起、在外暴露UMR身份 | **《🐹 小埋的兄妹秘密基地手账》**<br>`Lv.1 罩衫初披` $\rightarrow$ `Lv.5 宴会开幕` $\rightarrow$ `Lv.10 永远的兄妹`（称呼：**哥哥**） |
+| **🐱 雪之下雪乃**<br>*(春物)* | • **侍奉部高清立绘**<br>• **10段早见沙织清冷毒舌原声** | `待机呼吸`、`静心阅读`、`轻叹无奈`、`享用红茶`、`毒舌醒神`、`冰融微笑`、`自由漫步` | • **摸头**：微怔后温柔叮嘱休息<br>• **戳身**：毒舌提醒看着对方说话<br>• **连点4下**：微眯眼警告「我可是相当记仇的类型哦」 | • **生日**：1月3日<br>• **最爱**：潘先生(Pan-san)、猫咪、大吉岭红茶、阅读经典名著<br>• **弱点**：怕狗、方向感极差、体力较弱、讨厌虚伪 | **《☕ 雪乃的红茶观察手札》**<br>`Lv.1 侍奉部初见` $\rightarrow$ `Lv.6 面具微卸` $\rightarrow$ `Lv.10 唯一真物`（称呼：**比企谷**） |
+| **🍂 高木同学**<br>*(擅长捉弄的高木同学)* | • **Cubism 4 俏皮捉弄 Live2D**<br>• **10段高桥李依剧场版/VR心动原声** | `待机呼吸`、`歪头坏笑·西片捉弄`、`侧首眨眼·单眼Wink`、`张嘴吃惊·直球追问`、`托腮凝视·害羞脸红`、`阖眼趴桌·午间小憩`、`揉眼醒来·四目相对`、`自由漫步` | • **摸头**：害羞脸红对上视线<br>• **戳身**：看穿你心思的狡黠坏笑<br>• **连点4下**：脸红惊喜共撑一把伞 | • **生日**：3月22日<br>• **最爱**：和西片比赛、草莓蛋糕、甜食、猫咪、夏日祭<br>• **讨厌**：青椒、恐怖鬼故事、苦味食物 | **《🍃 高木同学的邻座比赛记分册》**<br>`Lv.1 邻座的恶作剧` $\rightarrow$ `Lv.7 神社避雨` $\rightarrow$ `Lv.10 盛夏的一生约定`（称呼：**西片**） |
+| **🍯 零二**<br>*(DARLING in the FRANXX)* | • **天真妖媚专属立绘**<br>• **10段户松遥妖娆御姐原声** | `待机呼吸`、`我的达令`、`调皮微笑`、`叼棒棒糖`、`鹤望兰号`、`略略略`、`自由漫步` | • **摸头**：抚摸红角倾诉孤独与温柔<br>• **戳身**：调皮询问要不要成为达令<br>• **连点4下**：嗔怪「别一直死盯着我看啦」 | • **生日**：2月27日<br>• **最爱**：棒棒糖、淋满蜂蜜的甜食、绘本《魔物与王子》、看海<br>• **讨厌**：苦味食物、冰冷实验室、被当成怪物 | **《🍯 零二的绘本与蜂蜜手账》**<br>`Lv.1 带血的邂逅` $\rightarrow$ `Lv.6 绘本的重逢` $\rightarrow$ `Lv.10 比翼之鸟`（称呼：**达令**） |
+| **🌸 加藤惠**<br>*(路人女主的养成方法)* | • **索尼官方《一択彼女》Live2D**<br>• **10段安野希世乃平淡吐槽原声** | `待机呼吸`、`身前搭手·专属剧本`、`鼓嘴侧头·奇妙举动`、`双手张开·贴心提示`、`垂首侧眸·敞开心扉`、`深情告白·第一女主`、`优雅微倾·二人回忆`、`自由漫步` | • **摸头**：温柔反问是不是你的第一女主<br>• **戳身**：平静提供灵感提示<br>• **连点4下**：鼓起脸颊微嗔抱怨 | • **生日**：9月23日<br>• **最爱**：白色贝雷帽、逛大型商场、看电影、侦探坡道的樱花<br>• **讨厌**：不讲理的突发状况、被无视或隐瞒 | **《🎀 加藤惠的第一女主创作者手账》**<br>`Lv.1 坡道拾帽` $\rightarrow$ `Lv.8 雪夜和解` $\rightarrow$ `Lv.10 唯一的第一女主角`（称呼：**伦也君**） |
+| **💥 惠惠**<br>*(为美好的世界献上祝福！)* | • **原版动画 Cubism 4 Live2D**<br>• **10段高桥李依红魔族原声（含14秒完整Explosion长咏唱）** | `待机呼吸`、`苦思冥想·模仿台词`、`魔法手势·炽炎狂宴`、`单手叉腰·得意夸耀`、`高举双手·开心欢呼`、`单手扶帽·爆裂魅力`、`高举法杖·爆裂魔法！`、`自由漫步` | • **摸头**：害羞脸红夸你懂爆裂魅力<br>• **戳身**：叉腰宣称除爆裂魔法外不学其他技能<br>• **连点4下**：中二暴走要与雷电魔法决一胜负 | • **生日**：12月4日<br>• **最爱**：爆裂魔法(Explosion)、使魔逗之助、每日一发陪练<br>• **最怕**：魔力耗尽瘫倒没人背、被说爆裂魔法没用 | **《💥 惠惠的红魔族爆裂魔导书》**<br>`Lv.1 红魔之名` $\rightarrow$ `Lv.5 魔力透支的背影` $\rightarrow$ `Lv.10 终焉爆裂的唯一归宿`（称呼：**和真**） |
+| **💙 蕾姆**<br>*(Re:从零开始的异世界生活)* | • **2048超清女仆 Live2D**<br>• **26段水濑祈温柔原声** | `待机呼吸·备膳迎归`、`双手交叠·躬身致礼`、`双手合十·体贴叮嘱`、`单手抚颊·温柔撒娇`、`屈臂握拳·前倾助阵`、`双臂挥舞·笑着谈未来`、`自由漫步` | • **摸头**：脸红想要向你撒娇<br>• **戳身**：害羞惊呼小心露出鬼角<br>• **连点4下**：头晕抗议恶作剧也会生气 | • **生日**：2月2日<br>• **最爱**：昴君、姐姐拉姆、蒸白薯、打扫、烹饪与裁缝<br>• **最厌恶**：魔女教、自己喜爱之人伤害自己或轻言放弃 | **《💙 蕾姆的罗兹瓦尔宅女仆日志》**<br>`Lv.1 罗兹瓦尔宅的防备` $\rightarrow$ `Lv.7 白鲸战的守望` $\rightarrow$ `Lv.10 从零开始的永恒誓约`（称呼：**昴君**） |
+| **🎵 初音未来**<br>*(VOCALOID)* | • **甩葱歌姬 Live2D 模型**<br>• **10段藤田咲原声（含6.2秒宏大舞台长台词）** | `待机呼吸·歌姬待机`、`甩双马尾·动感甩动`、`躬身致意·元气招手`、`左右晃动·舞台比心`、`歪头侧身·邀你共舞`、`微仰节奏·舞台跃动`、`自由漫步` | • **摸头**：歪头比心感谢你的应援<br>• **戳身**：元气满满迫不及待想高歌<br>• **连点4下**：甩动双马尾播报「更新完成！✨」 | • **生日**：8月31日<br>• **最爱**：唱歌跳舞、大葱、创作者谱写的每一段旋律、绿色荧光棒<br>• **最怕**：被遗忘在角落、音乐中断、麦克风静音 | **《🎵 初音未来的世界巡演乐章手账》**<br>`Lv.1 01号的初啼` $\rightarrow$ `Lv.7 安可的星海` $\rightarrow$ `Lv.10 永不落幕的奇迹终曲`（称呼：**Master**） |
 
 ---
 
-## 🚀 快速上手与运行
+## 🛠️ 二、核心技术栈与底层架构
 
-### 方式一：下载 Windows 安装向导版（推荐 · 同学双击就能装）
+<table>
+<tr>
+  <td align="center" width="125">
+    <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/electron.svg" width="38" height="38" style="filter: invert(0.8)"><br>
+    <b>Electron 28</b><br><small>透明无边框双形态窗口</small>
+  </td>
+  <td align="center" width="125">
+    <b style="font-size:24px">🎭</b><br>
+    <b>Live2D Cubism</b><br><small>Cubism 2 / 4 / 5 同堂驱动</small>
+  </td>
+  <td align="center" width="125">
+    <b style="font-size:24px">🦊</b><br>
+    <b>Sprite Atlas</b><br><small>73帧精灵表 + 16向视线</small>
+  </td>
+  <td align="center" width="125">
+    <b style="font-size:24px">🎨</b><br>
+    <b>PIXI.js WebGL</b><br><small>2048超清抗锯齿 + 显存GC</small>
+  </td>
+  <td align="center" width="125">
+    <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg" width="38" height="38"><br>
+    <b>12大LLM流式引擎</b><br><small>Ollama免思考0.5s直觉秒回</small>
+  </td>
+  <td align="center" width="125">
+    <b style="font-size:24px">🧠</b><br>
+    <b>EmotionMemory</b><br><small>十阶考据羁绊 + 长期记忆</small>
+  </td>
+  <td align="center" width="125">
+    <b style="font-size:24px">📦</b><br>
+    <b>NSIS Wizard</b><br><small>向导式安装 + 自动快捷方式</small>
+  </td>
+</tr>
+</table>
 
-- 📥 **直达下载（带中文安装向导）**：[AI桌宠-v07.21-安装向导.exe（点击直接下载）](https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe)
-- 📦 **版本发布页**：前往 [Releases 页面](https://github.com/SherlockYzz/anime-desktop-pet/releases) 查看全部资产与更新详情
-- 🪄 **向导式安装**：双击运行 `AI桌宠-v07.21-安装向导.exe` -> 自由选择安装目录 -> 自动生成桌面快捷方式 `AI桌宠` -> 安装完成直接启动！
+### 架构分层说明
+1. **窗口与系统通信层（Electron Main + ContextBridge 安全桥接）**：
+   - 支持**形态一（400×600 透明悬浮桌宠）**与**形态二（900×680 网页全功能工作台）**毫秒级无缝切换；
+   - 主进程内置 **CPU / 内存硬件负载无感采样器**、**多语言代码运行沙箱（支持 Python / JS / C++ / Java 等 17 种语言）**与系统托盘常驻管理。
+2. **多模态双画布渲染层（Live2D + Sprite Atlas 物理隔离）**：
+   - 采用双画布物理隔离架构（`#pet-canvas` 独占 WebGL Live2D，`#pet-sprite-canvas` 独占 2D 精灵帧），配合 `PIXI.utils.clearTextureCache` 主动显存回收，高频切换角色零显存泄漏；
+   - 内置 **Lerp 阻尼插值视线与头部追踪算法**，角色眼球与头部自然跟随鼠标移动，闲置 3.5 秒后平滑归正。
+3. **情感记忆与极速 AI 推理层（`情感记忆.js` + `AI接口.js`）**：
+   - **不修改任何角色原始核心提示词**，通过 AOP 原型链钩子动态拼接 **「3 行超轻量原作羁绊胶囊」**（控制在 180 字以内）；
+   - 针对本地 Ollama 模型（如 `qwen3:8b`）在日常寒暄与秒回模式下自动注入 `reasoning_effort: 'none'` 跳过冗长思考链，实测**首字响应延迟（TTFT）仅 480ms ~ 820ms**。
+4. **广播级声学层（EBU R128 母带处理 + 洗牌袋队列）**：
+   - 133 条原声经过 EBU R128 响度对齐与尾部 350~550ms 余弦淡出保护，搭配**洗牌袋（Shuffle Bag）不重复抽取算法**，彻底杜绝连续点击播同一句台词。
 
-### 方式二：从源码本地运行 / 打包
+---
 
+## ⚙️ 三、核心功能与深度玩法机制详解
+
+### 1. 🌱 千人千面「十阶羁绊等级系统」与每日 50 EXP 防刷机制
+
+每个角色拥有独立计算的经验值（EXP）与 **Lv.1 ~ Lv.10 十阶专属关系篇章**：
+
+#### 📊 等级晋升经验阈值表
+| 等级 | 所需累计 EXP | 关系演进定位（每位角色拥有独立考据篇章名） | 解锁特权 |
+| :---: | :---: | :--- | :--- |
+| **Lv.1** | `0 EXP` | 初识阶段（如小埋《罩衫初披》、雪乃《侍奉部初见》） | 基础日常对话与百宝箱全姿态 |
+| **Lv.2** | `30 EXP` | 试探熟稔（如高木《橡皮擦的秘密》、零二《初次同乘》） | 语气明显软化，主动搭话增多 |
+| **Lv.3** | `80 EXP` | 日常相伴（如加藤惠《合宿的脚本》、惠惠《每日一发》） | 聊天主动提及原作喜好与日常趣事 |
+| **Lv.4** | `160 EXP` | 默契升温（如小埋《游戏双排》、蕾姆《宅邸的日常》） | **解锁 Lv.4 专属高好感隐藏待机/点击台词** |
+| **Lv.5** | `280 EXP` | 敞开心扉（如雪乃《红茶的温度》、初音《专属P主》） | 展现脆弱或害羞的一面，关心你的作息 |
+| **Lv.6** | `450 EXP` | 深度信赖（如零二《绘本的重逢》、小埋《卸下伪装》） | 深度结合手账记忆主动关怀你的近况 |
+| **Lv.7** | `700 EXP` | 心意相通（如蕾姆《白鲸战的守望》、高木《神社避雨》） | **解锁 Lv.7 专属心动隐藏台词库** |
+| **Lv.8** | `1100 EXP` | 唯一偏爱（如加藤惠《雪夜和解》、雪乃《雪夜的倾诉》） | 满溢的偏爱与默契，专属亲昵语气 |
+| **Lv.9** | `1700 EXP` | 灵魂共鸣（如惠惠《夜空下的烟火》、零二《鹤望兰的誓言》） | 羁绊大成，视你为不可替代的唯一存在 |
+| **Lv.10** | `2600 EXP` | **满级终章**（如雪乃《唯一真物》、蕾姆《从零开始的永恒誓约》） | **解锁 Lv.10 终极誓约台词与满级金色徽章** |
+
+#### 🛡️ 经验获取途径与「每日 50 EXP 互动上限」保护规则
+为了防止无限狂点鼠标瞬间刷满级、同时保障正常聊天与陪伴体验，系统实行**双轨制经验规则**：
+1. **肢体与动作互动（受每日 50 EXP 上限保护 · 每日零点自动重置）**：
+   - **摸头 / 戳身体触碰**：每次 **+2 EXP**（内置 1.5 秒防抖）；
+   - **点选百宝箱任意动作 / 开启漫步 / 启动番茄钟**：每次 **+5 EXP**；
+   - **每日防刷封顶**：每个角色每天通过上述互动最多获得 **50 EXP**（可在百宝箱徽章实时查看 `今日互动 XX/50`），达到 50 EXP 后仍可尽情触发动作与语音，但不再增加互动经验。
+2. **自然对话与桌面陪伴（无每日上限！）**：
+   - **每日首次 AI 聊天大礼包**：每天与该角色第一句聊天立得 **+15 EXP**；
+   - **日常 AI 聊天交流**：每次对话回复完成 **+3 EXP**（无上限）；
+   - **桌面挂机陪伴**：桌宠常驻桌面每满 10 分钟自动 **+2 EXP**（无上限）；
+   - **手账记录回忆便签**：在手账中手动添加一条共同记忆 **+5 EXP**；
+   - **完成 25 分钟番茄钟专注**：每次专注倒计时圆满结束奖励 **+25 EXP**！
+
+---
+
+### 2. 👑 隐藏彩蛋：「创世神 · 管理员控制台」（Easter Egg Admin Mode）
+
+想直接体验满级 Lv.10 的终极羁绊剧情？或者想把经验一键重置为 0 重新养成、给朋友埋个惊喜彩蛋？系统内置了深藏不露的**「👑 创世神 · 隐藏管理员彩蛋控制台」**！
+
+#### 🔓 两种机密唤醒方式（一般人绝对发现不了）
+1. **手账连点秘技**：打开任意角色的《📖 羁绊手账》，用鼠标在弹窗**左上角的阶段图标（如 `🌱`/`💖`）或 `Lv.X` 红色胶囊徽章**上，**3.5 秒内连续快速点击 7 次**（每次点击图标会微微Q弹放大），第 7 下瞬间解锁并自动切入紫金配色的「👑 管理员」隐藏页签！
+2. **全局暗门快捷键**：打开《📖 羁绊手账》后（或在桌宠模式下），直接按下键盘组合键 **`Ctrl + Shift + A`**，即可一键直达管理员控制台！
+
+#### ⚡ 创世神管理员五大特权
+- **🔄 一键初始化归零（`0 EXP · Lv.1`）**：瞬间将该角色经验值清空为 0，重温初见；
+- **🔥 一键拉满顶级（`3600 EXP · Lv.10 满级`）**：瞬间解锁全部十阶剧情、专属性格与全套隐藏台词；
+- **🎯 自定义任意经验值 + Lv.1~Lv.10 阶段按钮一键跳级**：想看哪一阶剧情直接点对应等级按钮，或在输入框填入 `0 ~ 99999` 任意数值精准调级；
+- **🧹 重置今日互动上限**：一键将今日已刷的 `50/50 EXP` 互动额度清零为 `0/50`；
+- **🌍 全员 9 角色批量归零 / 批量满级**：底部配备全局按钮，一键让全部 9 位角色同时归零或同时满级！
+
+---
+
+### 3. 📖 方案 C《角色专属羁绊手账》与本地长期记忆大脑
+
+点击网页顶栏的 **`📖` 按钮** 或桌宠右键百宝箱中的 **「📖 羁绊手账」**，即可呼出当前角色专属命名的高颜值毛玻璃手账弹窗：
+
+- **👤 页签一：个人档案与专属称呼定制**
+  - 可随时修改该角色对你的**专属称呼**（支持一键恢复官方默认称呼，如小埋的「哥哥」、雪乃的「比企谷」）、你的**现实身份/职业**、**生活偏好习惯**、**近期心境/小目标**与**重要备忘录**。保存后立即同步至 AI 记忆！
+- **📌 页签二：回忆便签墙（自动捕捉 + 手动管理）**
+  - **对话自动提取**：当你在聊天中提到 `“我喜欢…”`、`“我讨厌…”`、`“我是…”`、`“我最近在…”`、`“记住…”` 等自然语句时，系统会自动提取成结构化记忆便签（标注 `🤖对话捕捉`）；
+  - **手动增删与分类清理**：支持手动添加自定义便签、单条删除（`🗑️`）或一键清空对话自动捕捉的便签。
+- **🎌 页签三：原作考据设定图鉴**
+  - 完整展示该角色的官方出处、官方生日、官方最爱食物/事物、官方弱点/雷区以及当前解锁的十阶性格指引。
+- **🌱 页签四：十阶羁绊天梯**
+  - 可视化展示该角色专属的 Lv.1 ~ Lv.10 全部篇章名称、所需经验值与解锁状态。
+
+---
+
+### 4. 🍅 桌面管家三件套（番茄钟 + 硬件超载吐槽 + 晨间实况天气）
+
+1. **💼 25 分钟沉浸专注番茄钟**：
+   - 在网页顶栏或桌宠右键百宝箱底部点击 **`💼 番茄钟`** 即可开启 25 分钟专注倒计时；
+   - 开启后桌宠头顶会浮现精致的 **`🍅 专注中 24:59` 实时倒计时胶囊**，若曦等角色还会自动切入伏案专注姿态陪你学习工作；
+   - 25 分钟圆满结束时，角色会播报专属语音叮嘱你起身喝水休息，并立得 **+25 EXP** 羁绊奖励！
+2. **⚡ CPU / 内存硬件过载 9 角色专属关怀吐槽**：
+   - 主进程每 30 秒无感检测一次系统负载；当电脑连续处于 **CPU > 85%** 或 **内存 > 88%** 的高负荷状态时，当前角色会弹出符合其原作性格的专属关怀气泡与语音（例如小埋担心游戏掉帧、雪乃冷静提醒你清理后台进程、蕾姆心疼电脑和你的身体），内置 15 分钟冷却绝不打扰。
+3. **☀️ 免 Key 晨间实况天气问候**：
+   - 每日首次唤醒桌宠时，后台自动获取当地实时天气与气温，由当前角色向你播报贴心的早安/日常天气与穿衣提醒。
+
+---
+
+### 5. 🐾 姿态百宝箱、部位触碰与桌面自由漫步
+
+- **部位识别与三段式触碰**：
+  - 点击角色**上半身（头部 38% 区域）**触发**摸头反馈**，点击**下半身**触发**戳身体反馈**，快速连续点击 **$\ge 4$ 下**触发**暴走抗议反馈**；
+  - 每次点击均联动专属动作、原生 CV 语音与 100% 对应的中文翻译气泡。
+- **桌面自由漫步与一键丝滑回正**：
+  - 开启 **「🐾 自由漫步·桌面溜达」**（或按 `T` 键）后，桌宠会在桌面上自在左右走动，走到屏幕左右边缘时智能转身反弹；
+  - **防滑脱定格保护**：当你右键打开百宝箱菜单、打开缩放面板或按住拖拽时，桌宠会立即原地定格，绝不会从鼠标底下溜走；
+  - **多种方式瞬间恢复正常状态**：漫步时只需点击桌宠底部悬浮栏亮起的**红色 `🐾` 按钮**，或在百宝箱中点选**「🌸 待机呼吸·乖乖待命」**（或任意其他动作/快捷键 `1~8`），即可 100% 立即停止漫步恢复正常待机！
+
+---
+
+### 6. ⌨️ 独立快捷键管理器与防打字冲突系统
+
+点击桌宠底部控制栏、百宝箱底部或网页顶栏的 **`⌨️` 按钮**（或按 `F1`），即可打开**快捷键一览与自定义面板**：
+
+| 默认按键 | 功能说明 | 默认按键 | 功能说明 |
+| :---: | :--- | :---: | :--- |
+| `W / A / S / D` 或 `↑ ↓ ← →` | 控制桌宠在桌面四向移动 | `Space`（空格） | 纵身跃起 / 开心欢呼 |
+| `E` | 切换专注工作姿态 | `Z` | 切换抱尾入睡 / 休息姿态 |
+| `T` | 开启 / 停止桌面自由漫步 | `B` | 开启 / 关闭头顶台词气泡 |
+| `数字键 1 ~ 8` | 姿态百宝箱第 1~8 项动作直达（`1` 为待机呼吸） | `Esc` 或 `F2` | 桌宠悬浮模式 $\leftrightarrow$ 网页工作台切换 |
+| `Ctrl + Shift + A` | **呼出「👑 创世神 · 隐藏管理员控制台」** | `鼠标右键` | 呼出当前角色专属姿态百宝箱 |
+
+- **🚫 一键解除全部快捷键**：打字、写代码或打游戏时点击一下，100% 释放所有键盘按键，绝不误触；
+- **🛡️ 防打字模式（仅方向键控制）**：自动屏蔽所有英文字母与数字键，仅保留方向键与功能键控制桌宠；
+- **🎯 自由交互式录制**：点击任意按键徽章即可敲击键盘录制新键位，支持单键删除（`×`）与一键恢复出厂默认。
+
+---
+
+### 7. 💻 双形态无缝切换与 17 语言在线代码工作台
+
+双击桌宠或点击底部 `🔄` 按钮（或按 `Esc` / `F2`）即可进入**形态二（网页全功能工作台）**：
+- **💬 沉浸式 AI 聊天面板**：支持流式打字机输出、Markdown 渲染、情绪感知表情联动与长期记忆自动沉淀；
+- **👨‍💻 17 语言代码编写与本地运行沙箱**：切换到「写代码」页签，内置带行号的代码编辑器，支持 **Python、JavaScript、C、C++、Java、Go、Rust、TypeScript、HTML/CSS、SQL 等 17 种语言**，既可让角色帮你写代码，也能点击「运行」直接在本地执行并查看输出结果！
+
+---
+
+## 🚀 四、快速安装与 AI 大模型配置指南
+
+### 1. 给同学 / 用户安装（Windows 中文安装向导版 · 开箱即用）
+1. 点击下载仓库根目录的 **[`AI桌宠-v07.21-安装向导.exe`](https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe)**；
+2. 双击运行安装程序，跟随中文安装向导**自由选择安装路径（如 D 盘 / E 盘 / F 盘）**；
+3. 安装完成后会自动在桌面创建 **「AI桌宠」** 快捷方式并直接启动！
+
+### 2. 从源码本地运行或重新打包
 ```bash
-# 1. 克隆本仓库
+# 1. 克隆仓库
 git clone https://github.com/SherlockYzz/anime-desktop-pet.git
-
-# 2. 进入项目目录并安装依赖
 cd anime-desktop-pet
-npm install
 
-# 3. 启动开发版桌宠
+# 2. 安装依赖并启动
+npm install
 npm start
 
-# 4. 生成带安装向导的 Windows 安装包 (.exe)
+# 3. 打包生成带安装向导的 Windows 安装程序 (.exe)
 npm run build:win
 ```
 
----
-
-## ⚙️ AI 大模型配置指南
-
-点击网页模式右上角设置齿轮 `⚙️` 即可自由配置你喜爱的 AI 模型：
-
-1. **本地模型 (Ollama / LM Studio)**：免 API Key，支持一键检测服务与动态拉取本地模型列表（如 `qwen3:8b`、`deepseek-r1`），开启秒回模式首字延迟仅 0.5 秒！
-2. **DeepSeek / 硅基流动 / 阿里通义千问 / 月之暗面 Kimi / 字节豆包 / 智谱 GLM**：填入 API Key 即可一键测试连接并动态刷新可用模型。
-3. **Google Gemini / OpenAI / Claude / Grok**：支持官方地址及自定义中转代理地址。
+### 3. AI 大模型配置（支持 12 大主流平台 + 本地免费离线模型）
+进入网页模式点击右上角 `⚙️ 设置` 即可一键切换：
+- **本地离线模型（Ollama / LM Studio · 免 API Key）**：推荐本地运行 `qwen3:8b` 或 `deepseek-r1`，支持一键检测服务状态与动态刷新本地已安装模型，开启「秒回模式」0.5 秒极速响应；
+- **主流云端大模型**：原生内置 **DeepSeek、硅基流动 (SiliconFlow)、OpenAI (ChatGPT)、Google Gemini、阿里通义千问、月之暗面 Kimi、字节豆包、智谱 GLM、Anthropic Claude、xAI Grok**，填入 API Key 点击「测试连接」即可畅聊。
 
 ---
 
-## 🤝 贡献与反馈
+## 🛠️ 五、近期版本优化与问题修复记录 (Changelog & Bug Fixes)
 
-欢迎在 [GitHub Issues](https://github.com/SherlockYzz/anime-desktop-pet/issues) 提交你的宝贵建议与角色需求！如果喜欢这个项目，请顺手点一个 **⭐ Star** 支持一下作者吧！✨
+> 以下为 `v07.21` 及近期版本针对稳定性与交互细节完成的底层治理记录：
 
-## 📄 许可证
+- **🐞 修复桌面漫步开启后无法切回正常待机状态的 Bug**：
+  - 修复了此前点选「🌸 待机呼吸」或其他动作时未解除 `_wanderActive` 漫步锁、导致 16ms 后又被移动循环强行拉回奔跑状态的问题；
+  - 新增**打开菜单/拖拽时自动定格防滑脱机制**（打开百宝箱、缩放窗或拖拽时窗口立即暂停平移），并在底部控制栏新增漫步状态下的**红色 `🐾` 一键停止漫步快捷按钮**；同时为全部 9 位角色补齐第一顺位「🌸 待机呼吸·乖乖待命」按钮。
+- **🐞 修复等级制度导致的非原创角色乱叫“主人”（OOC 崩坏）问题**：
+  - 移除全局统一的“主人”默认称呼，按原作设定严格隔离 9 大角色称呼，仅原创角色若曦保留「主人」。
+- **🐞 修复长提示词与本地推理模型思考过久导致日常对话响应慢的问题**：
+  - 将记忆注入压缩为 3 行超轻量羁绊胶囊，并为本地 Ollama 模型增加直觉秒回通道（`reasoning_effort: 'none'`），首字延迟缩短至 0.5s~0.8s。
+- **🐞 修复高分屏（125%/150%/200% DPI）下窗口缩放立绘裁切与屏幕越界问题**：
+  - 支持 0.75x ~ 1.35x 严格等比例缩放与屏幕工作区安全边界保护，一键复原 100% 默认尺寸。
+- **🐞 修复键盘快捷键与日常打字输入法冲突问题**：
+  - 引入独立快捷键管理器，支持「一键解除快捷键」与「防打字模式」。
+
+---
+
+## 🤝 贡献与许可证
+
+欢迎在 [GitHub Issues](https://github.com/SherlockYzz/anime-desktop-pet/issues) 提交你的宝贵建议与新角色需求！如果喜欢这个项目，请点亮一颗 **⭐ Star** 支持作者吧！
 
 本项目遵循 [MIT License](LICENSE) 开源协议。
