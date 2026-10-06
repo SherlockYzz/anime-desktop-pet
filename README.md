@@ -219,10 +219,11 @@
 
 ## 🚀 快速上手与运行
 
-### 方式一：下载 Windows 绿色免安装版（推荐）
+### 方式一：下载 Windows 绿色免安装版（推荐 · 解压即用）
 
-1. 从 [Releases 页面](https://github.com/SherlockYzz/anime-desktop-pet/releases) 下载最新的绿色压缩包。
-2. 解压后直接双击运行 `AI桌宠.exe` 即可启动，桌面快捷方式一键生成！
+- 📥 **直达下载**：[AI桌宠-v7.2.1-安装包.zip（点击下载）](https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v7.2.1-%E5%AE%89%E8%A3%85%E5%8C%85.zip)
+- 📦 **版本发布页**：前往 [Releases 页面](https://github.com/SherlockYzz/anime-desktop-pet/releases) 查看全部资产与更新详情
+- 🚀 **运行方式**：解压压缩包后，直接双击运行 `AI桌宠.exe` 即可启动，桌面快捷方式一键生成！
 
 ### 方式二：从源码本地运行
 
