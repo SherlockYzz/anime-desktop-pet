@@ -18,3 +18,10 @@ yarn.lock
 scratch/
 __pycache__/
 *.pyc
+
+# Packaged installers (distributed via GitHub Releases)
+*.exe
+
+# Local AI assistant configs
+.claude/
+CLAUDE.md
