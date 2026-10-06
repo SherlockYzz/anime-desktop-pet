@@ -47,8 +47,16 @@
       "node_modules/**/*"
     ],
     "win": {
-      "target": "nsis",
-      "icon": "AI桌宠.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "AI桌宠.ico",
+      "artifactName": "${productName}-v${version}-安装向导.${ext}"
     },
     "mac": {
       "target": "dmg"
@@ -59,7 +67,14 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "AI桌宠",
+      "installerIcon": "AI桌宠.ico",
+      "uninstallerIcon": "AI桌宠.ico",
+      "installerHeaderIcon": "AI桌宠.ico",
+      "runAfterFinish": true
     }
   }
 }
+
