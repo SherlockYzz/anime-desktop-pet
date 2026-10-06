@@ -567,3 +567,77 @@ ipcMain.handle('start-local-ollama', async () => {
   }
 });
 
+// ★ 桌面贴心管家：系统硬件负荷感知（CPU/内存探测）
+const os = require('os');
+let lastCpuMeasure = null;
+
+function getCpuUsage() {
+  const cpus = os.cpus() || [];
+  let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
+  for (const cpu of cpus) {
+    user += cpu.times.user;
+    nice += cpu.times.nice;
+    sys += cpu.times.sys;
+    irq += cpu.times.irq;
+    idle += cpu.times.idle;
+  }
+  const total = user + nice + sys + irq + idle;
+  if (!lastCpuMeasure) {
+    lastCpuMeasure = { total, idle };
+    return 0;
+  }
+  const diffTotal = total - lastCpuMeasure.total;
+  const diffIdle = idle - lastCpuMeasure.idle;
+  lastCpuMeasure = { total, idle };
+  if (diffTotal <= 0) return 0;
+  const usage = Math.round(((diffTotal - diffIdle) / diffTotal) * 100);
+  return Math.max(0, Math.min(100, usage));
+}
+
+ipcMain.handle('get-system-status', async () => {
+  try {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const memPercent = Math.round((usedMem / totalMem) * 100);
+    const cpuPercent = getCpuUsage();
+    return {
+      success: true,
+      totalMemMB: Math.round(totalMem / (1024 * 1024)),
+      usedMemMB: Math.round(usedMem / (1024 * 1024)),
+      memPercent,
+      cpuPercent,
+      cpuCount: os.cpus().length,
+      platform: process.platform,
+    };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+// ★ 桌面贴心管家：晨间免Key轻量气象获取（公网开放接口）
+ipcMain.handle('get-weather-info', async () => {
+  return new Promise((resolve) => {
+    const https = require('https');
+    const req = https.get('https://wttr.in/?format=j1', { timeout: 3500 }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const cur = json.current_condition?.[0] || {};
+          const weatherDesc = cur.lang_zh?.[0]?.value || cur.weatherDesc?.[0]?.value || '晴';
+          const tempC = cur.temp_C || '20';
+          const humidity = cur.humidity || '50';
+          resolve({ success: true, weather: weatherDesc, temp: tempC, humidity });
+        } catch (e) {
+          resolve({ success: false, error: 'parse_failed' });
+        }
+      });
+    });
+    req.on('error', (err) => resolve({ success: false, error: err.message }));
+    req.on('timeout', () => { req.destroy(); resolve({ success: false, error: 'timeout' }); });
+  });
+});
+
+

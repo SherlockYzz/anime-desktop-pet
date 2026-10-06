@@ -36,5 +36,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ★ 本地 Ollama 检测与一键启动
   detectLocalOllama: () => ipcRenderer.invoke('detect-local-ollama'),
   startLocalOllama: () => ipcRenderer.invoke('start-local-ollama'),
+
+  // ★ 桌面贴心管家：系统负荷与气象感知
+  getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
+  getWeatherInfo: () => ipcRenderer.invoke('get-weather-info'),
 });
+
 

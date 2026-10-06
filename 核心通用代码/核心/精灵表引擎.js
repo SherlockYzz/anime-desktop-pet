@@ -314,9 +314,9 @@ class SpriteAtlasManager {
     this.draw();
   }
 
-  goIdle() { this.S.work = false; this.setAnim('idle'); }
-  work() { this.S.work = true; this.setAnim('running'); }
-  sleep() { this.S.work = false; this.setAnim('sleep'); }
+  goIdle() { this.S.work = false; this.S.sleep = false; this.S.paused = false; this.setAnim('idle', null, true); }
+  work() { this.S.work = true; this.S.sleep = false; this.S.paused = false; this.setAnim('running', null, true); }
+  sleep() { this.S.work = false; this.S.sleep = true; this.S.paused = false; this.setAnim('sleep', null, true); }
   wave() { this.setAnim('waving', null, true); }
   jump() { this.setAnim('jumping', null, true); }
   review() { this.setAnim('review', null, true); }

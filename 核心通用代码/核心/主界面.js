@@ -224,6 +224,8 @@ class App {
     document.getElementById('btn-minimize')?.addEventListener('click', () => { window.electronAPI?.minimizeWindow?.()?.catch?.(e => console.warn('最小化失败:', e)); });
     document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e)); });
     document.getElementById('btn-settings')?.addEventListener('click', () => this.settings.show());
+    document.getElementById('btn-pomodoro-titlebar')?.addEventListener('click', () => window.desktopButler?.togglePomodoro?.());
+    document.getElementById('btn-memory-diary-titlebar')?.addEventListener('click', () => window.emotionMemory?.showMemoryDiary?.());
     document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', (e) => this._switchTab(e.target.dataset.tab)));
     document.getElementById('btn-chat-send')?.addEventListener('click', () => this._sendChat());
     document.getElementById('chat-input')?.addEventListener('keydown', (e) => {
@@ -244,8 +246,8 @@ class App {
     document.getElementById('btn-clear-chat')?.addEventListener('click', () => this.chat.clearWithConfirm());
     document.getElementById('api-provider')?.addEventListener('change', (e) => this.settings.onProviderChange(e.target.value));
     document.getElementById('btn-test-connection')?.addEventListener('click', () => this.settings.testConnection());
-    document.getElementById('live2d-container')?.addEventListener('click', () => {
-      if (document.body.classList.contains('web-mode-active')) this.chat.handleCharacterClick();
+    document.getElementById('live2d-container')?.addEventListener('click', (e) => {
+      if (document.body.classList.contains('web-mode-active')) this.chat.handleCharacterClick(e);
     });
     document.addEventListener('mousemove', () => this._resetIdle());
     document.addEventListener('keydown', () => this._resetIdle());
@@ -351,6 +353,10 @@ class App {
 
       this.showToast(`已切换到 ${char.name}`);
     } finally { this._switchingChar = false; }
+  }
+
+  switchTab(name) {
+    return this._switchTab(name);
   }
 
   _switchTab(name) {

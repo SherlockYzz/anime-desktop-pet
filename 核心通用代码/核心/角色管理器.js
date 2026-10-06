@@ -617,21 +617,54 @@ class CharacterManager {
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
 
-  /** 播放指定编号或随机的角色原生CV语音 */
+  /** 播放指定编号或随机的角色原生CV语音（含防爆音平滑淡出与双通道管理） */
   playVoice(charId, voiceIndex) {
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
+      // ★ 防爆音保护：对上一音频执行 40ms 平滑衰减淡出，杜绝高采样率声卡截断破音
       if (this._currentAudio) {
-        this._currentAudio.pause();
+        const oldAudio = this._currentAudio;
         this._currentAudio = null;
+        try {
+          const fadeSteps = 4;
+          const stepTime = 10;
+          let currentStep = 0;
+          const initialVol = oldAudio.volume;
+          const fadeTimer = setInterval(() => {
+            currentStep++;
+            if (currentStep >= fadeSteps || oldAudio.paused) {
+              clearInterval(fadeTimer);
+              oldAudio.pause();
+              oldAudio.currentTime = 0;
+            } else {
+              oldAudio.volume = Math.max(0, initialVol * (1 - currentStep / fadeSteps));
+            }
+          }, stepTime);
+        } catch (e) {
+          try { oldAudio.pause(); } catch (err) {}
+        }
       }
+
       let idx;
       if (voiceIndex !== undefined && voiceIndex !== null) {
         idx = String(voiceIndex).padStart(2, '0');
       } else {
-        idx = String(Math.floor(Math.random() * char.voice.count) + 1).padStart(2, '0');
+        this._lastVoiceIdxMap = this._lastVoiceIdxMap || {};
+        const lastIdx = this._lastVoiceIdxMap[char.id];
+        const candidates = [];
+        for (let i = 1; i <= char.voice.count; i++) {
+          const code = String(i).padStart(2, '0');
+          if (char.id === 'yukino' && code === '08') continue; // 跳过截断残片
+          if (code !== lastIdx) candidates.push(code);
+        }
+        idx = candidates.length > 0
+          ? candidates[Math.floor(Math.random() * candidates.length)]
+          : String(Math.floor(Math.random() * char.voice.count) + 1).padStart(2, '0');
       }
+      this._lastVoiceIdxMap = this._lastVoiceIdxMap || {};
+      this._lastVoiceIdxMap[char.id] = idx;
+      this.lastPlayedVoiceId = idx;
       const ext = char.voice.format || (char.id === 'rem' ? 'wav' : 'mp3');
       const audioUrl = `${char.voice.baseDir}${idx}.${ext}`;
       const audio = new Audio(audioUrl);

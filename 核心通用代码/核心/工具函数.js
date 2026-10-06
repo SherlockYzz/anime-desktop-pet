@@ -12,7 +12,8 @@ const CHARACTER_FOLDER_MAP = {
   zerotwo: '角色-零二',
   ruoxi: '角色-若曦',
   megumin: '角色-惠惠',
-  miku: '角色-初音未来'
+  miku: '角色-初音未来',
+  umaru: '角色-土间埋'
 };
 
 /** HTML转义：防止XSS注入 */

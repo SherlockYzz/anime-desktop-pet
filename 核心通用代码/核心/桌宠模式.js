@@ -118,38 +118,25 @@ class PetMode {
         return;
       }
 
-      // 未拖动：100% 触发点击事件！
-      if (e.target.closest('#pet-controls') || e.target.closest('#pet-action-menu')) return;
+      // 未拖动：100% 立即触发点击事件（零延迟响应 + 多语音不重复循环 + 快速连点暴走）
+      if (e.target.closest('#pet-controls') || e.target.closest('#pet-action-menu') || e.target.closest('#pet-scale-menu') || e.target.closest('#pet-shortcuts-menu') || e.target.closest('.pet-bubble')) return;
 
-      this._clickCount++;
+      this._clickCount = (this._clickCount || 0) + 1;
       if (this._clickTimer) clearTimeout(this._clickTimer);
 
-      if (this._clickCount >= 3) {
-        // 三连击：暴走抗议反馈
+      if (this._clickCount >= 4) {
+        // 快速连点 4 下及以上：触发暴走抗议反馈并重置连击计数
         const cnt = this._clickCount;
         this._clickCount = 0;
         this._playTap('rage', cnt);
-        this._lastInteraction = Date.now();
-      } else if (this._clickCount === 2) {
-        // 双击：若曦跳跃，其它角色触发愉悦互动（绝不误退到网页模式）
-        this._clickCount = 0;
-        if (this._renderMode === 'sprite') {
-          this._spriteCall('jump');
-          this._lastInteraction = Date.now();
-        } else {
-          this._playTap('head', 2);
-          this._lastInteraction = Date.now();
-        }
       } else {
-        // 单击：延迟 250ms 防抖等待双击
+        // 正常点击（摸头或戳身）：立即从触碰语音池中不重复抽取下一段语音与对应字幕
+        this._playTap(downPart, this._clickCount);
         this._clickTimer = setTimeout(() => {
-          if (this._clickCount === 1) {
-            this._playTap(downPart, 1);
-            this._lastInteraction = Date.now();
-          }
           this._clickCount = 0;
-        }, 250);
+        }, 650);
       }
+      this._lastInteraction = Date.now();
     });
 
     document.getElementById('btn-back-pet')?.addEventListener('click', () => this.enter(false, true));
@@ -194,17 +181,15 @@ class PetMode {
       this._toggleActionMenu(true);
     });
 
-    // 动作百宝箱点击项分发（深度支持所有角色动作、表情、台词与CV联动）
+    // 动作百宝箱点击项兜底分发（仅在未挂载 actionMenuManager 时生效，避免与 renderMenu 的 onclick 重复触发导致自由漫步被瞬间二次反转关闭）
     document.getElementById('pet-action-menu')?.addEventListener('click', (e) => {
+      if (window.actionMenuManager) return;
       e.stopPropagation();
       const item = e.target.closest('.pet-action-item');
       if (!item) return;
       const action = item.dataset.action;
       if (!action) return;
-      const char = window.characterManager?.getCurrentCharacter();
-      if (window.actionMenuManager) {
-        window.actionMenuManager.executeAction(char?.id, action, { model: this._model });
-      } else if (action === 'wander') {
+      if (action === 'wander') {
         this._toggleWander();
       } else {
         this._spriteCall(action);
@@ -245,6 +230,7 @@ class PetMode {
     };
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (document.getElementById('pet-memory-diary-modal')) { window.emotionMemory?.closeMemoryDiary?.(); return; }
         if (window.shortcutManager?._menuOpen) { window.shortcutManager.toggleMenu(false); return; }
         if (this._scaleMenuOpen) { this._toggleScaleMenu(false); return; }
         if (this._actionMenuOpen) { this._toggleActionMenu(false); return; }
@@ -265,6 +251,7 @@ class PetMode {
         return;
       }
       if (document.body.classList.contains('web-mode-active')) return;
+      if (document.getElementById('pet-memory-diary-modal')) return;
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
 
@@ -320,6 +307,15 @@ class PetMode {
       if (dir) this._keys[dir] = false;
     });
     window.addEventListener('blur', () => { this._keys = { left: false, right: false, up: false, down: false }; });
+  }
+
+  /** 动作调用入口 */
+  triggerAction(act) {
+    return this._handleShortcutAction(act);
+  }
+
+  _handleActionClick(act) {
+    return this._handleShortcutAction(act);
   }
 
   /** 分发并执行快捷键触发的动作姿态（全面联动动画、气泡与原生CV语音） */
@@ -527,23 +523,54 @@ class PetMode {
     const area = document.getElementById('pet-character-area');
     if (!area) return;
 
+    this._targetTrackX = 0;
+    this._targetTrackY = 0;
+    this._smoothTrackX = 0;
+    this._smoothTrackY = 0;
+    this._lastPetMouseMove = Date.now();
+
     this._mouseTrackHandler = (e) => {
       if (!this._mouseTrackEnabled) return;
+      this._lastPetMouseMove = Date.now();
       const r = area.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx) / (r.width / 2);  // -1 ~ 1
-      const dy = (e.clientY - cy) / (r.height / 2); // -1 ~ 1
+      this._targetTrackX = Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2)));
+      this._targetTrackY = Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)));
+    };
+
+    this._mouseLeaveHandler = () => {
+      this._targetTrackX = 0;
+      this._targetTrackY = 0;
+    };
+
+    // ★ 视线与头部阻尼插值循环（Lerp）：平滑过渡与出界柔和回正
+    const tickTrack = () => {
+      if (!this._mouseTrackHandler) return;
+
+      // 超过 3.5 秒无鼠标移动，视线缓缓自动回归正中
+      if (Date.now() - this._lastPetMouseMove > 3500) {
+        this._targetTrackX = 0;
+        this._targetTrackY = 0;
+      }
+
+      const lerp = 0.18;
+      this._smoothTrackX += (this._targetTrackX - this._smoothTrackX) * lerp;
+      this._smoothTrackY += (this._targetTrackY - this._smoothTrackY) * lerp;
+
+      const dx = this._smoothTrackX;
+      const dy = this._smoothTrackY;
 
       if (this._renderMode === 'vrm' && window.vrmManager?.vrm) {
-        // VRM：转动头部骨骼
+        // VRM：平滑转动头部骨骼
         const head = window.vrmManager.vrm.humanoid?.getNormalizedBoneNode('head');
         if (head) {
           head.rotation.y = dx * 0.3;
           head.rotation.x = dy * 0.15;
         }
       } else if (this._renderMode === 'live2d' && this._model) {
-        // Live2D：全版本双轨视线与头部跟踪（加藤惠/蕾姆/初音/惠惠/高木同学100%全覆盖）
+        // Live2D：全版本双轨平滑视线与头部跟踪
         try {
           if (this._model.internalModel?.focusController) {
             this._model.internalModel.focusController.focus(dx, -dy);
@@ -570,18 +597,28 @@ class PetMode {
             }
           }
         } catch (e) {}
-      } else if (this._renderMode === 'sprite' && window.spriteAtlasManager) {
-        // 精灵表：16 向视线由引擎内部 document mousemove 处理，此处无需重复
       }
+
+      this._mouseTrackRaf = requestAnimationFrame(tickTrack);
     };
 
     document.addEventListener('mousemove', this._mouseTrackHandler);
+    document.addEventListener('mouseleave', this._mouseLeaveHandler);
+    this._mouseTrackRaf = requestAnimationFrame(tickTrack);
   }
 
   _stopMouseTracking() {
     if (this._mouseTrackHandler) {
       document.removeEventListener('mousemove', this._mouseTrackHandler);
       this._mouseTrackHandler = null;
+    }
+    if (this._mouseLeaveHandler) {
+      document.removeEventListener('mouseleave', this._mouseLeaveHandler);
+      this._mouseLeaveHandler = null;
+    }
+    if (this._mouseTrackRaf) {
+      cancelAnimationFrame(this._mouseTrackRaf);
+      this._mouseTrackRaf = null;
     }
   }
 
@@ -595,14 +632,35 @@ class PetMode {
     const step = (timestamp) => {
       this._moveRaf = requestAnimationFrame(step);
       if (document.body.classList.contains('web-mode-active')) return;
+
+      // ★ 当打开百宝箱菜单、缩放菜单、快捷键面板、手账弹窗或正在鼠标拖拽时，立即暂停自动漫步位移，防止按钮从鼠标下滑走
+      const menuBlocking = this._actionMenuOpen || this._scaleMenuOpen || this._dragging ||
+        window.shortcutManager?._menuOpen || !!document.getElementById('pet-memory-diary-modal');
+      if (menuBlocking) {
+        accX = 0;
+        accY = 0;
+        if (this._moving && !this._dragging) {
+          this._endMove();
+        }
+        return;
+      }
+
       const k = this._keys;
       let dx = 0, dy = 0;
       if (k.left) dx -= 1;
       if (k.right) dx += 1;
       if (k.up) dy -= 1;
       if (k.down) dy += 1;
-      // 无键盘输入时走自动漫步
+      // 无键盘输入时走自动漫步（带屏幕左右边界智能转身反弹）
       if (!dx && !dy && this._wanderActive && this._wanderDir) {
+        const scrX = typeof window.screenX === 'number' ? window.screenX : 0;
+        const scrW = window.screen?.availWidth || 1920;
+        const winW = window.outerWidth || Math.round(400 * (this._petScale || 1));
+        if (this._wanderDir > 0 && scrX + winW >= scrW - 20) {
+          this._wanderDir = -1;
+        } else if (this._wanderDir < 0 && scrX <= 20) {
+          this._wanderDir = 1;
+        }
         dx = this._wanderDir * (this._wanderSpeed / this._moveSpeed);
       }
       if (dx || dy) {
@@ -643,8 +701,8 @@ class PetMode {
     const m = this._spriteAtlas || window.spriteAtlasManager;
     if (this._renderMode !== 'sprite' || !m || !m.ready) return;
     const cur = m.S.anim;
-    const movable = ['idle', 'sleep', 'look-row-9', 'look-row-10', 'running-left', 'running-right', 'running'];
-    if (!movable.includes(cur)) return; // 不打断挥手/跳跃等一次性动作
+    // 除一次性跳跃/挥手动作外，均可顺畅切入奔跑动画
+    if (cur === 'jumping' || cur === 'greet-row-7') return;
     if (dx < 0) { m.setAnim('running-left'); this._facing = 'left'; }
     else if (dx > 0) { m.setAnim('running-right'); this._facing = 'right'; }
     else if (dy !== 0) { m.setAnim(this._facing === 'left' ? 'running-left' : 'running-right'); }
@@ -657,6 +715,8 @@ class PetMode {
     if (this._renderMode === 'sprite' && m && m.ready) {
       if (m.S.work) {
         m.work();
+      } else if (m.S.sleep) {
+        m.sleep();
       } else {
         m.goIdle();
       }
@@ -666,58 +726,55 @@ class PetMode {
 
   /** 调用精灵引擎动作（跳跃/工作/睡觉/挥手/验收/受阻/等待等全套动作） */
   _spriteCall(action) {
+    // ★ 核心修复：只要用户触发了任何非漫步姿态（如待机呼吸、工作、睡觉、挥手等），立即退出桌面漫步状态！
+    if (action !== 'wander' && this._wanderActive) {
+      this._stopWander();
+    }
+
     const m = this._spriteAtlas || window.spriteAtlasManager;
     if (!m || !m.ready) return;
     const char = window.characterManager?.getCurrentCharacter();
     const charId = char?.id || 'ruoxi';
 
+    let voiceIdx = '01';
     if (action === 'jump') {
       m.jump();
-      this._showBubble('嘿呀！轻巧一跃~ ⚡');
+      voiceIdx = '06';
     } else if (action === 'toggleWork' || action === 'work') {
       const isWork = (action === 'work') ? (m.work(), true) : m.toggleWork();
-      this._showBubble(isWork ? '进入专注工作模式啦，主人也要加油哦！💼' : '工作暂停，伸个懒腰休息下~ 🌸');
+      voiceIdx = isWork ? '02' : '01';
     } else if (action === 'toggleSleep' || action === 'sleep') {
       const isSleep = (action === 'sleep') ? (m.sleep(), true) : m.toggleSleep();
-      this._showBubble(isSleep ? '抱紧暖暖的狐狸尾巴，呼噜噜入睡咯……🌙' : '揉揉眼睛，主人我醒来啦！☀️');
+      voiceIdx = isSleep ? '03' : '05';
     } else if (action === 'wave') {
       m.wave();
-      this._showBubble('主人好呀！若曦随时都在呢~ 👋');
+      voiceIdx = '05';
     } else if (action === 'review') {
       m.review();
-      this._showBubble('成果已经准备好啦，主人请检阅！📜');
+      voiceIdx = '07';
     } else if (action === 'fail') {
       m.fail();
-      this._showBubble('呜……受阻了，容若曦抱头缓一缓。😿');
+      voiceIdx = '08';
     } else if (action === 'wait') {
       m.wait();
-      this._showBubble('歪头等待主人的新指令中……💭');
+      voiceIdx = '09';
     } else if (action === 'idle') {
+      if (m.S) {
+        m.S.work = false;
+        m.S.sleep = false;
+      }
       m.goIdle();
-      this._showBubble('乖乖待命呼吸中~ 🌸');
+      voiceIdx = '01';
     }
 
-    // ★ 触发原生CV语音联动
-    if (window.characterManager) {
-      const voiceMap = {
-        idle: '01',
-        work: '02',
-        toggleWork: '02',
-        sleep: '03',
-        toggleSleep: '03',
-        wander: '04',
-        wave: '05',
-        jump: '06',
-        review: '07',
-        fail: '08',
-        wait: '09'
-      };
-      const v = voiceMap[action];
-      if (v) {
-        window.characterManager.playVoice(charId, v);
-      } else {
-        window.characterManager.playRandomVoice(charId);
-      }
+    const exactBubble = window.actionMenuManager?.getVoiceTranscript?.(charId, voiceIdx);
+    if (exactBubble) {
+      this._showBubble(exactBubble);
+    }
+
+    // ★ 触发原生CV语音联动（与气泡台词 100% 严格对应）
+    if (window.characterManager?.playVoice) {
+      window.characterManager.playVoice(charId, voiceIdx);
     }
 
     this._lastInteraction = Date.now();
@@ -869,7 +926,7 @@ class PetMode {
     }
   }
 
-  /** 更新控制栏按钮激活状态（桌面保留缩放窗、切回网页与动作百宝箱） */
+  /** 更新控制栏按钮激活状态（桌面保留缩放窗、切回网页与动作百宝箱；漫步激活时额外亮起停止漫步快捷按钮） */
   _updateControlButtons() {
     const btnWork = document.getElementById('btn-toggle-work');
     const btnSleep = document.getElementById('btn-toggle-sleep');
@@ -880,7 +937,17 @@ class PetMode {
 
     if (btnWork) btnWork.style.display = 'none';
     if (btnSleep) btnSleep.style.display = 'none';
-    if (btnWander) btnWander.style.display = 'none';
+    if (btnWander) {
+      if (this._wanderActive) {
+        btnWander.classList.add('active');
+        btnWander.style.setProperty('display', 'flex', 'important');
+        btnWander.title = '正在桌面漫步中 · 点击立即停止漫步恢复正常状态';
+      } else {
+        btnWander.classList.remove('active');
+        btnWander.style.setProperty('display', 'none', 'important');
+        btnWander.title = '自动漫步（T / 快捷键 4）';
+      }
+    }
     if (btnScale) btnScale.style.display = 'flex';
     if (btnActions) btnActions.style.display = 'flex';
     if (btnSwitchWeb) btnSwitchWeb.style.display = 'flex';
@@ -891,13 +958,14 @@ class PetMode {
     const next = (typeof on === 'boolean') ? on : !this._wanderActive;
     if (next) this._startWander(); else this._stopWander();
     this._updateControlButtons();
-    this._showBubble(this._wanderActive ? '好耶，我可以在桌面上溜达啦~' : '那我乖乖待着。');
     const char = window.characterManager?.getCurrentCharacter();
-    if (char && window.characterManager?.playVoice) {
-      if (char.id === 'ruoxi') {
-        window.characterManager.playVoice('ruoxi', '04');
-      } else {
-        window.characterManager.playRandomVoice(char.id);
+    const charId = char?.id || 'ruoxi';
+    if (window.actionMenuManager?.playWanderFeedback) {
+      window.actionMenuManager.playWanderFeedback(charId, this._wanderActive);
+    } else {
+      this._showBubble(this._wanderActive ? '好耶，若曦可以在主人的桌面上尽情溜达啦！ 🐾' : '乖乖待命呼吸中，随时听候主人差遣。 🌸');
+      if (window.characterManager?.playVoice) {
+        window.characterManager.playVoice(charId, this._wanderActive ? '04' : '01');
       }
     }
   }
@@ -905,16 +973,44 @@ class PetMode {
   _startWander() {
     if (this._wanderActive) return;
     this._wanderActive = true;
+
+    // 解除精灵图工作/睡眠锁定，立即进入可奔跑状态
+    const m = this._spriteAtlas || window.spriteAtlasManager;
+    if (this._renderMode === 'sprite' && m && m.ready) {
+      if (m.S) {
+        m.S.work = false;
+        m.S.sleep = false;
+      }
+      m.goIdle();
+    }
+
+    // 确保移动主循环处于激活状态
+    if (!this._moveRaf) {
+      this._startMovementLoop();
+    }
+
     const tick = () => {
       if (!this._wanderActive) return;
-      this._wanderDir = Math.random() > 0.5 ? 1 : -1;
-      this._wanderSpeed = 0.9 + Math.random() * 0.9;
+      const scrX = typeof window.screenX === 'number' ? window.screenX : 0;
+      const scrW = window.screen?.availWidth || 1920;
+      const winW = window.outerWidth || Math.round(400 * (this._petScale || 1));
+
+      // 若靠近屏幕右边缘（如初始出生点），优先向左溜达；若靠近左边缘，优先向右溜达
+      if (scrX + winW >= scrW - 120) {
+        this._wanderDir = -1;
+      } else if (scrX <= 120) {
+        this._wanderDir = 1;
+      } else {
+        this._wanderDir = Math.random() > 0.5 ? 1 : -1;
+      }
+      this._wanderSpeed = 1.6 + Math.random() * 1.1;
+
       this._wanderTimer = setTimeout(() => {
         if (!this._wanderActive) return;
         this._wanderDir = 0;
         this._endMove();
-        this._wanderTimer = setTimeout(tick, 1500 + Math.random() * 3500);
-      }, 1200 + Math.random() * 2500);
+        this._wanderTimer = setTimeout(tick, 1000 + Math.random() * 2000);
+      }, 2200 + Math.random() * 2600);
     };
     tick();
   }
@@ -922,7 +1018,21 @@ class PetMode {
   _stopWander() {
     this._wanderActive = false;
     this._wanderDir = 0;
+    this._keys = { left: false, right: false, up: false, down: false };
     if (this._wanderTimer) { clearTimeout(this._wanderTimer); this._wanderTimer = null; }
+    const m = this._spriteAtlas || window.spriteAtlasManager;
+    if (this._renderMode === 'sprite' && m && m.ready && m.S) {
+      m.S.work = false;
+      m.S.sleep = false;
+    }
+    this._endMove();
+    if (this._renderMode === 'live2d' && this._model && window.actionMenuManager?.playIdle) {
+      const cid = window.characterManager?.getCurrentCharacter()?.id;
+      window.actionMenuManager.playIdle(cid, { model: this._model });
+    } else if (this._renderMode === 'vrm' && window.vrmManager) {
+      window.vrmManager.playAnimation?.('idle');
+    }
+    this._updateControlButtons();
   }
 
   // ★ 画布保活与双画布物理隔离：若曦独占 pet-sprite-canvas，Live2D 独占 pet-canvas
@@ -1261,12 +1371,12 @@ class PetMode {
     }
   }
 
-  // === 气泡系统（轻巧不挡脸、点击即消、支持全局开关） ===
+  // === 气泡系统（位置下移醒目展示、点击即消、支持全局开关、连点防早退） ===
   _showBubble(text) {
     if (this._bubbleEnabled === false) return;
     const c = document.getElementById('pet-bubble-container');
     if (!c || !text) return;
-    // 杜绝堆叠：每次只保留最新单条气泡
+    // 杜绝堆叠与旧计时器干扰：每次只保留最新单条气泡
     this._clearBubbles();
     const b = document.createElement('div');
     b.className = 'pet-bubble';
@@ -1279,12 +1389,12 @@ class PetMode {
       setTimeout(() => b.remove(), 250);
     });
     c.appendChild(b);
-    setTimeout(() => {
+    this._bubbleHideTimer = setTimeout(() => {
       if (b.parentNode) {
         b.classList.add('bubble-fade-out');
-        setTimeout(() => b.remove(), 250);
+        this._bubbleRemoveTimer = setTimeout(() => b.remove(), 250);
       }
-    }, 2200);
+    }, 4200);
   }
 
   /** 切换气泡台词显示/静音 */
@@ -1297,6 +1407,14 @@ class PetMode {
   }
 
   _clearBubbles() {
+    if (this._bubbleHideTimer) {
+      clearTimeout(this._bubbleHideTimer);
+      this._bubbleHideTimer = null;
+    }
+    if (this._bubbleRemoveTimer) {
+      clearTimeout(this._bubbleRemoveTimer);
+      this._bubbleRemoveTimer = null;
+    }
     const c = document.getElementById('pet-bubble-container');
     if (c) c.innerHTML = '';
   }
@@ -1325,6 +1443,13 @@ class PetMode {
       if (this._pixiApp?.stage) this._pixiApp.stage.removeChild(this._model);
       this._model.destroy({ children: true });
       this._model = null;
+    }
+    // ★ WebGL 显存主动垃圾回收：清空 Pixi 纹理缓存并触发 Texture GC，杜绝多角色高频切换时的显存慢增
+    if (window.PIXI?.utils?.clearTextureCache) {
+      try { window.PIXI.utils.clearTextureCache(); } catch (e) {}
+    }
+    if (this._pixiApp?.renderer?.textureGC?.run) {
+      try { this._pixiApp.renderer.textureGC.run(); } catch (e) {}
     }
     if (destroyPixi && this._pixiApp) {
       this._pixiApp.destroy(false); // ★ 绝对传 false，保留 DOM 画布节点！

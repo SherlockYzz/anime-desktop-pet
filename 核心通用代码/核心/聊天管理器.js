@@ -274,20 +274,36 @@ class ChatManager {
 
   // === 角色点击 ===
 
-  handleCharacterClick() {
+  handleCharacterClick(e) {
     this.app.resetIdleTimer();
-    this.app.clickCount++;
+    this.app.clickCount = (this.app.clickCount || 0) + 1;
     if (this.app.clickTimer) clearTimeout(this.app.clickTimer);
 
-    if (this.app.clickCount >= 3) {
+    const char = window.characterManager?.getCurrentCharacter();
+    const charId = char?.id || 'ruoxi';
+    const container = document.getElementById('live2d-container');
+    const rect = container?.getBoundingClientRect?.();
+    const isHead = (e && rect && rect.height > 0) ? ((e.clientY - rect.top) < rect.height * 0.38) : false;
+    const part = this.app.clickCount >= 4 ? 'rage' : (isHead ? 'head' : 'body');
+
+    let matchedText = null;
+    if (window.actionMenuManager?.handleTouch) {
+      const res = window.actionMenuManager.handleTouch(charId, part, this.app.clickCount, {
+        model: window.live2dManager?.model,
+        suppressPetBubble: true
+      });
+      matchedText = res?.text || null;
+    }
+
+    if (this.app.clickCount >= 4) {
       const s = Math.random() > 0.5 ? 'tsukkomi' : 'jealous';
-      this.addMessage('ai', window.characterManager.getRandomLine(s));
+      this.addMessage('ai', matchedText || window.characterManager.getRandomLine(s));
       window.live2dManager.updateMood('annoyed');
       this.app.clickCount = 0;
     } else {
-      this.addMessage('ai', window.characterManager.getRandomLine('click'));
+      this.addMessage('ai', matchedText || window.characterManager.getRandomLine('click'));
       window.live2dManager.updateMood('normal');
+      this.app.clickTimer = setTimeout(() => { this.app.clickCount = 0; }, 900);
     }
-    this.app.clickTimer = setTimeout(() => { this.app.clickCount = 0; }, 2000);
   }
 }

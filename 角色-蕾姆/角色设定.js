@@ -67,6 +67,7 @@ CHARACTER_REGISTRY.rem = {
   voice: {
     baseDir: '../../角色-蕾姆/音频素材/',
     count: 26,
+    format: 'wav'
   },
 
   // 以下字段由运行时从 txt 文件加载填充

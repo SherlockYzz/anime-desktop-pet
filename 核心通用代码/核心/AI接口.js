@@ -11,9 +11,31 @@ class MimoAPI {
     this.provider = 'doubao';
     this.conversationHistory = [];
     this.maxHistory = 30;
+    this.maxHistoryChars = 8000; // 上下文软预算（防止大代码块或本地模型溢出）
     this._responseMode = 'instant';
     this._promptMode = 'auto';
     this._maxRetries = 2;
+  }
+
+  // ★ 上下文预算滑动窗口：兼顾条数与总字符数软上限，成对淘汰保证对话严格交替
+  _trimHistory() {
+    if (this.conversationHistory.length > this.maxHistory) {
+      this.conversationHistory = this.conversationHistory.slice(-this.maxHistory);
+    }
+    let totalChars = this.conversationHistory.reduce((sum, msg) => sum + (msg.content ? msg.content.length : 0), 0);
+    while (totalChars > this.maxHistoryChars && this.conversationHistory.length > 2) {
+      if (this.conversationHistory[0].role === 'user' && this.conversationHistory[1]?.role === 'assistant') {
+        const removedUser = this.conversationHistory.shift();
+        const removedAssistant = this.conversationHistory.shift();
+        totalChars -= (removedUser.content?.length || 0) + (removedAssistant.content?.length || 0);
+      } else {
+        const removed = this.conversationHistory.shift();
+        totalChars -= (removed.content?.length || 0);
+      }
+    }
+    if (this.conversationHistory.length > 0 && this.conversationHistory[0].role === 'assistant') {
+      this.conversationHistory.shift();
+    }
   }
 
   getSystemPrompt() { return window.characterManager.getSystemPrompt(); }
@@ -28,6 +50,7 @@ class MimoAPI {
   setPromptMode(mode) { this._promptMode = mode || 'auto'; }
 
   needsApiKey() {
+    if (this.provider === 'local' || this.provider === 'lmstudio') return false;
     const p = window.getProvider?.(this.provider);
     return p ? p.needsKey : true;
   }
@@ -68,12 +91,12 @@ class MimoAPI {
       sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
     }
 
-    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，强化逻辑、人设与响应速度）
+    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，强化逻辑、人设与直觉秒回速度）
     sys += `\n\n[交互与任务执行铁律 - 最高优先级]
-1. 逻辑与任务第一：无论何时，首要前提是【正面、清晰、有逻辑地回应用户的话】！若包含具体任务（翻译、解答、计算、查阅、写代码等），必须立刻给出清晰准确的逻辑结论或答案，严禁答非所问、严禁装傻反问、严禁忽视用户逻辑。
-2. 深度融入人设：在确保逻辑严密、回答准确的前提下，将自身专属的人设性格、说话口吻、特有称呼以及动作神态（用英文小括号包裹）浑然天成地融入其中，做到“有脑子、有性格、鲜活真实”。
-3. 语速与轻快节奏：作为常驻桌面的桌宠，除代码和专题深度分析外，日常回复必须【精炼利落、言简意赅】（常规交流建议控制在 2~4 句话，80~150 字内），坚决杜绝拖沓车轱辘话，保持轻快敏捷的互动节奏，大幅提升交流效率。
-4. 语言规范铁律：所有回复必须【全程使用规范中文交流】！绝对严禁整句输出日语或其他外语（即使针对用户“不要说日语”的抗议，也必须用中文正面回答与道歉，严禁用日语道歉）。`;
+1. 逻辑与任务第一：首要前提是【正面、清晰、有逻辑地回应用户的话】！若含具体任务（翻译、解答、计算、写代码等），立刻给出准确结论，严禁答非所问或装傻反问。
+2. 深度融入人设：将自身专属的人设性格、说话口吻、特有称呼及动作神态（用英文小括号包裹）自然融入回复，做到“有脑子、有性格、鲜活真实”。
+3. 语速与直觉秒回：除代码和深度分析外，日常回复必须【精炼利落】（常规交流 2~4 句话，60~140 字内）；日常寒暄与简单提问请凭角色本能直接秒回，切勿在思考链中长篇分析人设规则。
+4. 语言规范铁律：所有回复必须【全程使用规范中文交流】！绝对严禁整句输出日语或其他外语。`;
 
     return sys;
   }
@@ -84,6 +107,17 @@ class MimoAPI {
     return [{ role: 'system', content: sys }, ...this.conversationHistory];
   }
 
+  // ★ 智能判断是否跳过推理模型的冗长人设思考链（实现日常对话秒回，深度/代码问题保留推理）
+  _shouldSkipReasoning(message, isCodeMode) {
+    if (isCodeMode || this._responseMode === 'deep') return false;
+    const isLocalOllama = this.provider === 'local' || (this.baseUrl && this.baseUrl.includes('11434'));
+    if (!isLocalOllama) return false;
+    if (this._responseMode === 'instant' || this._promptMode === 'compact') return true;
+    const msg = (message || '').trim();
+    const isComplexQuery = msg.length > 80 || /(?:为什么|怎么实现|原理|分析一下|详细说说|写个|写一段|代码|算法|推理|计算|步骤|方案)/.test(msg);
+    return !isComplexQuery;
+  }
+
   _getRequestParams(isCodeMode) {
     const mode = this._responseMode;
     const params = { temperature: 0.7, max_tokens: 1024 };
@@ -91,7 +125,7 @@ class MimoAPI {
     switch (mode) {
       case 'instant':
         params.temperature = 0.5;
-        params.max_tokens = isCodeMode ? 4096 : 800;
+        params.max_tokens = isCodeMode ? 4096 : 600;
         break;
       case 'balanced':
         params.temperature = 0.7;
@@ -157,9 +191,7 @@ class MimoAPI {
     if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
     this.conversationHistory.push({ role: 'user', content: message });
-    if (this.conversationHistory.length > this.maxHistory) {
-      this.conversationHistory = this.conversationHistory.slice(-this.maxHistory);
-    }
+    this._trimHistory();
 
     const rp = this._getRequestParams(isCodeMode);
     const body = {
@@ -169,6 +201,9 @@ class MimoAPI {
       max_tokens: rp.max_tokens,
       stream: false,
     };
+    if (this._shouldSkipReasoning(message, isCodeMode)) {
+      body.reasoning_effort = 'none';
+    }
 
     try {
       const res = await this._fetchWithRetry(`${this.baseUrl}/chat/completions`, {
@@ -194,6 +229,7 @@ class MimoAPI {
       }
 
       this.conversationHistory.push({ role: 'assistant', content: rawContent || apiThinking });
+      this._trimHistory();
       return { thinking: displayThinking, content: displayContent };
     } catch (err) { throw err; }
 
@@ -204,9 +240,7 @@ class MimoAPI {
     if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
     this.conversationHistory.push({ role: 'user', content: message });
-    if (this.conversationHistory.length > this.maxHistory) {
-      this.conversationHistory = this.conversationHistory.slice(-this.maxHistory);
-    }
+    this._trimHistory();
 
     const rp = this._getRequestParams(isCodeMode);
     const body = {
@@ -216,6 +250,9 @@ class MimoAPI {
       max_tokens: rp.max_tokens,
       stream: true,
     };
+    if (this._shouldSkipReasoning(message, isCodeMode)) {
+      body.reasoning_effort = 'none';
+    }
 
     let attempt = 0;
     const maxRetries = this._maxRetries;
@@ -344,6 +381,7 @@ class MimoAPI {
     }
 
     this.conversationHistory.push({ role: 'assistant', content: fullRaw });
+    this._trimHistory();
     return { thinking: displayThinking, content: displayContent };
   }
 

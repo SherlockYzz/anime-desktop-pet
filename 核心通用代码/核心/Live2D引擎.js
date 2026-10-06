@@ -351,6 +351,14 @@ class Live2DManager {
         if (this.app.stage) this.app.stage.removeChild(this.model);
         this.model.destroy({ children: true });
         this.model = null;
+
+        // ★ WebGL 显存主动垃圾回收：清空 Pixi 纹理缓存并触发 Texture GC，杜绝多角色高频切换时的显存慢增
+        if (window.PIXI?.utils?.clearTextureCache) {
+          try { window.PIXI.utils.clearTextureCache(); } catch (e) {}
+        }
+        if (this.app?.renderer?.textureGC?.run) {
+          try { this.app.renderer.textureGC.run(); } catch (e) {}
+        }
       }
 
       // 文件存在性已在上游缓存检查过
@@ -423,6 +431,12 @@ class Live2DManager {
         if (this.app?.stage) this.app.stage.removeChild(this.model);
         this.model.destroy({ children: true });
         this.model = null;
+        if (window.PIXI?.utils?.clearTextureCache) {
+          try { window.PIXI.utils.clearTextureCache(); } catch (e) {}
+        }
+        if (this.app?.renderer?.textureGC?.run) {
+          try { this.app.renderer.textureGC.run(); } catch (e) {}
+        }
       }
       // ★ 严禁销毁 this.app！保持全局单例复用，仅隐藏 live2d-canvas，避免 WebGL 上下文耗尽崩溃
       this._cleanupGifMode();
@@ -532,6 +546,7 @@ class Live2DManager {
     this.model.buttonMode = true;
 
     this.model.on('pointerdown', (e) => {
+      if (document.body.classList.contains('web-mode-active')) return;
       const char = window.characterManager?.getCurrentCharacter();
       const rect = this.app?.view?.getBoundingClientRect?.();
       const clientY = e?.data?.global?.y || 0;
@@ -546,42 +561,89 @@ class Live2DManager {
     if (this._onMouseMove) {
       document.removeEventListener('mousemove', this._onMouseMove);
     }
+    if (this._onMouseLeave) {
+      document.removeEventListener('mouseleave', this._onMouseLeave);
+    }
+    if (this._trackingRaf) {
+      cancelAnimationFrame(this._trackingRaf);
+      this._trackingRaf = null;
+    }
+
+    // 视线平滑阻尼插值（Lerp）与出界回正系统
+    this._targetEyeX = 0;
+    this._targetEyeY = 0;
+    this._smoothEyeX = 0;
+    this._smoothEyeY = 0;
+    this._lastMouseMoveTime = Date.now();
+
     this._onMouseMove = (e) => {
+      this._lastMouseMoveTime = Date.now();
       if (this.model && this.app && this.app.view) {
         const rect = this.app.view.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
           const cx = rect.left + rect.width / 2;
           const cy = rect.top + rect.height / 2;
-          const dx = (e.clientX - cx) / (rect.width / 2);
-          const dy = (e.clientY - cy) / (rect.height / 2);
-          try {
-            if (this.model.internalModel?.focusController) {
-              this.model.internalModel.focusController.focus(dx, -dy);
-            }
-            const cm = this.model.internalModel?.coreModel;
-            if (cm) {
-              if (typeof cm.setParamFloat === 'function') {
-                cm.setParamFloat('PARAM_EYE_BALL_X', dx * 0.85);
-                cm.setParamFloat('PARAM_EYE_BALL_Y', -dy * 0.85);
-                cm.setParamFloat('PARAM_ANGLE_X', dx * 18);
-                cm.setParamFloat('PARAM_ANGLE_Y', -dy * 15);
-              }
-              if (typeof cm.setParameterValueById === 'function' && typeof cm.getParameterIndex === 'function') {
-                const eyeX = cm.getParameterIndex('ParamEyeBallX') >= 0 ? 'ParamEyeBallX' : 'PARAM_EYE_BALL_X';
-                const eyeY = cm.getParameterIndex('ParamEyeBallY') >= 0 ? 'ParamEyeBallY' : 'PARAM_EYE_BALL_Y';
-                const angX = cm.getParameterIndex('ParamAngleX') >= 0 ? 'ParamAngleX' : 'PARAM_ANGLE_X';
-                const angY = cm.getParameterIndex('ParamAngleY') >= 0 ? 'ParamAngleY' : 'PARAM_ANGLE_Y';
-                cm.setParameterValueById(eyeX, dx * 0.85);
-                cm.setParameterValueById(eyeY, -dy * 0.85);
-                cm.setParameterValueById(angX, dx * 18);
-                cm.setParameterValueById(angY, -dy * 15);
-              }
-            }
-          } catch (err) {}
+          this._targetEyeX = Math.max(-1, Math.min(1, (e.clientX - cx) / (rect.width / 2)));
+          this._targetEyeY = Math.max(-1, Math.min(1, (e.clientY - cy) / (rect.height / 2)));
         }
       }
     };
+
+    this._onMouseLeave = () => {
+      this._targetEyeX = 0;
+      this._targetEyeY = 0;
+    };
+
+    const updateSmoothTracking = () => {
+      if (!this.model) {
+        this._trackingRaf = null;
+        return;
+      }
+
+      // 超过 3.5 秒鼠标无位移，视线柔和回正正中
+      if (Date.now() - this._lastMouseMoveTime > 3500) {
+        this._targetEyeX = 0;
+        this._targetEyeY = 0;
+      }
+
+      const lerpFactor = 0.18;
+      this._smoothEyeX += (this._targetEyeX - this._smoothEyeX) * lerpFactor;
+      this._smoothEyeY += (this._targetEyeY - this._smoothEyeY) * lerpFactor;
+
+      const dx = this._smoothEyeX;
+      const dy = this._smoothEyeY;
+
+      try {
+        if (this.model.internalModel?.focusController) {
+          this.model.internalModel.focusController.focus(dx, -dy);
+        }
+        const cm = this.model.internalModel?.coreModel;
+        if (cm) {
+          if (typeof cm.setParamFloat === 'function') {
+            cm.setParamFloat('PARAM_EYE_BALL_X', dx * 0.85);
+            cm.setParamFloat('PARAM_EYE_BALL_Y', -dy * 0.85);
+            cm.setParamFloat('PARAM_ANGLE_X', dx * 18);
+            cm.setParamFloat('PARAM_ANGLE_Y', -dy * 15);
+          }
+          if (typeof cm.setParameterValueById === 'function' && typeof cm.getParameterIndex === 'function') {
+            const eyeX = cm.getParameterIndex('ParamEyeBallX') >= 0 ? 'ParamEyeBallX' : 'PARAM_EYE_BALL_X';
+            const eyeY = cm.getParameterIndex('ParamEyeBallY') >= 0 ? 'ParamEyeBallY' : 'PARAM_EYE_BALL_Y';
+            const angX = cm.getParameterIndex('ParamAngleX') >= 0 ? 'ParamAngleX' : 'PARAM_ANGLE_X';
+            const angY = cm.getParameterIndex('ParamAngleY') >= 0 ? 'ParamAngleY' : 'PARAM_ANGLE_Y';
+            cm.setParameterValueById(eyeX, dx * 0.85);
+            cm.setParameterValueById(eyeY, -dy * 0.85);
+            cm.setParameterValueById(angX, dx * 18);
+            cm.setParameterValueById(angY, -dy * 15);
+          }
+        }
+      } catch (err) {}
+
+      this._trackingRaf = requestAnimationFrame(updateSmoothTracking);
+    };
+
     document.addEventListener('mousemove', this._onMouseMove);
+    document.addEventListener('mouseleave', this._onMouseLeave);
+    this._trackingRaf = requestAnimationFrame(updateSmoothTracking);
   }
 
   handleResize() {
@@ -799,9 +861,10 @@ class Live2DManager {
       pointer-events: auto;
       cursor: pointer;
     ">`;
-    fallbackDiv.onclick = (e) => {
-      e.stopPropagation();
-      this.playAnimation('tap');
+    fallbackDiv.onclick = () => {
+      if (!document.body.classList.contains('web-mode-active')) {
+        this.playAnimation('tap');
+      }
     };
     container.appendChild(fallbackDiv);
 
@@ -829,8 +892,30 @@ class Live2DManager {
     const gifContainer = document.getElementById('gif-fallback-container');
     if (gifContainer) gifContainer.remove();
 
-    if (this.model) this.model.destroy();
-    if (this.app) this.app.destroy(true);
+    if (this._onMouseMove) {
+      document.removeEventListener('mousemove', this._onMouseMove);
+      this._onMouseMove = null;
+    }
+    if (this._onMouseLeave) {
+      document.removeEventListener('mouseleave', this._onMouseLeave);
+      this._onMouseLeave = null;
+    }
+    if (this._trackingRaf) {
+      cancelAnimationFrame(this._trackingRaf);
+      this._trackingRaf = null;
+    }
+
+    if (this.model) {
+      this.model.destroy();
+      this.model = null;
+    }
+    if (window.PIXI?.utils?.clearTextureCache) {
+      try { window.PIXI.utils.clearTextureCache(); } catch (e) {}
+    }
+    if (this.app) {
+      this.app.destroy(true);
+      this.app = null;
+    }
   }
 
   // 切换显示模式

@@ -100,6 +100,29 @@ class ShortcutManager {
     return !!this.config.enabled;
   }
 
+  /** 获取所有快捷键信息列表 */
+  getShortcuts() {
+    return Object.entries(this.config.bindings || {}).map(([actionId, keys]) => {
+      const meta = this.ACTION_META[actionId] || {};
+      return {
+        id: actionId,
+        label: meta.label || actionId,
+        group: meta.group || 'action',
+        icon: meta.icon || '⌨️',
+        keys: keys || []
+      };
+    });
+  }
+
+  /** 是否处于防打字模式（仅方向键） */
+  isArrowOnlyMode() {
+    return !!this.config.arrowOnlyMode;
+  }
+
+  isAntiTypingMode() {
+    return this.isArrowOnlyMode();
+  }
+
   /** 切换启用/禁用状态 */
   toggleEnabled(state) {
     this.config.enabled = (typeof state === 'boolean') ? state : !this.config.enabled;
@@ -112,6 +135,10 @@ class ShortcutManager {
     this.config.arrowOnlyMode = (typeof state === 'boolean') ? state : !this.config.arrowOnlyMode;
     this.saveConfig();
     return this.config.arrowOnlyMode;
+  }
+
+  setAntiTypingMode(state) {
+    return this.toggleArrowOnlyMode(state);
   }
 
   /** 一键解除全部快捷键（完全停用并清空所有按键绑定） */
