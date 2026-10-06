@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# ✨ ReDame · 二次元AI桌宠 (v07.21)
+# ✨ ReDame · 二次元AI桌宠 v07.21（最终版·短时间内不会更新）
 
 **九大经典动漫角色全阵容 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
 
@@ -8,7 +8,7 @@
 
 <p>
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
-  <img src="https://img.shields.io/badge/Version-07.21-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-07.21%20(%E6%9C%80%E7%BB%88%E7%89%88%C2%B7%E7%9F%AD%E6%97%B6%E9%97%B4%E5%86%85%E4%B8%8D%E4%BC%9A%E6%9B%B4%E6%96%B0)-8A2BE2?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4%2F5-ff69b4?style=for-the-badge" alt="Live2D">
   <img src="https://img.shields.io/badge/Voice-133%20Broadcast%20CV-00cec9?style=for-the-badge" alt="Voice">
