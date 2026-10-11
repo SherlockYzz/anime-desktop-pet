@@ -1,0 +1,45 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  getScreenSize: () => ipcRenderer.invoke('get-screen-size'),
+  setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
+  minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+  closeWindow: () => ipcRenderer.invoke('close-window'),
+  onShowSettings: (callback) => ipcRenderer.on('show-settings', callback),
+  onToggleModeRequest: (callback) => ipcRenderer.on('toggle-mode-request', callback),
+  updateTrayLabel: (label, avatarPath) => ipcRenderer.invoke('update-tray-label', label, avatarPath),
+
+  // ★ 本地文件检测
+  checkFileExists: (relPath) => ipcRenderer.invoke('check-file-exists', relPath),
+
+  // ★ 鼠标穿透（透明区域穿透，实体区域交互）
+  setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
+
+  // ★ 桌宠移动与尺寸缩放
+  getWorkArea: () => ipcRenderer.invoke('get-work-area'),
+  getWindowBounds: () => ipcRenderer.invoke('get-window-bounds'),
+  setWindowBounds: (bounds) => ipcRenderer.invoke('set-window-bounds', bounds),
+  moveWindowBy: (dx, dy) => ipcRenderer.send('move-window-by', dx, dy),
+  setWindowPosition: (x, y) => ipcRenderer.send('set-window-position', x, y),
+
+  // 自定义角色
+  saveCustomCharacter: (data) => ipcRenderer.invoke('save-custom-character', data),
+  getCustomCharacters: () => ipcRenderer.invoke('get-custom-characters'),
+  deleteCustomCharacter: (id) => ipcRenderer.invoke('delete-custom-character', id),
+  exportCustomCharacter: (id) => ipcRenderer.invoke('export-custom-character', id),
+  importCustomCharacter: () => ipcRenderer.invoke('import-custom-character'),
+
+  // 原作台词集
+  saveCanonicalLines: (folder, lines) => ipcRenderer.invoke('save-canonical-lines', folder, lines),
+  loadCanonicalLines: (folder) => ipcRenderer.invoke('load-canonical-lines', folder),
+
+  // ★ 本地 Ollama 检测与一键启动
+  detectLocalOllama: () => ipcRenderer.invoke('detect-local-ollama'),
+  startLocalOllama: () => ipcRenderer.invoke('start-local-ollama'),
+
+  // ★ 桌面贴心管家：系统负荷与气象感知
+  getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
+  getWeatherInfo: () => ipcRenderer.invoke('get-weather-info'),
+});
+
+

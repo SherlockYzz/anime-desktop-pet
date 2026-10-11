@@ -1,0 +1,82 @@
+{
+  "name": "ai-desktop-pet-en",
+  "version": "7.21.0",
+  "description": "AI Desktop Pet v07.21 (English Edition) - 9 iconic anime companions featuring Live2D dual-engine, emotion bonds, long-term memory, Pomodoro focus butler, and universal LLM streaming.",
+  "main": "程序主入口.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "keywords": [
+    "electron",
+    "live2d",
+    "ai",
+    "desktop-pet",
+    "virtual-assistant",
+    "anime"
+  ],
+  "author": "SherlockYzz",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.ai-desktop-pet.en",
+    "productName": "AI Desktop Pet",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "程序主入口.js",
+      "安全桥接.js",
+      "核心通用代码/**/*",
+      "角色-加藤惠/**/*",
+      "角色-蕾姆/**/*",
+      "角色-零二/**/*",
+      "角色-高木同学/**/*",
+      "角色-雪之下雪乃/**/*",
+      "角色-若曦/**/*",
+      "角色-惠惠/**/*",
+      "角色-初音未来/**/*",
+      "角色-土间埋/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "AI桌宠.ico",
+      "artifactName": "${productName}-v07.21-Setup.${ext}"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "AI Desktop Pet",
+      "installerIcon": "AI桌宠.ico",
+      "uninstallerIcon": "AI桌宠.ico",
+      "installerHeaderIcon": "AI桌宠.ico",
+      "runAfterFinish": true,
+      "language": "1033"
+    }
+  }
+}
+

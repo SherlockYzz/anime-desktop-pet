@@ -1,0 +1,53 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "Takagi.moc3",
+    "Textures": [
+      "Takagi.2048/texture_00.png",
+      "Takagi.2048/texture_01.png"
+    ],
+    "Physics": "Takagi.physics3.json",
+    "DisplayInfo": "Takagi.cdi3.json",
+    "Expressions": [
+      { "Name": "Neutral", "File": "expressions/Neutral.exp3.json" },
+      { "Name": "TeaseSmile", "File": "expressions/TeaseSmile.exp3.json" },
+      { "Name": "Wink", "File": "expressions/Wink.exp3.json" },
+      { "Name": "Smug", "File": "expressions/Smug.exp3.json" },
+      { "Name": "Surprised", "File": "expressions/Surprised.exp3.json" },
+      { "Name": "Blush", "File": "expressions/Blush.exp3.json" },
+      { "Name": "Sleepy", "File": "expressions/Sleepy.exp3.json" }
+    ],
+    "Motions": {
+      "Idle": [
+        { "File": "motions/Idle.motion3.json", "FadeInTime": 0.8, "FadeOutTime": 0.8 }
+      ],
+      "Tease": [
+        { "File": "motions/Tease.motion3.json", "FadeInTime": 0.12, "FadeOutTime": 0.2 }
+      ],
+      "Poke": [
+        { "File": "motions/Poke.motion3.json", "FadeInTime": 0.06, "FadeOutTime": 0.18 }
+      ],
+      "Surprised": [
+        { "File": "motions/Surprised.motion3.json", "FadeInTime": 0.05, "FadeOutTime": 0.24 }
+      ],
+      "Sleep": [
+        { "File": "motions/Sleep.motion3.json", "FadeInTime": 0.4, "FadeOutTime": 0.24 }
+      ],
+      "WakeUp": [
+        { "File": "motions/WakeUp.motion3.json", "FadeInTime": 0.12, "FadeOutTime": 0.22 }
+      ]
+    }
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": ["ParamEyeLOpen", "ParamEyeROpen"]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": ["ParamMouthOpenY"]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schema": "ruoxi-chatgpt-pets-runtime-manifest/2.0",
+  "generatedBy": "Codex",
+  "pet": {
+    "id": "ruoxi",
+    "displayName": "若曦 (Ruo Xi)",
+    "description": "白发赤瞳狐耳少女精灵，红白中式礼服，Q版chibi约2.6头身。",
+    "spriteVersionNumber": 2
+  },
+  "atlas": {
+    "file": "若曦_pets_v2_atlas.png",
+    "size": { "w": 1536, "h": 2288 },
+    "grid": { "cols": 8, "rows": 11 },
+    "cell": { "w": 192, "h": 208 },
+    "background": "transparent",
+    "requiredFrames": 73,
+    "transparentCells": 15
+  },
+  "defaultAnimation": "idle",
+  "baseFps": 12,
+  "lookTracking": {
+    "enabled": true,
+    "radiusPx": 420,
+    "axes": "顺时针，000=正上方，090=屏幕右，180=正下方，270=屏幕左",
+    "zeroDegrees": "up",
+    "stepDegrees": 22.5,
+    "directions": [
+      { "deg": 0,     "row": 9,  "frame": 0 }, { "deg": 22.5,  "row": 9,  "frame": 1 },
+      { "deg": 45,    "row": 9,  "frame": 2 }, { "deg": 67.5,  "row": 9,  "frame": 3 },
+      { "deg": 90,    "row": 9,  "frame": 4 }, { "deg": 112.5, "row": 9,  "frame": 5 },
+      { "deg": 135,   "row": 9,  "frame": 6 }, { "deg": 157.5, "row": 9,  "frame": 7 },
+      { "deg": 180,   "row": 10, "frame": 0 }, { "deg": 202.5, "row": 10, "frame": 1 },
+      { "deg": 225,   "row": 10, "frame": 2 }, { "deg": 247.5, "row": 10, "frame": 3 },
+      { "deg": 270,   "row": 10, "frame": 4 }, { "deg": 292.5, "row": 10, "frame": 5 },
+      { "deg": 315,   "row": 10, "frame": 6 }, { "deg": 337.5, "row": 10, "frame": 7 }
+    ]
+  },
+  "animations": {
+    "idle":          { "label": "待机呼吸",   "row": 0,  "startCol": 0, "frames": 6, "durations": [280,110,110,140,140,340], "fps": 8.6,  "loop": true,  "official": true,  "kind": "standard" },
+    "running-right": { "label": "向右移动",   "row": 1,  "startCol": 0, "frames": 8, "durations": [110,110,110,110,110,110,110,190], "fps": 11.9, "loop": true, "official": true, "kind": "standard" },
+    "running-left":  { "label": "向左移动",   "row": 2,  "startCol": 0, "frames": 8, "durations": [110,110,110,110,110,110,110,190], "fps": 11.9, "loop": true, "official": true, "kind": "standard" },
+    "waving":        { "label": "挥手问候",   "row": 3,  "startCol": 0, "frames": 4, "durations": [140,140,140,300], "fps": 12.0, "loop": false, "official": true, "kind": "standard", "returnTo": "idle" },
+    "jumping":       { "label": "蓄力跳跃",   "row": 4,  "startCol": 0, "frames": 5, "durations": [150,150,150,150,300], "fps": 11.1, "loop": false, "official": true, "kind": "standard", "returnTo": "idle" },
+    "failed":        { "label": "受阻沮丧",   "row": 5,  "startCol": 0, "frames": 8, "durations": [160,160,160,160,160,160,160,320], "fps": 8.7, "loop": true, "official": true, "kind": "standard" },
+    "waiting":       { "label": "等待确认",   "row": 6,  "startCol": 0, "frames": 6, "durations": [170,170,170,170,170,340], "fps": 8.8, "loop": true, "official": true, "kind": "standard" },
+    "running":       { "label": "专注工作",   "row": 7,  "startCol": 0, "frames": 6, "durations": [120,120,120,120,120,240], "fps": 12.5, "loop": true, "official": true, "kind": "standard" },
+    "review":        { "label": "验收成果",   "row": 8,  "startCol": 0, "frames": 6, "durations": [200,200,200,200,200,380], "fps": 7.6, "loop": false, "official": true, "kind": "standard", "returnTo": "idle" },
+    "look-row-9":    { "label": "视线 000-157.5", "row": 9,  "startCol": 0, "frames": 8, "durations": [120,120,120,120,120,120,120,120], "fps": 8.0, "loop": false, "official": true, "kind": "look" },
+    "look-row-10":   { "label": "视线 180-337.5", "row": 10, "startCol": 0, "frames": 8, "durations": [120,120,120,120,120,120,120,120], "fps": 8.0, "loop": false, "official": true, "kind": "look" },
+    "sleep":         { "label": "抱尾睡觉",   "row": 8,  "startCol": 0, "frames": 6, "durations": [340,340,340,340,340,700], "fps": 2.9,  "loop": true,  "official": false, "kind": "private",
+                       "note": "本地私有扩展动作（睡觉做梦）。官方 v2 无 sleep 行；本运行时使用同尺寸私有 sleep 行条带素材，行号 row 由 privateRow 指定，避免与官方 row8=review 冲突。" }
+  },
+  "privateRows": {
+    "sleep": { "source": "sleep.png", "row": 8, "overridesOfficial": "review", "mode": "runtime-only" }
+  },
+  "stateMachine": {
+    "initial": "idle",
+    "idleTimeoutMs": 30000,
+    "transitions": [
+      { "from": "idle",           "event": "hoverNear",     "to": "look" },
+      { "from": "idle|look",      "event": "click",         "to": "waving" },
+      { "from": "idle|look",      "event": "dblclick|space","to": "jumping" },
+      { "from": "idle|look",      "event": "dragStart",     "to": "running-right|running-left" },
+      { "from": "running-right|running-left", "event": "dragEnd", "to": "idle" },
+      { "from": "idle",           "event": "toggleWork|W",  "to": "running" },
+      { "from": "running",        "event": "toggleWork|W",  "to": "idle" },
+      { "from": "idle",           "event": "idleTimeout30s","to": "sleep" },
+      { "from": "sleep",          "event": "anyInput",      "to": "idle" },
+      { "from": "waving|jumping|review", "event": "animationEnd", "to": "idle" },
+      { "from": "*",              "event": "taskFailed",    "to": "failed" },
+      { "from": "*",              "event": "awaitConfirm",  "to": "waiting" },
+      { "from": "failed|waiting", "event": "clear",         "to": "idle" }
+    ]
+  },
+  "keymap": {
+    "Space": "jumping",
+    "W": "toggle running (work mode)",
+    "1": "idle", "2": "waving", "3": "jumping", "4": "failed",
+    "5": "waiting", "6": "running", "7": "review", "8": "sleep",
+    "ArrowLeft": "prev frame", "ArrowRight": "next frame",
+    "G": "toggle grid", "P": "toggle control panel", "Esc": "quit"
+  }
+}

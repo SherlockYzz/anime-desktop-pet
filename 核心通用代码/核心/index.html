@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Desktop Pet</title>
+  <link rel="stylesheet" href="样式.css">
+  <!-- ★ preload 核心库，让浏览器尽早开始加载而不阻塞渲染 -->
+  <link rel="preload" href="../第三方库/marked.min.js" as="script">
+</head>
+<body>
+  <!-- 标题栏 -->
+  <div class="titlebar" id="titlebar">
+    <div class="titlebar-drag">
+      <span class="pet-name">AI Pet</span>
+    </div>
+    <div class="titlebar-buttons">
+      <button class="btn-back-pet" id="btn-back-pet" title="Back to Desktop Pet Mode">Pet</button>
+      <button class="btn-shortcuts-titlebar" id="btn-pomodoro-titlebar" title="Focus Pomodoro (25 min)">💼</button>
+      <button class="btn-shortcuts-titlebar" id="btn-memory-diary-titlebar" title="Bond Diary & Long-term Memory">📖</button>
+      <button class="btn-shortcuts-titlebar" id="btn-shortcuts-titlebar" title="Keyboard Shortcuts (⌨️ / F1)">⌨️</button>
+      <button class="btn-character-select" id="btn-character-select" title="Switch Companion">&#x1f464;</button>
+      <button class="btn-settings" id="btn-settings" title="Settings">&#x2699;</button>
+      <button class="btn-minimize" id="btn-minimize" title="Minimize">_</button>
+      <button class="btn-close" id="btn-close" title="Close">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- Live2D模型容器 -->
+  <div class="live2d-container" id="live2d-container">
+    <canvas id="live2d-canvas"></canvas>
+    <canvas id="vrm-canvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer;"></canvas>
+    <div class="mood-indicator" id="mood-indicator"></div>
+  </div>
+
+  <!-- 聊天面板 -->
+  <div class="chat-panel" id="chat-panel">
+    <!-- 梦幻星星装饰 -->
+    <div class="dream-stars" id="dream-stars"></div>
+    <div class="tab-bar">
+      <button class="tab active" data-tab="chat">Chat</button>
+      <button class="tab" data-tab="code">Code Helper</button>
+    </div>
+
+    <!-- 聊天模式 -->
+    <div class="tab-content active" id="tab-chat">
+      <div class="messages" id="chat-messages">
+        <!-- ★ 初始消息由 JavaScript 动态生成，确保头像与保存的角色一致 -->
+      </div>
+      <div class="input-area">
+        <button class="btn-clear-chat" id="btn-clear-chat" title="Clear Chat History">Clear</button>
+        <textarea id="chat-input" placeholder="Type a message..." rows="2"></textarea>
+        <button class="btn-send" id="btn-chat-send">Send</button>
+      </div>
+    </div>
+
+    <!-- 代码模式 -->
+    <div class="tab-content" id="tab-code">
+      <div class="code-header">
+        <select id="language-select">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="java">Java</option>
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+          <option value="csharp">C#</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+          <option value="sql">SQL</option>
+          <option value="php">PHP</option>
+          <option value="ruby">Ruby</option>
+          <option value="swift">Swift</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="shell">Shell</option>
+        </select>
+        <button class="btn-copy" id="btn-copy">Copy</button>
+        <button class="btn-run" id="btn-run">Run</button>
+      </div>
+      <div class="code-editor">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea id="code-input" placeholder="Write code here, or let her help you..." spellcheck="false"></textarea>
+      </div>
+      <div class="code-output" id="code-output">
+        <div class="output-header">Execution Result</div>
+        <pre id="output-content">Waiting to run...</pre>
+      </div>
+      <div class="code-ai-area">
+        <textarea id="code-ai-input" placeholder="Describe the code feature you want..." rows="2"></textarea>
+        <button class="btn-ai-code" id="btn-ai-code">Generate Code</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 角色选择面板 -->
+  <div class="character-panel" id="character-panel">
+    <div class="character-header">
+      <h3>Choose Your Companion</h3>
+      <div class="character-header-actions">
+        <button class="btn-import-character" id="btn-import-character" title="Import Character">&#x21E9;</button>
+        <button class="btn-add-character" id="btn-create-character" title="Create New Character">+</button>
+        <button class="btn-close-panel" id="btn-close-character">&#x2715;</button>
+      </div>
+    </div>
+    <div class="character-grid" id="character-grid"></div>
+  </div>
+
+  <!-- 设置面板 -->
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-header">
+      <h3>Settings</h3>
+      <button class="btn-close-settings" id="btn-close-settings">&#x2715;</button>
+    </div>
+    <div class="settings-content">
+
+      <!-- API 提供商选择 -->
+      <div class="setting-item">
+        <label>API Provider</label>
+        <select id="api-provider">
+          <!-- 由 renderer.js 动态生成 -->
+        </select>
+        <div class="setting-item-description" id="provider-description"></div>
+      </div>
+
+      <!-- 本地 Ollama 服务状态栏（仅本地模型时显示） -->
+      <div class="setting-item local-service-bar" id="setting-local-service" style="display:none;">
+        <div class="local-service-status-row">
+          <span class="local-status-dot" id="local-status-dot"></span>
+          <span class="local-status-text" id="local-status-text">Detecting local Ollama...</span>
+          <button class="btn-start-local" id="btn-start-local" type="button" style="display:none;">🚀 Start Service</button>
+        </div>
+      </div>
+
+      <!-- API 地址 -->
+      <div class="setting-item" id="setting-base-url">
+        <div class="setting-label-row">
+          <label>API Endpoint</label>
+          <button class="btn-reset-url" id="btn-reset-url" type="button" title="Reset to recommended default">Reset Default</button>
+        </div>
+        <input type="text" id="api-base-url" placeholder="https://api.example.com/v1">
+        <div class="setting-item-description">Supports custom reverse proxy, API aggregator, or local LAN port</div>
+      </div>
+
+      <!-- API Key -->
+      <div class="setting-item" id="setting-api-key">
+        <label>API Key</label>
+        <input type="password" id="api-key" placeholder="Enter your API Key">
+      </div>
+
+      <!-- 模型选择 -->
+      <div class="setting-item" id="setting-model">
+        <label>Model Selection</label>
+        <div class="setting-item-row">
+          <select id="model-select">
+            <!-- 由 renderer.js 动态生成 -->
+          </select>
+          <button class="btn-refresh-models" id="btn-refresh-models" type="button" title="Fetch available models">🔄 Refresh Models</button>
+        </div>
+      </div>
+
+      <!-- 自定义模型名（仅自定义提供商时显示） -->
+      <div class="setting-item" id="setting-custom-model" style="display:none;">
+        <label>Custom Model Name</label>
+        <input type="text" id="custom-model-input" placeholder="Enter model name (e.g. gpt-4o or deepseek-chat)">
+      </div>
+
+      <!-- 测试连接 -->
+      <div class="setting-item">
+        <button class="btn-test-connection" id="btn-test-connection">Test Connection</button>
+        <div class="test-result" id="test-result"></div>
+      </div>
+
+      <!-- ★ 响应模式 -->
+      <div class="setting-item">
+        <label>Response Mode</label>
+        <div class="setting-item-row">
+          <select id="response-mode">
+            <option value="instant">Instant Mode (Fastest, recommended for local models)</option>
+            <option value="balanced">Balanced Mode</option>
+            <option value="deep">Deep Mode (More detailed reply)</option>
+          </select>
+        </div>
+        <div class="setting-item-description">Instant Mode = lower tokens + low temperature, ideal for lightweight local models</div>
+      </div>
+
+      <!-- ★ 提示词模式 -->
+      <div class="setting-item">
+        <label>Prompt Mode</label>
+        <div class="setting-item-row">
+          <select id="prompt-mode">
+            <option value="auto">Smart Mode (Recommended)</option>
+            <option value="full">Full Mode (Richer persona)</option>
+            <option value="compact">Speed Mode (Fastest)</option>
+          </select>
+        </div>
+        <div class="setting-item-description">Smart Mode: concise prompt for short queries, detailed persona for complex conversation</div>
+      </div>
+
+      <!-- 窗口设置 -->
+      <div class="setting-item">
+        <label>Always on Top</label>
+        <input type="checkbox" id="always-on-top" checked>
+      </div>
+      <div class="setting-item">
+        <label>Window Opacity</label>
+        <input type="range" id="opacity-slider" min="50" max="100" value="95">
+        <span id="opacity-value">95%</span>
+      </div>
+
+      <!-- ★ 快捷键与防打字设置 -->
+      <div class="setting-section-divider"><span>Shortcuts & Anti-mispress Settings</span></div>
+      <div class="setting-item">
+        <label>Shortcuts Management</label>
+        <button class="btn-open-shortcuts-settings" id="btn-open-shortcuts-settings" style="padding:6px 14px;border-radius:8px;border:1px solid var(--primary-color);background:rgba(217,79,79,0.1);color:var(--primary-color);font-size:12px;font-weight:bold;cursor:pointer;">⌨️ Open Shortcuts Guide & Key Bindings</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-item-description">View full shortcuts guide, one-click disable shortcuts (free typing), anti-typing mode (arrow keys only), and interactive key recording.</div>
+      </div>
+
+      <!-- ★ 角色提示词编辑 -->
+      <div class="setting-section-divider"><span>Character Persona & System Prompt</span></div>
+      <div class="setting-item">
+        <div class="setting-item-description">System prompt defines the AI companion persona and rules. Changes apply immediately upon saving. Click "Reset Default" to revert.</div>
+      </div>
+      <div class="setting-item">
+        <label>Select Character</label>
+        <select id="prompt-character-select">
+          <!-- 由 SettingsManager 动态填充 -->
+        </select>
+      </div>
+      <div class="setting-item">
+        <label>System Prompt</label>
+        <div class="setting-item-description">Edit character system prompt here. Leave empty to use default persona.</div>
+        <textarea id="prompt-editor" class="prompt-editor" placeholder="Enter system prompt for character..." spellcheck="false"></textarea>
+      </div>
+      <div class="setting-item setting-item-actions">
+        <button class="btn-prompt-save" id="btn-prompt-save">Save Persona</button>
+        <button class="btn-prompt-reset" id="btn-prompt-reset">Reset Default</button>
+        <span class="prompt-status" id="prompt-status"></span>
+      </div>
+
+      <!-- ★ 原作台词集管理 -->
+      <div class="setting-section-divider"><span>Original Line Collection</span></div>
+      <div class="setting-item">
+        <div class="setting-item-description">Classic lines used in boot, tap, idle, and farewell. Supports single-line additions and batch importing .txt files (one line per entry).</div>
+        <div class="canonical-add-row">
+          <textarea id="canonical-input" class="canonical-input" placeholder="Type a quote, press Enter or click Add..." rows="2" spellcheck="false"></textarea>
+          <button class="btn-canonical-add" id="btn-canonical-add">Add Quote</button>
+        </div>
+        <div class="canonical-import-row">
+          <button class="btn-canonical-import" id="btn-canonical-import">Batch Import (.txt)</button>
+          <button class="btn-canonical-reset" id="btn-canonical-reset">Reset Default</button>
+          <input type="file" id="canonical-file-input" accept=".txt" hidden>
+        </div>
+      </div>
+      <div class="setting-item">
+        <label>Current Lines (<span id="canonical-count">0</span> quotes)</label>
+        <div class="canonical-list" id="canonical-list">
+          <!-- 由 JS 动态填充 -->
+        </div>
+      </div>
+
+      <!-- ★ 自定义角色管理 -->
+      <div class="setting-item" id="setting-custom-char-actions" style="display:none;">
+        <div class="setting-section-divider"><span>Custom Companion Management</span></div>
+        <button class="btn-export-character" id="btn-export-character">Export Companion</button>
+        <button class="btn-delete-character" id="btn-delete-character">Delete Companion</button>
+      </div>
+
+      <button class="btn-save-settings" id="btn-save-settings">Save Settings</button>
+    </div>
+  </div>
+
+  <!-- 创建角色面板 -->
+  <div class="create-character-panel" id="create-character-panel">
+    <div class="cc-header">
+      <h3>Create New Companion</h3>
+      <button class="btn-close-panel" id="btn-close-create-character">&#x2715;</button>
+    </div>
+    <div class="cc-content">
+      <div class="cc-setting-item">
+        <label>Companion Name <span class="cc-required">*</span></label>
+        <input type="text" id="cc-name" placeholder="e.g. Hatsune Miku">
+      </div>
+      <div class="cc-setting-item">
+        <label>Origin Series <span class="cc-required">*</span></label>
+        <input type="text" id="cc-series" placeholder="e.g. VOCALOID">
+      </div>
+      <div class="cc-setting-item">
+        <label>Tagline</label>
+        <input type="text" id="cc-tagline" placeholder="e.g. The World's Number One Princess">
+      </div>
+      <div class="cc-setting-item">
+        <label>Description</label>
+        <textarea id="cc-description" placeholder="Introduce character background, lore, and personality..." rows="2"></textarea>
+      </div>
+      <div class="cc-setting-item">
+        <label>Theme Color</label>
+        <input type="color" id="cc-color" value="#f0a0b0">
+        <div class="cc-item-desc">Choose primary theme color; dynamic palettes will auto-generate</div>
+      </div>
+
+      <!-- 头像 -->
+      <div class="cc-setting-item">
+        <label>Avatar <span class="cc-required">*</span></label>
+        <div class="cc-image-upload" id="cc-avatar-upload">
+          <div class="cc-image-preview" id="cc-avatar-preview">
+            <span class="cc-upload-placeholder">Click to upload avatar</span>
+          </div>
+          <input type="file" id="cc-avatar-input" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- 封面 -->
+      <div class="cc-setting-item">
+        <label>Cover Image</label>
+        <div class="cc-image-upload" id="cc-cover-upload">
+          <div class="cc-image-preview" id="cc-cover-preview">
+            <span class="cc-upload-placeholder">Click to upload cover</span>
+          </div>
+          <input type="file" id="cc-cover-input" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- 系统提示词 -->
+      <div class="cc-setting-item">
+        <label>System Prompt <span class="cc-required">*</span></label>
+        <div class="cc-item-desc">Defines character persona, tone, and speech habits.</div>
+        <textarea id="cc-prompt" placeholder="Enter system prompt instructions..." rows="8" spellcheck="false"></textarea>
+      </div>
+
+      <!-- 原作台词集 -->
+      <div class="cc-setting-item">
+        <label>Original Lines <span class="cc-required">*</span></label>
+        <div class="cc-item-desc">Classic quotes for startup, tap, idle, and farewell. One line per quote.</div>
+        <textarea id="cc-canonical" placeholder="One quote per line..." rows="4" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Live2D模型 -->
+      <div class="cc-setting-item">
+        <label>Live2D Model (Optional)</label>
+        <div class="cc-item-desc">Upload .model3.json file; keep resources in same folder</div>
+        <div class="cc-file-upload" id="cc-live2d-upload">
+          <span id="cc-live2d-label">Click to select model3.json file</span>
+          <input type="file" id="cc-live2d-input" accept=".json,.zip" hidden>
+        </div>
+      </div>
+
+      <div class="cc-status" id="cc-status"></div>
+
+      <div class="cc-actions">
+        <button class="btn-cc-save" id="btn-cc-save">Create Companion</button>
+        <button class="btn-cc-cancel" id="btn-cc-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载动画 -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading, please wait...</div>
+  </div>
+
+  <!-- ★ 樱花飘落装饰容器（CSS only） -->
+  <div class="sakura-container">
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+    <div class="sakura-petal"></div>
+  </div>
+
+  <!-- 形态一（默认）：极简悬浮桌宠 -->
+  <div class="pet-overlay" id="pet-overlay">
+    <div class="pet-character-area" id="pet-character-area" title="Right click to open Action Toolbox">
+      <canvas id="pet-canvas"></canvas>
+      <canvas id="pet-sprite-canvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+      <img id="pet-gif" class="pet-gif-img" src="" alt="">
+    </div>
+    <div class="pet-bubble-container" id="pet-bubble-container"></div>
+    <div class="pet-controls" id="pet-controls">
+      <button class="pet-control-btn btn-toggle-work" id="btn-toggle-work" title="Focus Work (E / Shortcut 6)"></button>
+      <button class="pet-control-btn btn-toggle-sleep" id="btn-toggle-sleep" title="Sleep (Z / Shortcut 8)"></button>
+      <button class="pet-control-btn btn-toggle-wander" id="btn-toggle-wander" title="Free Wander (T / Shortcut 4)"></button>
+      <button class="pet-control-btn btn-pet-scale" id="btn-pet-scale" title="Pet Size Window (Resize)"></button>
+      <button class="pet-control-btn btn-pet-shortcuts" id="btn-pet-shortcuts" title="Shortcuts Guide (⌨️)"></button>
+      <button class="pet-control-btn btn-pet-actions" id="btn-pet-actions" title="Action Toolbox (Right Click Pet)"></button>
+      <button class="pet-control-btn btn-switch-web" id="btn-switch-web" title="Switch to Chat Mode"></button>
+    </div>
+    <!-- 大小滑动窗口弹出面板 -->
+    <div class="pet-scale-menu" id="pet-scale-menu">
+      <div class="pet-scale-header">
+        <span class="pet-scale-title">📐 Pet Size Slider</span>
+        <button class="btn-close-scale" id="btn-close-scale" title="Close">&#x2715;</button>
+      </div>
+      <div class="pet-scale-body">
+        <div class="pet-scale-slider-row">
+          <input type="range" id="pet-scale-slider" min="0.75" max="1.35" step="0.05" value="1.0">
+          <span class="pet-scale-val" id="pet-scale-val">100%</span>
+        </div>
+        <div class="pet-scale-presets">
+          <button class="scale-preset-btn" data-scale="0.8">80% Mini</button>
+          <button class="scale-preset-btn" data-scale="0.9">90% Compact</button>
+          <button class="scale-preset-btn active" data-scale="1.0">100% Default</button>
+          <button class="scale-preset-btn" data-scale="1.15">115% Relaxed</button>
+          <button class="scale-preset-btn" data-scale="1.3">130% Ultra</button>
+        </div>
+      </div>
+    </div>
+    <!-- 动作百宝箱弹出面板 -->
+    <div class="pet-action-menu" id="pet-action-menu">
+      <div class="pet-action-title">✨ Action & Pose Toolbox</div>
+      <div class="pet-action-grid">
+        <button class="pet-action-item" data-action="idle"><span class="action-icon">🌸</span>Idle Breath</button>
+        <button class="pet-action-item" data-action="work"><span class="action-icon">💼</span>Focus Work</button>
+        <button class="pet-action-item" data-action="sleep"><span class="action-icon">🌙</span>Sleep</button>
+        <button class="pet-action-item" data-action="wander"><span class="action-icon">🐾</span>Free Wander</button>
+        <button class="pet-action-item" data-action="wave"><span class="action-icon">👋</span>Wave Hello</button>
+        <button class="pet-action-item" data-action="jump"><span class="action-icon">⚡</span>Charged Jump</button>
+        <button class="pet-action-item" data-action="review"><span class="action-icon">📜</span>Show Result</button>
+        <button class="pet-action-item" data-action="fail"><span class="action-icon">😿</span>Frustrated</button>
+        <button class="pet-action-item" data-action="wait"><span class="action-icon">💭</span>Waiting</button>
+        <button class="pet-action-item" id="btn-pet-action-scale"><span class="action-icon">📐</span>Resize Pet</button>
+        <button class="pet-action-item" id="btn-toggle-hd"><span class="action-icon">✨</span>HD Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快捷键一览与自定义弹出面板（全局直达，双形态通达） -->
+  <div class="pet-shortcuts-menu" id="pet-shortcuts-menu"></div>
+
+  <!-- Live2D & Pixi 本地运行库（同步直载，杜绝异步竞争与脚本冲突） -->
+  <script src="../lib/pixi.min.js"></script>
+  <script src="../lib/live2d.min.js"></script>
+  <script src="../lib/live2dcubismcore.min.js"></script>
+  <script src="../lib/pixi-live2d-display.min.js"></script>
+  <script src="CDN配置.js"></script>
+  <script src="工具函数.js"></script>
+  <script src="角色注册表.js"></script>
+  <script src="../../角色-加藤惠/角色设定.js"></script>
+  <script src="../../角色-雪之下雪乃/角色设定.js"></script>
+  <script src="../../角色-高木同学/角色设定.js"></script>
+  <script src="../../角色-蕾姆/角色设定.js"></script>
+  <script src="../../角色-零二/角色设定.js"></script>
+  <script src="../../角色-若曦/角色设定.js"></script>
+  <script src="../../角色-惠惠/角色设定.js"></script>
+  <script src="../../角色-初音未来/角色设定.js"></script>
+  <script src="../../角色-土间埋/角色设定.js"></script>
+  <script src="API服务商.js"></script>
+  <script src="自定义角色管理器.js"></script>
+  <script src="角色管理器.js"></script>
+  <script src="情绪分析.js"></script>
+  <script src="Live2D引擎.js"></script>
+  <script src="VRM管理器.js"></script>
+  <script src="精灵表引擎.js"></script>
+  <script src="AI接口.js"></script>
+  <script src="聊天管理器.js"></script>
+  <script src="代码编辑器.js"></script>
+  <script src="设置管理器.js"></script>
+  <script src="动作百宝箱.js"></script>
+  <script src="快捷键管理器.js"></script>
+  <script src="情感记忆.js"></script>
+  <script src="桌宠模式.js"></script>
+  <script src="桌面管家.js"></script>
+  <script src="主界面.js"></script>
+</body>
+</html>
