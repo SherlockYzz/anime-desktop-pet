@@ -1,4 +1,4 @@
-# ✨ AI Desktop Pet v07.21 (English Edition)
+﻿# ✨ AI Desktop Pet v07.21 (English Edition)
 
 <div align="center">
 
@@ -16,7 +16,18 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>📥 Download English Installer (AI-Desktop-Pet-v07.21-Setup.exe)</b></a>
+  <b>🌐 Language / 语言:</b>
+  <b>English (Current)</b>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/blob/main/README.md"><b>简体中文 (Chinese README)</b></a>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/tree/main"><b>Main Branch (Chinese) 🌿</b></a>
+</p>
+
+<p>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>📥 Download English Installer (AI-Desktop-Pet-v07.21-Setup.exe - 147MB)</b></a>
+  <br>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-DesktopPet-v07.21-Setup.exe"><b>🇨🇳 Chinese Edition Setup (AI-DesktopPet-v07.21-Setup.exe - 147MB)</b></a>
   <br><br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet">⭐ Star Repository</a>
   ·
