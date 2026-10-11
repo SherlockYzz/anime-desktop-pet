@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# ✨ 二次元AI桌宠 v07.21（最终版·短时间内不会更新）
+# ✨ 二次元AI桌宠 v07.21（双版本发布 / Dual-Language Edition）
 
 **九大经典动漫角色全阵容 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
 
@@ -8,7 +8,7 @@
 
 <p>
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
-  <img src="https://img.shields.io/badge/Version-07.21%20(%E6%9C%80%E7%BB%88%E7%89%88%C2%B7%E7%9F%AD%E6%97%B6%E9%97%B4%E5%86%85%E4%B8%8D%E4%BC%9A%E6%9B%B4%E6%96%B0)-8A2BE2?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Edition-Dual%20(CN%20%2F%20EN)-8A2BE2?style=for-the-badge" alt="Edition">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4%2F5-ff69b4?style=for-the-badge" alt="Live2D">
   <img src="https://img.shields.io/badge/Voice-133%20Broadcast%20CV-00cec9?style=for-the-badge" alt="Voice">
@@ -16,7 +16,18 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe"><b>📥 点击直接下载 Windows 安装向导版 (AI桌宠-v07.21-安装向导.exe)</b></a>
+  <b>🌐 语言 / Language:</b>
+  <b>简体中文 (当前)</b>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/blob/english/README.md"><b>English (README)</b></a>
+  ·
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/tree/english"><b>English Branch 🌿</b></a>
+</p>
+
+<p>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-DesktopPet-v07.21-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (147MB)</b></a>
+  <br>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>🌍 Direct Download 【English Edition】 Setup (147MB)</b></a>
   <br><br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet">⭐ Star 支持</a>
   ·
@@ -26,6 +37,12 @@
 </p>
 
 </div>
+
+> 🌍 **Looking for the English Version? / 海外用户英文版现已就绪！**  
+> 为了方便海外动漫爱好者与开发者，现已推出官方独立 **English Edition**！包含纯英文安装向导 (NSIS 1033)、全套英文界面、9 大角色官方英文设定与手账系统。  
+> 📖 **英文版文档 (English README)**: [English README.md](https://github.com/SherlockYzz/anime-desktop-pet/blob/english/README.md)  
+> 🌿 **英文源码分支 (English Branch)**: [`english` 分支](https://github.com/SherlockYzz/anime-desktop-pet/tree/english)  
+> 📥 **英文安装包直链 (Download Setup)**: [AI-Desktop-Pet-v07.21-Setup.exe (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe)
 
 ---
 
@@ -298,10 +315,18 @@
 
 ## 🚀 四、快速安装与 AI 大模型配置指南
 
-### 1. 给同学 / 用户安装（Windows 中文安装向导版 · 开箱即用）
-1. 点击下载仓库根目录的 **[`AI桌宠-v07.21-安装向导.exe`](https://github.com/SherlockYzz/anime-desktop-pet/raw/main/AI%E6%A1%8C%E5%AE%A0-v07.21-%E5%AE%89%E8%A3%85%E5%90%91%E5%AF%BC.exe)**；
-2. 双击运行安装程序，跟随中文安装向导**自由选择安装路径（如 D 盘 / E 盘 / F 盘）**；
-3. 安装完成后会自动在桌面创建 **「AI桌宠」** 快捷方式并直接启动！
+### 1. 软件一键下载与安装向导（中英双版本 · 开箱即用）
+
+| 版本分类 / Edition | 安装包文件名 | 安装向导语言 | 适用群体 | 高速下载链接 |
+| :--- | :--- | :--- | :--- | :--- |
+| 🇨🇳 **简体中文版（国内推荐）** | `AI-DesktopPet-v07.21-Setup.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包 (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-DesktopPet-v07.21-Setup.exe) |
+| 🌍 **English Edition** | `AI-Desktop-Pet-v07.21-Setup.exe` | 纯英文 (NSIS 1033) | 海外 / 英语用户 | [👉 Click to Download English Setup (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe) |
+
+> 📌 **完整 Release 发布页**：[GitHub Releases - v07.21 双版本发布](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v07.21)  
+> **安装流程**：
+> 1. 下载对应安装包后双击运行；
+> 2. 跟随向导**自由选择安装盘符与目录（如 D 盘 / E 盘 / F 盘）**；
+> 3. 安装完成后会自动在桌面与开始菜单创建快捷方式并一键启动！
 
 ### 2. 从源码本地运行或重新打包
 ```bash
@@ -326,8 +351,12 @@ npm run build:win
 
 ## 🛠️ 五、近期版本优化与问题修复记录 (Changelog & Bug Fixes)
 
-> 以下为 `v07.21` 及近期版本针对稳定性与交互细节完成的底层治理记录：
+> 以下为 `v07.21` 及近期版本针对稳定性、国际化与交互细节完成的底层治理记录：
 
+- **🎉 [重磅] 正式上线独立 English Edition（双语言版本独立发布）**：
+  - 为满足海外用户的国际化需求，在**严格保证原中文版代码与安装向导 100% 原始稳定**的前提下，独立构建并发布了全套英文版；
+  - 源码与资源独立存放在 [`english`](https://github.com/SherlockYzz/anime-desktop-pet/tree/english) 独立分支，Release 提供专属 NSIS 1033 全英文安装向导（`AI-Desktop-Pet-v07.21-Setup.exe`）及全英文文档；
+  - 中文版归中文版、英文版归英文版，双轨并行，互不干扰。
 - **🐞 修复桌面漫步开启后无法切回正常待机状态的 Bug**：
   - 修复了此前点选「🌸 待机呼吸」或其他动作时未解除 `_wanderActive` 漫步锁、导致 16ms 后又被移动循环强行拉回奔跑状态的问题；
   - 新增**打开菜单/拖拽时自动定格防滑脱机制**（打开百宝箱、缩放窗或拖拽时窗口立即暂停平移），并在底部控制栏新增漫步状态下的**红色 `🐾` 一键停止漫步快捷按钮**；同时为全部 9 位角色补齐第一顺位「🌸 待机呼吸·乖乖待命」按钮。
