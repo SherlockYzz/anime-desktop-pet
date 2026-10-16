@@ -26,7 +26,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI桌宠-v07.22-安装向导.exe"><b>📥 点击直接下载【简体中文版】安装向导</b></a>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI-DesktopPet-v07.22-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (147MB)</b></a>
   <br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>🌍 Direct Download 【English Edition】 Setup (147MB)</b></a>
   <br><br>
@@ -341,7 +341,7 @@
 
 | 版本分类 / Edition | 安装包文件名 | 安装向导语言 | 适用群体 | 高速下载链接 |
 | :--- | :--- | :--- | :--- | :--- |
-| 🇨🇳 **简体中文版（国内推荐）** | `AI桌宠-v07.22-安装向导.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI桌宠-v07.22-安装向导.exe) |
+| 🇨🇳 **简体中文版（国内推荐）** | `AI-DesktopPet-v07.22-Setup.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包 (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI-DesktopPet-v07.22-Setup.exe) |
 | 🌍 **English Edition** | `AI-Desktop-Pet-v07.21-Setup.exe` | 纯英文 (NSIS 1033) | 海外 / 英语用户 | [👉 Click to Download English Setup (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe) |
 
 > 📌 **完整 Release 发布页**：[GitHub Releases - v07.22 发布页](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v07.22)  
