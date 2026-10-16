@@ -120,7 +120,13 @@
       const btnMute = document.getElementById('btn-arcade-mute');
       const btnReload = document.getElementById('btn-arcade-reload');
       const btnTitlebar = document.getElementById('btn-arcade-titlebar');
+      const btnExit = document.getElementById('btn-arcade-exit');
 
+      if (btnExit) {
+        btnExit.addEventListener('click', () => {
+          window.app?._switchTab?.('chat');
+        });
+      }
       if (btnRestart) {
         btnRestart.addEventListener('click', () => this.restartGame());
       }
@@ -270,18 +276,20 @@
       }
     }
 
-    /** 从任何地方极速切入摸鱼街机 */
+    /** 从任何地方极速切入摸鱼街机 (若已在街机中则切回聊天) */
     openArcade() {
-      if (document.body?.classList?.contains('pet-mode-active') || window.app?.petModeActive) {
+      if (!document.body?.classList?.contains('web-mode-active')) {
         window.app?.petMode?.exit?.(true);
       }
       setTimeout(() => {
-        if (window.app?._switchTab) {
+        if (window.app?.currentTab === 'arcade') {
+          window.app._switchTab('chat');
+        } else if (window.app?._switchTab) {
           window.app._switchTab('arcade');
         } else if (window.app?.switchTab) {
           window.app.switchTab('arcade');
         }
-      }, 80);
+      }, 100);
     }
   }
 

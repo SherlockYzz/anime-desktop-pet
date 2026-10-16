@@ -206,7 +206,8 @@ body::before {
   transform: rotate(90deg);
 }
 
-.btn-minimize:hover {
+.btn-minimize:hover,
+.btn-maximize-win:hover {
   background: var(--glow-color);
 }
 
@@ -3252,30 +3253,113 @@ body.web-mode-active .pet-shortcuts-menu.show {
 /* ========================================
    🎮 摸鱼街机模式专属样式 (Arcade Styles)
    ======================================== */
+
+/* 当进入摸鱼街机模式时：彻底隐藏 Live2D、背景星光、聊天标签栏与闲杂标题栏按钮，全屏仅聚焦游戏视窗 */
+body.arcade-mode-fullscreen #live2d-container,
+body.arcade-mode-fullscreen .live2d-container,
+body.arcade-mode-fullscreen .dream-stars,
+body.arcade-mode-fullscreen .tab-bar,
+body.arcade-mode-fullscreen #tab-chat,
+body.arcade-mode-fullscreen #tab-code {
+  display: none !important;
+}
+
+/* 标题栏精简：隐藏无关功能图标，仅保留必要窗口控制与返回桌宠 */
+body.arcade-mode-fullscreen .titlebar-buttons #btn-pomodoro-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-memory-diary-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-shortcuts-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-character-select,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-settings,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-arcade-titlebar {
+  display: none !important;
+}
+
+body.arcade-mode-fullscreen .titlebar {
+  background: rgba(10, 15, 29, 0.98) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25) !important;
+  height: 38px !important;
+  padding: 4px 12px !important;
+  box-sizing: border-box !important;
+}
+
+body.arcade-mode-fullscreen .pet-name {
+  color: #00f0ff !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}
+
+/* 聊天面板在街机模式下转为 100% 视口容器 */
+body.arcade-mode-fullscreen .chat-panel {
+  flex: 1 1 100% !important;
+  height: calc(100vh - 38px) !important;
+  max-height: calc(100vh - 38px) !important;
+  min-height: 0 !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #070a13 !important;
+  overflow: hidden !important;
+}
+
+body.arcade-mode-fullscreen .chat-panel::before {
+  display: none !important;
+}
+
 #tab-arcade {
   display: none;
   flex: 1;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  background: var(--bg-light);
+  background: #070a13;
 }
 
-#tab-arcade.active {
-  display: flex;
+#tab-arcade.active,
+body.arcade-mode-fullscreen #tab-arcade {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #070a13 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
 }
 
+/* 街机控制栏 */
 .arcade-sub-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--settings-bg);
+  padding: 6px 10px;
+  background: rgba(13, 21, 39, 0.96);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
-  gap: 10px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  gap: 8px;
   flex-shrink: 0;
-  z-index: 5;
+  z-index: 10;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.arcade-left-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.arcade-btn-exit {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.95)) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35) !important;
+}
+
+.arcade-btn-exit:hover {
+  background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+  transform: translateY(-1px);
 }
 
 .arcade-game-pills {
@@ -3296,31 +3380,31 @@ body.web-mode-active .pet-shortcuts-menu.show {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--text-color);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .arcade-pill-btn:hover {
-  background: var(--hover-color);
-  border-color: var(--primary-color);
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #fff;
   transform: translateY(-1px);
 }
 
 .arcade-pill-btn.active {
-  background: var(--gradient-main);
-  color: #fff;
+  background: linear-gradient(135deg, #00f0ff, #a855f7);
+  color: #070a13;
   border-color: transparent;
-  box-shadow: 0 2px 8px var(--glow-color);
-  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 240, 255, 0.45);
+  font-weight: 700;
 }
 
 .arcade-actions {
@@ -3331,12 +3415,12 @@ body.web-mode-active .pet-shortcuts-menu.show {
 }
 
 .arcade-action-btn {
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 4px 9px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--text-color);
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid var(--border-color);
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -3344,8 +3428,9 @@ body.web-mode-active .pet-shortcuts-menu.show {
 }
 
 .arcade-action-btn:hover {
-  background: var(--hover-color);
-  border-color: var(--primary-color);
+  background: rgba(0, 240, 255, 0.2);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #fff;
 }
 
 .arcade-action-btn.active {
@@ -3355,13 +3440,13 @@ body.web-mode-active .pet-shortcuts-menu.show {
 }
 
 .arcade-viewport-container {
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.02);
+  background: #070a13;
   overflow: hidden;
   position: relative;
 }
@@ -3370,7 +3455,7 @@ body.web-mode-active .pet-shortcuts-menu.show {
   width: 100%;
   height: 100%;
   border: none;
-  background: transparent;
+  background: #070a13;
 }
 
 

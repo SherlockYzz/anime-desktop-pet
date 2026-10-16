@@ -222,6 +222,7 @@ class App {
 
   _bindEvents() {
     document.getElementById('btn-minimize')?.addEventListener('click', () => { window.electronAPI?.minimizeWindow?.()?.catch?.(e => console.warn('最小化失败:', e)); });
+    document.getElementById('btn-maximize-win')?.addEventListener('click', () => { window.electronAPI?.maximizeWindow?.()?.catch?.(e => console.warn('最大化失败:', e)); });
     document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e)); });
     document.getElementById('btn-settings')?.addEventListener('click', () => this.settings.show());
     document.getElementById('btn-pomodoro-titlebar')?.addEventListener('click', () => window.desktopButler?.togglePomodoro?.());
@@ -359,10 +360,44 @@ class App {
     return this._switchTab(name);
   }
 
-  _switchTab(name) {
+  async _switchTab(name) {
     this.currentTab = name;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
+
+    const isArcade = (name === 'arcade');
+    document.body.classList.toggle('arcade-mode-fullscreen', isArcade);
+
+    const titleEl = document.querySelector('.pet-name');
+    if (isArcade) {
+      if (!this._origPetTitle && titleEl) this._origPetTitle = titleEl.textContent;
+      if (titleEl) titleEl.textContent = '🎮 摸鱼街机 (8款精选微游戏)';
+      // 记录进入街机前的窗口尺寸，视口过小时自适应延展以保证游戏完整显示
+      try {
+        const bounds = await window.electronAPI?.getWindowBounds?.();
+        if (bounds && !this._savedBoundsBeforeArcade) {
+          this._savedBoundsBeforeArcade = { ...bounds };
+          if (bounds.width < 460 || bounds.height < 680) {
+            const targetW = Math.max(500, bounds.width);
+            const targetH = Math.max(720, bounds.height);
+            await window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
+          }
+        }
+      } catch (e) {
+        console.warn('调整街机视口出错:', e);
+      }
+    } else {
+      if (titleEl && this._origPetTitle) titleEl.textContent = this._origPetTitle;
+      // 恢复进入街机前的窗口尺寸
+      if (this._savedBoundsBeforeArcade) {
+        try {
+          await window.electronAPI?.setWindowBounds?.(this._savedBoundsBeforeArcade);
+        } catch (e) {
+          console.warn('恢复视口出错:', e);
+        }
+        this._savedBoundsBeforeArcade = null;
+      }
+    }
   }
 
   async _sendChat() {

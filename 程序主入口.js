@@ -243,6 +243,15 @@ ipcMain.handle('minimize-window', () => {
   if (mainWindow) mainWindow.minimize();
 });
 
+ipcMain.handle('maximize-window', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
+});
+
 // ★ 直接 destroy 窗口，跳过 close 事件链，立即退出
 ipcMain.handle('close-window', () => {
   isQuitting = true;

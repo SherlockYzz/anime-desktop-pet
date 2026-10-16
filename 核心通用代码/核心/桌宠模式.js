@@ -234,6 +234,10 @@ class PetMode {
         if (window.shortcutManager?._menuOpen) { window.shortcutManager.toggleMenu(false); return; }
         if (this._scaleMenuOpen) { this._toggleScaleMenu(false); return; }
         if (this._actionMenuOpen) { this._toggleActionMenu(false); return; }
+        if (document.body.classList.contains('arcade-mode-fullscreen')) {
+          window.app?._switchTab?.('chat');
+          return;
+        }
         if (!document.body.classList.contains('web-mode-active')) {
           this.exit(true);
           return;
@@ -449,6 +453,8 @@ class PetMode {
       }
 
       document.body.classList.remove('web-mode-active');
+      document.body.classList.remove('arcade-mode-fullscreen');
+      if (this.app) this.app._savedBoundsBeforeArcade = null;
       await this._loadCharacter();
       this._bindClickEvents();
       this._startIdleTimer();
