@@ -34,6 +34,8 @@ function createWindow() {
     y: screenHeight - 620,
     transparent: true,
     frame: false,
+    thickFrame: false,                  // ★ 彻底消灭 Windows 10/11 在透明无边框窗口周围添加的系统级阴影与重绘边框
+    backgroundColor: '#00000000',       // ★ 严格 32 位全透明，杜绝任何默认背景底色与虚边
     alwaysOnTop: true,
     resizable: true,
     skipTaskbar: false,
@@ -169,8 +171,12 @@ ipcMain.handle('set-always-on-top', (event, flag) => {
 
 // ★ 鼠标穿透（透明区域忽略鼠标事件，悬浮角色实体与交互按钮时不忽略）
 ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
-  if (!mainWindow) return;
-  mainWindow.setIgnoreMouseEvents(Boolean(ignore), options || { forward: true });
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (ignore) {
+    mainWindow.setIgnoreMouseEvents(true, options || { forward: true });
+  } else {
+    mainWindow.setIgnoreMouseEvents(false);
+  }
 });
 
 // ★ 桌宠移动：多显示器工作区自适应

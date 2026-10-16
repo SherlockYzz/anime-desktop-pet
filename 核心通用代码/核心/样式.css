@@ -64,9 +64,21 @@
   --loading-shadow: rgba(248, 180, 200, 0.15);
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
 body {
   font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  background: transparent;
+  background: transparent !important;
   color: var(--text-color);
   overflow: hidden;
   user-select: none;
@@ -75,11 +87,11 @@ body {
 
 /* ★ 网页模式下彻底杜绝桌面图标穿透闪烁：采用实体主题底色 */
 body.web-mode-active {
-  background: var(--bg-color, #ffffff);
+  background: var(--bg-color, #ffffff) !important;
 }
 
-/* ===== 轻量背景装饰 ===== */
-body::before {
+/* ===== 轻量背景装饰（仅在网页模式生效，桌宠模式彻底隐藏杜绝矩形光晕蒙层） ===== */
+body.web-mode-active::before {
   content: '';
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -90,6 +102,9 @@ body::before {
     radial-gradient(circle 80px at 50% 85%, rgba(255,255,255,0.2) 0%, transparent 100%),
     radial-gradient(circle 60px at 30% 60%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
+}
+body:not(.web-mode-active)::before {
+  display: none !important;
 }
 
 /* ===== 梦幻粒子飘浮动画 ===== */
@@ -1661,18 +1676,21 @@ body::before {
    - 使用 opacity 过渡实现丝滑切换
    ============================================================ */
 
-/* 桌宠覆盖层（默认可见） */
+/* 桌宠覆盖层（默认可见 · 强化透明与物理穿透，自身不拦截鼠标，由子元素与动态穿透引擎接管） */
 .pet-overlay {
   display: block;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 500;
-  background: transparent;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   overflow: hidden;
   opacity: 1;
   visibility: visible;
   transition: opacity 0.3s ease;
-  pointer-events: auto;
+  pointer-events: none !important;
 }
 body.web-mode-active .pet-overlay {
   opacity: 0;

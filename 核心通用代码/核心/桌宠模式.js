@@ -29,8 +29,16 @@ class PetMode {
     this._wanderDir = 0;
     this._wanderSpeed = 1.4;
     this._wanderTimer = null;
-    this._moveSpeed = 5;
     this._mouseIgnored = false;
+    this._isDown = false;
+    this._passThroughActive = false;
+    this._passThroughInitialized = false;
+    this._lastHitCheckTime = 0;
+    this._hitCanvas = null;
+    this._hitCtx = null;
+    this._onMouseMovePassThrough = null;
+    this._onMouseLeavePassThrough = null;
+    this._onBlurPassThrough = null;
     // ★ 严守纪律：每次重新登录/打开程序时，必须强制恢复为默认窗口大小（1.0，即 400x600）
     try { localStorage.removeItem('pet-scale'); } catch (e) {}
     this._petScale = 1.0;
@@ -50,10 +58,6 @@ class PetMode {
     const area = document.getElementById('pet-character-area');
     if (!area) return;
 
-    // ★ 确保桌宠模式永远不穿透，保持 100% 鼠标交互捕获
-    window.electronAPI?.setIgnoreMouseEvents?.(false);
-    this._mouseIgnored = false;
-
     // ★ 统一的鼠标按下/拖拽/点击状态机（彻底解耦拖拽与触碰交互）
     let isDown = false;
     let isDragging = false;
@@ -65,6 +69,8 @@ class PetMode {
       if (document.body.classList.contains('web-mode-active')) return;
       if (e.button !== 0) return; // 仅左键拖拽与点击，右键保留给动作百宝箱
       isDown = true;
+      this._isDown = true;
+      this._setIgnoreMouse(false); // 按下时确保捕获事件
       isDragging = false;
       this._dragging = false;
       this._moved = false;
@@ -110,6 +116,7 @@ class PetMode {
       if (!isDown) return;
       const wasDragging = isDragging;
       isDown = false;
+      this._isDown = false;
       isDragging = false;
       this._dragging = false;
 
@@ -310,7 +317,204 @@ class PetMode {
         : (MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()]);
       if (dir) this._keys[dir] = false;
     });
-    window.addEventListener('blur', () => { this._keys = { left: false, right: false, up: false, down: false }; });
+    window.addEventListener('blur', () => {
+      this._keys = { left: false, right: false, up: false, down: false };
+      this._isDown = false;
+      this._dragging = false;
+    });
+  }
+
+  // === 智能动态穿透引擎（真透明 · 像素级穿透） ===
+  _initMousePassThrough() {
+    if (this._passThroughInitialized) return;
+    this._passThroughInitialized = true;
+
+    this._hitCanvas = document.createElement('canvas');
+    this._hitCanvas.width = 1;
+    this._hitCanvas.height = 1;
+    this._hitCtx = this._hitCanvas.getContext('2d', { willReadFrequently: true });
+
+    this._onMouseMovePassThrough = (e) => {
+      if (document.body.classList.contains('web-mode-active')) {
+        if (this._mouseIgnored) this._setIgnoreMouse(false);
+        return;
+      }
+      const now = performance.now();
+      if (now - this._lastHitCheckTime < 20) return; // 50Hz 极速检测，超低 CPU 占用
+      this._lastHitCheckTime = now;
+
+      const isHit = this._checkHit(e.clientX, e.clientY);
+      this._setIgnoreMouse(!isHit);
+    };
+
+    this._onMouseLeavePassThrough = () => {
+      if (document.body.classList.contains('web-mode-active')) return;
+      if (this._dragging || this._isDown) return;
+      this._setIgnoreMouse(true);
+    };
+
+    this._onBlurPassThrough = () => {
+      this._isDown = false;
+      this._dragging = false;
+      if (!document.body.classList.contains('web-mode-active')) {
+        this._setIgnoreMouse(true);
+      }
+    };
+  }
+
+  _startMousePassThrough() {
+    this._initMousePassThrough();
+    if (this._passThroughActive) return;
+    this._passThroughActive = true;
+    window.addEventListener('mousemove', this._onMouseMovePassThrough, { passive: true });
+    window.addEventListener('mouseleave', this._onMouseLeavePassThrough, { passive: true });
+    window.addEventListener('blur', this._onBlurPassThrough);
+  }
+
+  _stopMousePassThrough() {
+    if (!this._passThroughActive) return;
+    this._passThroughActive = false;
+    window.removeEventListener('mousemove', this._onMouseMovePassThrough);
+    window.removeEventListener('mouseleave', this._onMouseLeavePassThrough);
+    window.removeEventListener('blur', this._onBlurPassThrough);
+  }
+
+  _setIgnoreMouse(ignore) {
+    const shouldIgnore = Boolean(ignore);
+    if (this._mouseIgnored === shouldIgnore) return;
+    this._mouseIgnored = shouldIgnore;
+    window.electronAPI?.setIgnoreMouseEvents?.(shouldIgnore, { forward: true });
+  }
+
+  _checkHit(clientX, clientY) {
+    if (document.body.classList.contains('web-mode-active')) return true;
+    if (this._dragging || this._isDown) return true;
+
+    // 弹窗菜单（姿态百宝箱、大小滑动窗口、快捷键面板、记忆日记）打开时保持捕获
+    if (
+      this._actionMenuOpen ||
+      this._scaleMenuOpen ||
+      window.shortcutManager?._menuOpen ||
+      document.getElementById('pet-memory-diary-modal')
+    ) {
+      return true;
+    }
+
+    const elem = document.elementFromPoint(clientX, clientY);
+    if (!elem) return false;
+
+    // 交互控件（底部控制按钮栏、对话气泡、番茄钟徽章、菜单弹层）
+    if (
+      elem.closest('#pet-controls') ||
+      elem.closest('.pet-bubble') ||
+      elem.closest('#pet-pomodoro-badge') ||
+      elem.closest('.pet-pomodoro-badge') ||
+      elem.closest('#pet-scale-menu') ||
+      elem.closest('#pet-action-menu') ||
+      elem.closest('#pet-shortcuts-menu') ||
+      elem.closest('.pet-control-btn')
+    ) {
+      return true;
+    }
+
+    // 角色区域：执行像素级真透明穿透检测
+    if (elem.closest('#pet-character-area')) {
+      return this._checkCharacterPixelHit(clientX, clientY);
+    }
+
+    return false;
+  }
+
+  _checkCharacterPixelHit(clientX, clientY) {
+    try {
+      const area = document.getElementById('pet-character-area');
+      if (!area) return false;
+      const areaRect = area.getBoundingClientRect();
+      if (
+        clientX < areaRect.left || clientX > areaRect.right ||
+        clientY < areaRect.top || clientY > areaRect.bottom
+      ) {
+        return false;
+      }
+
+      // 1. 若曦专属：精灵表 Canvas (#pet-sprite-canvas)
+      const spriteCanvas = document.getElementById('pet-sprite-canvas');
+      if (spriteCanvas && spriteCanvas.style.display !== 'none' && spriteCanvas.offsetParent !== null) {
+        const rect = spriteCanvas.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+          const sX = spriteCanvas.width / rect.width;
+          const sY = spriteCanvas.height / rect.height;
+          const px = Math.floor((clientX - rect.left) * sX);
+          const py = Math.floor((clientY - rect.top) * sY);
+          const ctx = spriteCanvas.getContext('2d');
+          if (ctx) {
+            const pixel = ctx.getImageData(px, py, 1, 1).data;
+            return pixel[3] > 20; // Alpha > 20 判定为角色实体
+          }
+        }
+        return false;
+      }
+
+      // 2. 静态立绘 / GIF (高木同学、雪乃、02等)
+      const gif = document.getElementById('pet-gif');
+      const fallbackImg = area.querySelector('.pet-fallback-img');
+      const targetImg = (gif && gif.style.display !== 'none' && gif.offsetParent !== null && gif.src) ? gif :
+                        (fallbackImg && fallbackImg.style.display !== 'none' && fallbackImg.offsetParent !== null ? fallbackImg : null);
+
+      if (targetImg && targetImg.complete && targetImg.naturalWidth > 0) {
+        const rect = targetImg.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+          if (!this._hitCanvas) {
+            this._hitCanvas = document.createElement('canvas');
+            this._hitCanvas.width = 1;
+            this._hitCanvas.height = 1;
+            this._hitCtx = this._hitCanvas.getContext('2d', { willReadFrequently: true });
+          }
+          const scaleX = targetImg.naturalWidth / rect.width;
+          const scaleY = targetImg.naturalHeight / rect.height;
+          const px = Math.floor((clientX - rect.left) * scaleX);
+          const py = Math.floor((clientY - rect.top) * scaleY);
+
+          this._hitCtx.clearRect(0, 0, 1, 1);
+          this._hitCtx.drawImage(targetImg, px, py, 1, 1, 0, 0, 1, 1);
+          const pixel = this._hitCtx.getImageData(0, 0, 1, 1).data;
+          return pixel[3] > 20;
+        }
+        return false;
+      }
+
+      // 3. Live2D / VRM Canvas (#pet-canvas / #pet-vrm-canvas)
+      const petCanvas = document.getElementById('pet-canvas');
+      const vrmCanvas = document.getElementById('pet-vrm-canvas');
+      const canvas = (petCanvas && petCanvas.style.display !== 'none' && petCanvas.offsetParent !== null) ? petCanvas :
+                     ((vrmCanvas && vrmCanvas.style.display !== 'none' && vrmCanvas.offsetParent !== null) ? vrmCanvas : null);
+
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+          const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+          if (gl) {
+            const sX = canvas.width / rect.width;
+            const sY = canvas.height / rect.height;
+            const glX = Math.floor((clientX - rect.left) * sX);
+            const glY = Math.floor((rect.bottom - clientY) * sY); // WebGL Y轴翻转
+            if (glX >= 0 && glX < canvas.width && glY >= 0 && glY < canvas.height) {
+              const pixel = new Uint8Array(4);
+              gl.readPixels(glX, glY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+              return pixel[3] > 20;
+            }
+          }
+        }
+        return false;
+      }
+
+      // 容错兜底：未就绪时按核心区域判定
+      const relX = (clientX - areaRect.left) / areaRect.width;
+      const relY = (clientY - areaRect.top) / areaRect.height;
+      return (relX >= 0.15 && relX <= 0.85 && relY >= 0.05 && relY <= 0.95);
+    } catch (e) {
+      return true;
+    }
   }
 
   /** 动作调用入口 */
@@ -437,8 +641,9 @@ class PetMode {
     this.app.hideCharacterSelector?.();
 
     try {
-      window.electronAPI?.setIgnoreMouseEvents?.(false);
-      this._mouseIgnored = false;
+      // ★ 启动智能动态穿透引擎：初始为穿透状态，透明空白区域物理穿透直达底层桌面
+      this._startMousePassThrough();
+      this._setIgnoreMouse(true);
       if (skipTransition || !this._everTransitioned) {
         document.body.classList.remove('web-mode-active');
         await this._loadCharacter();
@@ -488,11 +693,9 @@ class PetMode {
       this._stopIdleTimer();
       this._clearBubbles();
 
-      // 退出桌宠模式时，确保全局恢复鼠标交互（全窗口响应）
-      if (this._mouseIgnored) {
-        window.electronAPI?.setIgnoreMouseEvents?.(false);
-        this._mouseIgnored = false;
-      }
+      // ★ 退出桌宠模式时，彻底停止穿透引擎，全局恢复全窗口鼠标交互捕获
+      this._stopMousePassThrough();
+      this._setIgnoreMouse(false);
 
       document.body.classList.add('web-mode-active');
 
@@ -1152,6 +1355,7 @@ class PetMode {
               antialias: true,
               autoDensity: true,
               resolution: window.devicePixelRatio || 1,
+              preserveDrawingBuffer: true // ★ 保持绘图缓冲，供精准像素读取实现真穿透
             });
           } else if (this._pixiApp.renderer) {
             this._pixiApp.renderer.resize(stageW, stageH);

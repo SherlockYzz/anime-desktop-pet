@@ -110,7 +110,8 @@ class VRMManager {
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       alpha: true,
-      antialias: true
+      antialias: true,
+      preserveDrawingBuffer: true
     });
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);

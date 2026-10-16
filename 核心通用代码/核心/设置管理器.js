@@ -886,9 +886,13 @@ class SettingsManager {
     window.mimoAPI.setModel(this.settings.model);
     // ★ 关键修复：把响应模式真正注入 AI 接口！
     window.mimoAPI.setResponseMode(this.settings.responseMode || 'instant');
-    window.mimoAPI.setPromptMode(this.settings.promptMode || 'auto');
-    window.electronAPI?.setAlwaysOnTop(this.settings.alwaysOnTop);
-    document.body.style.opacity = this.settings.opacity / 100;
+    // ★ 严禁将透明度赋给 document.body！否则 Windows DWM 会将整块 400x600 做半透明合成，产生 1px 系统灰色边框与背景脏色
+    document.body.style.opacity = '1';
+    const op = (this.settings.opacity ?? 95) / 100;
+    const petArea = document.getElementById('pet-character-area');
+    if (petArea) petArea.style.opacity = String(op);
+    const chatPanel = document.querySelector('.chat-panel');
+    if (chatPanel) chatPanel.style.opacity = String(op);
   }
 
   async testConnection() {
