@@ -1,8 +1,8 @@
 ﻿<div align="center">
 
-# ✨ 二次元AI桌宠 v07.21（双版本发布 / Dual-Language Edition）
+# ✨ 二次元AI桌宠 v07.22（双版本发布 / Dual-Language Edition）
 
-**九大经典动漫角色全阵容 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
+**九大经典动漫角色全阵容 · 摸鱼街机套件(8款微游戏) · 133段CV原声喝彩联动 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
 
 <br>
 
@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Edition-Dual%20(CN%20%2F%20EN)-8A2BE2?style=for-the-badge" alt="Edition">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
+  <img src="https://img.shields.io/badge/Arcade-8%20Mini%20Games-orange?style=for-the-badge" alt="Arcade">
   <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4%2F5-ff69b4?style=for-the-badge" alt="Live2D">
   <img src="https://img.shields.io/badge/Voice-133%20Broadcast%20CV-00cec9?style=for-the-badge" alt="Voice">
   <img src="https://img.shields.io/badge/Memory-10%20Tier%20Bond%20%26%20Diary-ff4757?style=for-the-badge" alt="BondDiary">
@@ -25,7 +26,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-DesktopPet-v07.21-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (147MB)</b></a>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI桌宠-v07.22-安装向导.exe"><b>📥 点击直接下载【简体中文版】安装向导</b></a>
   <br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>🌍 Direct Download 【English Edition】 Setup (147MB)</b></a>
   <br><br>
@@ -313,16 +314,37 @@
 
 ---
 
+### 8. 🎮 摸鱼街机：8款轻量微游戏套件与桌宠深度情感联动 (v7.22 重磅实装)
+
+在网页工作台新增 **「🎮 摸鱼街机」** 主选项卡，并在桌宠模式「动作百宝箱」底部增设快捷入口。内置 8 款专为多端生态打造的轻量、零依赖微型游戏矩阵：
+
+| 游戏名称 | 核心机制 | 宿主与声效联动特色 |
+| :--- | :--- | :--- |
+| **🧱 拉海洛方块·放置** | 8×8 放置消除，方块不可旋转，满行满列爆破 | 震屏微抖反馈，Combo 阶梯上升和弦琶音，桌宠广播喝彩 |
+| **⬇️ 拉海洛方块·重力** | 10×20 俄罗斯下落，支持平移、90°旋转、垂直/水平翻转与投影 | 多行大消除震屏，落点虚影预判与 Hold 暂存 |
+| **⬡ 六边形消除** | 61 格蜂巢轴坐标 ($q,r,s$)，横向/左斜/右斜 3 轴向全线消除 | 三向全屏大爆破，死局发牌保底与阻尼震屏 |
+| **⚪ 共鸣弹球** | 物理连续碰撞 (微子步 CCD 防穿模)，双模反射瞄准 | 2x ⏩ 倍速自由切换与 ⚡ 一键召回，机关枪式高频反弹 |
+| **💡 点点引光** | 8 关严格哈密顿全图填满回路，管道互不交叉 | 通关瞬间全盘回路发光，极度解压治愈 |
+| **🎨 溢彩水墨** | 10 关严格数学必解、BFS 水墨同化扩散、5 色国风调色盘 | 墨彩同化涟漪动画，空灵五音阶水滴敲击感 |
+| **🏰 堆叠高塔** | 2.5D 等距透视切片物理，悬空碎块重力掉落 | 连续完美对齐 C4~C6 连击琶音，彩虹渐变高塔 |
+| **🪞 镜光引路** | 8 关严谨唯一解光导阵列，45° 可旋转反光镜与分光棱镜 | 多层辉光激光实时投射，机械转镜齿轮音效与晶核充能 |
+
+- **🔊 零外部静态依赖（彻底杜绝 404）**：全套游戏音效纯由 Web Audio API 物理波形实时合成，不加载任何外部 `.mp3`，秒开秒玩；
+- **🎙️ 全角色 133 段原声 CV 实时语音喝彩**：连击（Combo >= 2）时土间埋喝彩欢呼、惠惠中二咏唱爆裂魔法、蕾姆温柔表扬；游戏失败时高木同学俏皮调侃；
+- **💖 玩游戏涨好感度与经验值**：通关关卡奖励 `+3 EXP`，打破历史最高纪录奖励 `+5 EXP`，桌宠头顶缓缓升起萌系漂浮提示，让摸鱼小游戏成为增进羁绊的温暖纽带！
+
+---
+
 ## 🚀 四、快速安装与 AI 大模型配置指南
 
 ### 1. 软件一键下载与安装向导（中英双版本 · 开箱即用）
 
 | 版本分类 / Edition | 安装包文件名 | 安装向导语言 | 适用群体 | 高速下载链接 |
 | :--- | :--- | :--- | :--- | :--- |
-| 🇨🇳 **简体中文版（国内推荐）** | `AI-DesktopPet-v07.21-Setup.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包 (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-DesktopPet-v07.21-Setup.exe) |
+| 🇨🇳 **简体中文版（国内推荐）** | `AI桌宠-v07.22-安装向导.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI桌宠-v07.22-安装向导.exe) |
 | 🌍 **English Edition** | `AI-Desktop-Pet-v07.21-Setup.exe` | 纯英文 (NSIS 1033) | 海外 / 英语用户 | [👉 Click to Download English Setup (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe) |
 
-> 📌 **完整 Release 发布页**：[GitHub Releases - v07.21 双版本发布](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v07.21)  
+> 📌 **完整 Release 发布页**：[GitHub Releases - v07.22 发布页](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v07.22)  
 > **安装流程**：
 > 1. 下载对应安装包后双击运行；
 > 2. 跟随向导**自由选择安装盘符与目录（如 D 盘 / E 盘 / F 盘）**；
@@ -351,8 +373,14 @@ npm run build:win
 
 ## 🛠️ 五、近期版本优化与问题修复记录 (Changelog & Bug Fixes)
 
-> 以下为 `v07.21` 及近期版本针对稳定性、国际化与交互细节完成的底层治理记录：
+> 以下为 `v07.22` 及近期版本针对稳定性、国际化与交互细节完成的底层治理记录：
 
+- **🎉 [v07.22 重磅实装] 「摸鱼街机」微游戏套件深度接入与桌宠情感闭环**：
+  - **8 款精选微型游戏全量实装**：内置拉海洛放置版、拉海洛重力版、六边形消除、共鸣弹球、点点引光、溢彩画、堆叠高塔与镜光引路；
+  - **视听爽感（Game Juice）升级**：消除类游戏引入 Canvas 屏幕微震动（Screen Shake）与五声音阶循环升调反馈；弹球加入 2x 倍速与召回；
+  - **全角色 133 段原生 CV 实时喝彩联动**：小游戏连击、破纪录、通关、失败等关键节点，桌宠均会根据当前角色播放地道原声 CV 与专属气泡台词；
+  - **好感度系统闭环**：通关或破纪录直接给当前角色注入 `+3 ~ +5 EXP` 亲密度经验，玩游戏增进感情；
+  - **双形态一键唤醒**：Web 模式提供独立第 3 主 Tab，桌宠百宝箱底部新增「🎮 街机」按钮。
 - **🎉 [重磅] 正式上线独立 English Edition（双语言版本独立发布）**：
   - 为满足海外用户的国际化需求，在**严格保证原中文版代码与安装向导 100% 原始稳定**的前提下，独立构建并发布了全套英文版；
   - 源码与资源独立存放在 [`english`](https://github.com/SherlockYzz/anime-desktop-pet/tree/english) 独立分支，Release 提供专属 NSIS 1033 全英文安装向导（`AI-Desktop-Pet-v07.21-Setup.exe`）及全英文文档；
