@@ -60,8 +60,9 @@
             // 候选手牌
             this.docks = [null, null, null];
             
-            // 粒子系统
+            // 粒子与悬浮文字系统
             this.particles = [];
+            this.floatingTexts = [];
             
             // 拖拽状态
             this.dragState = {
@@ -101,6 +102,7 @@
             this.canvas.height = h * dpr;
             this.dpr = dpr;
             this.cellSize = this.canvas.width / this.GRID_SIZE;
+            this.dragState.liftOffset = 70 * dpr; // 动态乘以 DPR 防手指遮挡
         }
 
         restart() {
@@ -110,6 +112,7 @@
             this.isGameOver = false;
             this.isPaused = false;
             this.particles = [];
+            this.floatingTexts = [];
             this._updateScoreUI();
             this._spawnDocks();
             document.getElementById('game-over-modal')?.classList.remove('active');
@@ -401,8 +404,16 @@
                 this.score += bonus;
                 this._updateScoreUI();
 
-                // 物理屏幕阻尼微震颤
+                // 物理屏幕阻尼微震颤与悬浮得分飘字
                 this.triggerShake(totalLines > 1 ? 5 : 3.5, 120);
+                this.floatingTexts.push({
+                    text: `+${bonus}${this.combo > 1 ? ` 🔥x${this.combo}` : ''}`,
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height / 2,
+                    alpha: 1.0,
+                    vy: -1.2,
+                    color: this.combo > 1 ? '#f43f5e' : '#fbbf24'
+                });
 
                 // 播放阶梯音阶与触觉震动
                 this.audio.playClear(totalLines, this.combo);
@@ -472,17 +483,34 @@
                 document.getElementById('final-score-val').textContent = this.score;
                 document.getElementById('game-over-modal')?.classList.add('active');
 
-                this.bridge.emit('ON_GAME_OVER', {
+                const overPayload = {
                     finalScore: this.score,
-                    highScore: this.highScore
-                });
+                    score: this.score,
+                    highScore: this.highScore,
+                    current: this.score,
+                    best: this.highScore
+                };
+                this.bridge.emit('GAME_OVER', overPayload);
+                this.bridge.emit('ON_GAME_OVER', overPayload);
             }
         }
 
         _updateScoreUI() {
             document.getElementById('score-val').textContent = this.score;
-            document.getElementById('high-score-val').textContent = Math.max(this.score, this.highScore);
-            this.bridge.emit('ON_SCORE_UPDATE', { currentScore: this.score, highScore: this.highScore });
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                window.SafeStorage.set('lahairo_high_score', this.highScore);
+            }
+            document.getElementById('high-score-val').textContent = this.highScore;
+
+            const payload = {
+                current: this.score,
+                best: this.highScore,
+                currentScore: this.score,
+                highScore: this.highScore
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
         }
 
         _createParticles(x, y, color) {
@@ -617,6 +645,26 @@
                     this.ctx.beginPath();
                     this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+
+            // 绘制浮动得分文字
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) {
+                    this.floatingTexts.splice(i, 1);
+                } else {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = ft.alpha;
+                    this.ctx.font = `900 ${22 * this.dpr}px -apple-system, sans-serif`;
+                    this.ctx.fillStyle = ft.color;
+                    this.ctx.shadowColor = ft.color;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(ft.text, ft.x, ft.y);
                     this.ctx.restore();
                 }
             }

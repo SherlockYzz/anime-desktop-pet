@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "7.23.0",
-  "description": "二次元AI桌宠 v07.23 - 真透明与像素级物理穿透 · 九大角色全阵容 · 摸鱼街机套件(8款精选微游戏) · 133段CV原声喝彩联动 · 官方考据十阶羁绊与零OOC隔离 · 角色专属手账与长期记忆 · 桌面管家三件套 · 双核Live2D · 广播级原生CV声库",
+  "version": "8.0.0",
+  "description": "二次元AI桌宠 v08.00 - 全量十款轻量H5独立微游戏套件(含极意数独与律动共鸣音游) · 鸣潮关卡深度复刻 · 133段CV原声喝彩联动 · 真透明与像素级物理穿透 · 官方考据十阶羁绊与零OOC隔离 · 角色专属手账与长期记忆 · 桌面管家三件套 · 双核Live2D · 广播级原生CV声库",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
@@ -56,7 +56,7 @@
         }
       ],
       "icon": "AI桌宠.ico",
-      "artifactName": "${productName}-v07.22-安装向导.${ext}"
+      "artifactName": "${productName}-v08.00-安装向导.${ext}"
     },
     "mac": {
       "target": "dmg"

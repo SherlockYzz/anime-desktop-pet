@@ -46,6 +46,7 @@
             this.lockTimer = 0;
 
             this.particles = [];
+            this.floatingTexts = [];
             this.shake = { intensity: 0, duration: 0, startTime: 0 };
 
             this.audio = new window.AudioEngine();
@@ -95,6 +96,7 @@
             this.canHold = true;
             this.heldPiece = null;
             this.particles = [];
+            this.floatingTexts = [];
             this.dropInterval = 800;
 
             this.nextPiece = this._randomPiece();
@@ -280,7 +282,9 @@
             }
             this.score += dropDist * 2;
             this.audio.playDrop();
-            this.bridge.vibrate(20);
+            this.bridge.vibrate(dropDist > 4 ? 25 : 15);
+            // 硬下落强击震屏与火花冲击
+            this.triggerShake(dropDist > 4 ? 4.5 : 2.5, 80);
             this._createImpactSparks();
             this._lockPiece();
         }
@@ -375,6 +379,15 @@
                     }
                 });
 
+                // 浮动跳字
+                const midRow = fullRows[Math.floor(fullRows.length / 2)];
+                this._addFloatingText(
+                    `+${gained}${this.combo > 1 ? ` (x${this.combo})` : ''}`,
+                    this.canvas.width / 2,
+                    midRow * this.cellSize + this.cellSize / 2,
+                    this.combo > 1 ? '#ffea00' : '#00f0ff'
+                );
+
                 // 优雅下落消除：保留未被消除的行，在顶部补全空行 (彻底根除多行并发消除跳行 Bug)
                 const newBoard = this.board.filter((_, idx) => !fullRows.includes(idx));
                 while (newBoard.length < this.ROWS) {
@@ -395,6 +408,17 @@
             }
 
             this._updateScoreUI();
+        }
+
+        _addFloatingText(text, x, y, color = '#00f0ff') {
+            this.floatingTexts.push({
+                text,
+                x,
+                y,
+                alpha: 1,
+                vy: -1.2 * this.dpr,
+                color
+            });
         }
 
         _showComboBanner(combo, lines) {
@@ -423,18 +447,37 @@
             document.getElementById('final-score-val').textContent = this.score;
             document.getElementById('game-over-modal')?.classList.add('active');
 
-            this.bridge.emit('ON_GAME_OVER', {
+            const overPayload = {
                 finalScore: this.score,
-                highScore: this.highScore
-            });
+                score: this.score,
+                highScore: this.highScore,
+                current: this.score,
+                best: this.highScore
+            };
+            this.bridge.emit('GAME_OVER', overPayload);
+            this.bridge.emit('ON_GAME_OVER', overPayload);
         }
 
         _updateScoreUI() {
             document.getElementById('score-val').textContent = this.score;
-            document.getElementById('high-score-val').textContent = Math.max(this.score, this.highScore);
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                window.SafeStorage.set('lahairo_falling_high_score', this.highScore);
+            }
+            document.getElementById('high-score-val').textContent = this.highScore;
             document.getElementById('level-val').textContent = this.level;
             document.getElementById('lines-val').textContent = this.linesCleared;
-            this.bridge.emit('ON_SCORE_UPDATE', { currentScore: this.score, highScore: this.highScore });
+
+            const payload = {
+                current: this.score,
+                best: this.highScore,
+                currentScore: this.score,
+                highScore: this.highScore,
+                level: this.level,
+                lines: this.linesCleared
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
         }
 
         _bindEvents() {
@@ -690,6 +733,27 @@
                     this.ctx.beginPath();
                     this.ctx.arc(p.x, p.y, 3 * this.dpr, 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+
+            // 6. 浮动得分跳字渲染
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) {
+                    this.floatingTexts.splice(i, 1);
+                } else {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = ft.alpha;
+                    this.ctx.fillStyle = ft.color || '#ffea00';
+                    this.ctx.font = `bold ${Math.round(16 * this.dpr)}px system-ui, -apple-system, sans-serif`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.shadowColor = ft.color || '#ffea00';
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.fillText(ft.text, ft.x, ft.y);
                     this.ctx.restore();
                 }
             }

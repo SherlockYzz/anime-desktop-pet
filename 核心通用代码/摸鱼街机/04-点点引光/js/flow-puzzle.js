@@ -589,6 +589,8 @@
             this.activeColor = null;
             this.isDragging = false;
             this.isWon = false;
+            this.isPaused = false;
+            this.strokeCount = 0;
             this.victoryPulse = null;
             this.particles = [];
 
@@ -598,6 +600,16 @@
             this._startLoop();
 
             this.bridge.emit('ON_READY', { game: 'flow-link' });
+        }
+
+        pause() {
+            this.isPaused = true;
+            document.getElementById('pause-modal')?.classList.add('active');
+        }
+
+        resume() {
+            this.isPaused = false;
+            document.getElementById('pause-modal')?.classList.remove('active');
         }
 
         _initDPI() {
@@ -619,6 +631,7 @@
             this.cellSize = this.canvas.width / this.level.size;
             this.pipes.clear();
             this.isWon = false;
+            this.strokeCount = 0;
             this.victoryPulse = null;
             this.particles = [];
 
@@ -636,13 +649,13 @@
 
         nextLevel() {
             this.currentLevelIdx = (this.currentLevelIdx + 1) % LEVELS.length;
-            window.SafeStorage.set('flow_level_idx', this.currentLevelIdx);
+            this.bridge.saveProgress({ level: this.currentLevelIdx });
             this._loadLevel(this.currentLevelIdx);
         }
 
         prevLevel() {
             this.currentLevelIdx = (this.currentLevelIdx - 1 + LEVELS.length) % LEVELS.length;
-            window.SafeStorage.set('flow_level_idx', this.currentLevelIdx);
+            this.bridge.saveProgress({ level: this.currentLevelIdx });
             this._loadLevel(this.currentLevelIdx);
         }
 
@@ -662,8 +675,10 @@
                 if (node) {
                     this.activeColor = node.name;
                     this.isDragging = true;
+                    this.strokeCount++;
                     this.pipes.set(node.name, [{ r: cell.r, c: cell.c }]);
                     this.audio.playStep(520);
+                    this._updateUI();
                 } else {
                     // 点在现有管道中间：截断至该点并继续延伸
                     for (let [color, path] of this.pipes) {
@@ -671,8 +686,10 @@
                         if (pathIdx !== -1) {
                             this.activeColor = color;
                             this.isDragging = true;
+                            this.strokeCount++;
                             this.pipes.set(color, path.slice(0, pathIdx + 1));
                             this.audio.playStep(480);
+                            this._updateUI();
                             break;
                         }
                     }
@@ -861,16 +878,48 @@
                     path.forEach(p => this._createGlowParticles(p.r, p.c, n.color));
                 });
 
-                this.bridge.emit('ON_LEVEL_COMPLETE', {
+                const minStrokes = this.level.nodes.length;
+                let stars = 1;
+                let rating = '功德圆满';
+                if (this.strokeCount <= minStrokes) {
+                    stars = 3;
+                    rating = '神乎其技·一笔通天';
+                } else if (this.strokeCount <= minStrokes + 2) {
+                    stars = 2;
+                    rating = '妙手天成·游刃有余';
+                } else {
+                    stars = 1;
+                    rating = '功德圆满·百折不挠';
+                }
+
+                const completePayload = {
                     levelIndex: this.currentLevelIdx + 1,
-                    size: this.level.size
-                });
+                    level: this.currentLevelIdx + 1,
+                    size: this.level.size,
+                    fillPercent: 100,
+                    current: 100,
+                    best: 100,
+                    currentScore: 100,
+                    highScore: 100,
+                    stars: stars,
+                    strokes: this.strokeCount,
+                    minStrokes: minStrokes
+                };
+                this.bridge.saveProgress({ level: Math.min(this.currentLevelIdx + 1, LEVELS.length - 1) });
+                this.bridge.emit('LEVEL_COMPLETE', completePayload);
+                this.bridge.emit('ON_LEVEL_COMPLETE', completePayload);
 
                 // 延迟 700ms 弹出结算弹窗，留足观赏全图流光贯通的震撼视觉
                 setTimeout(() => {
                     const textEl = document.getElementById('victory-level-text');
+                    const starStr = '⭐'.repeat(stars);
                     if (textEl) {
-                        textEl.textContent = `关卡 ${this.currentLevelIdx + 1} 完美通关！全盘共鸣流光 100% 贯通！`;
+                        textEl.innerHTML = `
+                            <div style="font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 0 12px #00f0ff); letter-spacing: 6px;">${starStr}</div>
+                            <div style="font-size: 15px; color: #00f0ff; font-weight: bold; margin-bottom: 12px;">[ ${rating} ]</div>
+                            关卡 ${this.currentLevelIdx + 1} 完美通关！全盘共鸣流光 100% 贯通！<br>
+                            连线尝试: <strong>${this.strokeCount}</strong> 次 (基准笔数: ${minStrokes} 笔)
+                        `;
                     }
                     document.getElementById('victory-modal')?.classList.add('active');
                 }, 700);
@@ -887,7 +936,22 @@
 
             document.getElementById('level-label-val').textContent = `${this.currentLevelIdx + 1}/${LEVELS.length}`;
             document.getElementById('fill-percent-val').textContent = `${percent}%`;
-            this.bridge.emit('ON_SCORE_UPDATE', { fillPercent: percent, level: this.currentLevelIdx + 1 });
+            const strokesEl = document.getElementById('strokes-val');
+            if (strokesEl) {
+                strokesEl.textContent = `${this.strokeCount}`;
+            }
+
+            const payload = {
+                fillPercent: percent,
+                level: this.currentLevelIdx + 1,
+                levelIndex: this.currentLevelIdx,
+                current: percent,
+                best: 100,
+                currentScore: percent,
+                highScore: 100
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
         }
 
         _createGlowParticles(r, c, color) {

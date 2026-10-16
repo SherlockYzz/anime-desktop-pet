@@ -15,133 +15,973 @@
         { id: 4, name: '翡翠绿', hex: '#10b981', glow: 'rgba(16, 185, 129, 0.5)' }
     ];
 
-    // 10 关严格数学可解关卡配置
+    // 15 关严格数学全通关配置（全量复刻《鸣潮》黎那汐塔【溢彩画册】大世界探索机制）
     const LEVELS = [
         {
-            "name": "第 1 关: 启蒙·双生水墨",
-            "size": 3,
-            "steps": 2,
-            "grid": [
-                [1, 1, 0],
-                [0, 0, 0],
-                [0, 1, 1]
-            ]
+                "name": "第 1 关: 黎那汐塔·星夜与月",
+                "size": 5,
+                "steps": 4,
+                "grid": [
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                        ],
+                        [
+                                1,
+                                0,
+                                2,
+                                0,
+                                1
+                        ],
+                        [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ]
+                ]
         },
         {
-            "name": "第 2 关: 回转·同心之环",
-            "size": 4,
-            "steps": 2,
-            "grid": [
-                [0, 0, 0, 0],
-                [0, 1, 1, 0],
-                [0, 1, 0, 0],
-                [0, 0, 0, 0]
-            ]
+                "name": "第 2 关: 黎乔利的星期日",
+                "size": 6,
+                "steps": 5,
+                "grid": [
+                        [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                0,
+                                2,
+                                2,
+                                1,
+                                3,
+                                1
+                        ],
+                        [
+                                0,
+                                2,
+                                3,
+                                3,
+                                3,
+                                1
+                        ],
+                        [
+                                2,
+                                3,
+                                3,
+                                3,
+                                1,
+                                1
+                        ],
+                        [
+                                2,
+                                3,
+                                0,
+                                0,
+                                1,
+                                1
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                0,
+                                0
+                        ]
+                ]
         },
         {
-            "name": "第 3 关: 流云·三色交响",
-            "size": 5,
-            "steps": 3,
-            "grid": [
-                [0, 0, 1, 1, 2],
-                [0, 0, 1, 1, 2],
-                [2, 1, 1, 1, 2],
-                [2, 0, 0, 0, 2],
-                [2, 2, 2, 2, 2]
-            ]
+                "name": "第 3 关: 拉古那的回忆",
+                "size": 6,
+                "steps": 6,
+                "grid": [
+                        [
+                                1,
+                                1,
+                                2,
+                                2,
+                                3,
+                                3
+                        ],
+                        [
+                                1,
+                                0,
+                                2,
+                                2,
+                                0,
+                                3
+                        ],
+                        [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                        ],
+                        [
+                                3,
+                                0,
+                                1,
+                                1,
+                                0,
+                                2
+                        ],
+                        [
+                                3,
+                                3,
+                                1,
+                                1,
+                                2,
+                                2
+                        ],
+                        [
+                                3,
+                                3,
+                                0,
+                                0,
+                                2,
+                                2
+                        ]
+                ]
         },
         {
-            "name": "第 4 关: 棋盘·交错织网",
-            "size": 4,
-            "steps": 3,
-            "grid": [
-                [0, 0, 1, 1],
-                [0, 0, 1, 1],
-                [1, 1, 0, 0],
-                [1, 1, 0, 0]
-            ]
+                "name": "第 4 关: 林间曦光",
+                "size": 6,
+                "steps": 5,
+                "grid": [
+                        [
+                                0,
+                                0,
+                                1,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                0,
+                                0,
+                                1,
+                                2,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                0,
+                                0,
+                                2,
+                                2,
+                                1
+                        ],
+                        [
+                                3,
+                                2,
+                                2,
+                                0,
+                                0,
+                                1
+                        ],
+                        [
+                                3,
+                                2,
+                                2,
+                                3,
+                                0,
+                                0
+                        ],
+                        [
+                                3,
+                                3,
+                                3,
+                                3,
+                                0,
+                                0
+                        ]
+                ]
         },
         {
-            "name": "第 5 关: 梯田·层级涟漪",
-            "size": 5,
-            "steps": 4,
-            "grid": [
-                [0, 0, 0, 0, 0],
-                [1, 1, 1, 1, 0],
-                [2, 2, 2, 1, 0],
-                [3, 3, 2, 1, 0],
-                [3, 3, 2, 1, 0]
-            ]
+                "name": "第 5 关: 埃格拉的风车",
+                "size": 7,
+                "steps": 5,
+                "grid": [
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                4,
+                                1,
+                                4,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                0,
+                                4,
+                                0,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                4,
+                                2,
+                                4,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                0,
+                                4,
+                                0,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                4,
+                                1,
+                                4,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ]
+                ]
         },
         {
-            "name": "第 6 关: 核心·四象归元",
-            "size": 6,
-            "steps": 4,
-            "grid": [
-                [0, 0, 0, 1, 1, 1],
-                [0, 0, 0, 1, 1, 1],
-                [0, 0, 2, 2, 1, 1],
-                [3, 3, 2, 2, 1, 1],
-                [3, 3, 3, 3, 3, 3],
-                [3, 3, 3, 3, 3, 3]
-            ]
+                "name": "第 6 关: 湖中睡莲",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                0,
+                                2,
+                                2,
+                                1,
+                                3,
+                                3,
+                                1
+                        ],
+                        [
+                                0,
+                                2,
+                                4,
+                                4,
+                                4,
+                                3,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                4,
+                                4,
+                                4,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                3,
+                                4,
+                                4,
+                                4,
+                                2,
+                                0
+                        ],
+                        [
+                                1,
+                                3,
+                                3,
+                                1,
+                                2,
+                                2,
+                                0
+                        ],
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                0,
+                                0,
+                                0
+                        ]
+                ]
         },
         {
-            "name": "第 7 关: 鸣潮·风暴眼",
-            "size": 6,
-            "steps": 4,
-            "grid": [
-                [0, 0, 0, 0, 0, 0],
-                [0, 1, 1, 1, 1, 0],
-                [0, 1, 2, 2, 1, 0],
-                [0, 1, 2, 2, 1, 0],
-                [0, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0]
-            ]
+                "name": "第 7 关: 拂风水畔·翠色流云",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                2,
+                                2,
+                                2,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                2,
+                                0,
+                                2,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                2,
+                                3,
+                                3,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4
+                        ]
+                ]
         },
         {
-            "name": "第 8 关: 星轨·对称迷阵",
-            "size": 6,
-            "steps": 4,
-            "grid": [
-                [0, 1, 2, 2, 1, 0],
-                [1, 1, 2, 2, 1, 1],
-                [2, 2, 0, 0, 2, 2],
-                [2, 2, 0, 0, 2, 2],
-                [1, 1, 2, 2, 1, 1],
-                [0, 1, 2, 2, 1, 0]
-            ]
+                "name": "第 8 关: 泊金岗的黄昏",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                        ],
+                        [
+                                2,
+                                1,
+                                1,
+                                0,
+                                3,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                4,
+                                4,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                2,
+                                4,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                1,
+                                4,
+                                4,
+                                4,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                1,
+                                1,
+                                3,
+                                3,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                        ]
+                ]
         },
         {
-            "name": "第 9 关: 华章·五色交融",
-            "size": 7,
-            "steps": 5,
-            "grid": [
-                [0, 0, 1, 1, 2, 2, 3],
-                [0, 0, 1, 1, 2, 2, 3],
-                [4, 4, 1, 1, 2, 2, 3],
-                [4, 4, 4, 4, 2, 2, 3],
-                [4, 4, 4, 4, 0, 0, 3],
-                [4, 4, 4, 4, 0, 0, 0],
-                [4, 4, 4, 4, 0, 0, 0]
-            ]
+                "name": "第 9 关: 悲叹墓岛·静谧孤岛",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                3,
+                                3,
+                                3,
+                                3,
+                                3,
+                                3,
+                                3
+                        ],
+                        [
+                                3,
+                                1,
+                                1,
+                                3,
+                                2,
+                                2,
+                                3
+                        ],
+                        [
+                                3,
+                                1,
+                                0,
+                                4,
+                                0,
+                                2,
+                                3
+                        ],
+                        [
+                                3,
+                                3,
+                                4,
+                                4,
+                                4,
+                                3,
+                                3
+                        ],
+                        [
+                                3,
+                                2,
+                                0,
+                                4,
+                                0,
+                                1,
+                                3
+                        ],
+                        [
+                                3,
+                                2,
+                                2,
+                                3,
+                                1,
+                                1,
+                                3
+                        ],
+                        [
+                                3,
+                                3,
+                                3,
+                                3,
+                                3,
+                                3,
+                                3
+                        ]
+                ]
         },
         {
-            "name": "第 10 关: 万象·极客画卷",
-            "size": 8,
-            "steps": 5,
-            "grid": [
-                [0, 0, 0, 0, 1, 1, 1, 1],
-                [0, 0, 0, 0, 1, 1, 1, 1],
-                [2, 2, 2, 2, 1, 1, 1, 1],
-                [2, 2, 2, 2, 3, 3, 3, 3],
-                [4, 4, 4, 4, 3, 3, 3, 3],
-                [4, 4, 4, 4, 3, 3, 3, 3],
-                [4, 4, 4, 4, 0, 0, 0, 0],
-                [4, 4, 4, 4, 0, 0, 0, 0]
-            ]
+                "name": "第 10 关: 赞悼圣迹·万象归元",
+                "size": 8,
+                "steps": 6,
+                "grid": [
+                        [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                2,
+                                2,
+                                2
+                        ],
+                        [
+                                0,
+                                4,
+                                0,
+                                1,
+                                1,
+                                2,
+                                4,
+                                2
+                        ],
+                        [
+                                0,
+                                0,
+                                3,
+                                3,
+                                3,
+                                3,
+                                2,
+                                2
+                        ],
+                        [
+                                1,
+                                1,
+                                3,
+                                4,
+                                4,
+                                3,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                3,
+                                4,
+                                4,
+                                3,
+                                1,
+                                1
+                        ],
+                        [
+                                2,
+                                2,
+                                3,
+                                3,
+                                3,
+                                3,
+                                0,
+                                0
+                        ],
+                        [
+                                2,
+                                4,
+                                2,
+                                0,
+                                0,
+                                1,
+                                4,
+                                0
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                0,
+                                1,
+                                1,
+                                1
+                        ]
+                ]
+        },
+        {
+                "name": "第 11 关: 贝奥海域·潮汐回响",
+                "size": 6,
+                "steps": 5,
+                "grid": [
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                4,
+                                4,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                2,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                2,
+                                0,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                4,
+                                4,
+                                4,
+                                4,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                        ]
+                ]
+        },
+        {
+                "name": "第 12 关: 阿维纽林·晨雾微曦",
+                "size": 6,
+                "steps": 6,
+                "grid": [
+                        [
+                                0,
+                                0,
+                                1,
+                                1,
+                                2,
+                                2
+                        ],
+                        [
+                                0,
+                                3,
+                                1,
+                                1,
+                                3,
+                                2
+                        ],
+                        [
+                                1,
+                                1,
+                                4,
+                                4,
+                                1,
+                                1
+                        ],
+                        [
+                                1,
+                                1,
+                                4,
+                                4,
+                                1,
+                                1
+                        ],
+                        [
+                                2,
+                                3,
+                                1,
+                                1,
+                                3,
+                                0
+                        ],
+                        [
+                                2,
+                                2,
+                                1,
+                                1,
+                                0,
+                                0
+                        ]
+                ]
+        },
+        {
+                "name": "第 13 关: 圣石回廊·天光织锦",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                2,
+                                2,
+                                2,
+                                1,
+                                2,
+                                2,
+                                2
+                        ],
+                        [
+                                2,
+                                2,
+                                1,
+                                0,
+                                1,
+                                2,
+                                2
+                        ],
+                        [
+                                2,
+                                1,
+                                0,
+                                4,
+                                0,
+                                1,
+                                2
+                        ],
+                        [
+                                1,
+                                0,
+                                4,
+                                3,
+                                4,
+                                0,
+                                1
+                        ],
+                        [
+                                2,
+                                1,
+                                0,
+                                4,
+                                0,
+                                1,
+                                2
+                        ],
+                        [
+                                2,
+                                2,
+                                1,
+                                0,
+                                1,
+                                2,
+                                2
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                1,
+                                2,
+                                2,
+                                2
+                        ]
+                ]
+        },
+        {
+                "name": "第 14 关: 巨榕之荫·青苍幻境",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                3,
+                                3,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                2,
+                                3,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                3,
+                                0,
+                                3,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                4
+                        ],
+                        [
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4
+                        ]
+                ]
+        },
+        {
+                "name": "第 15 关: 晨曦圣座·万彩琼楼",
+                "size": 7,
+                "steps": 6,
+                "grid": [
+                        [
+                                1,
+                                1,
+                                1,
+                                0,
+                                2,
+                                2,
+                                2
+                        ],
+                        [
+                                1,
+                                3,
+                                1,
+                                0,
+                                2,
+                                4,
+                                2
+                        ],
+                        [
+                                1,
+                                1,
+                                1,
+                                0,
+                                2,
+                                2,
+                                2
+                        ],
+                        [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                1,
+                                1,
+                                1
+                        ],
+                        [
+                                2,
+                                4,
+                                2,
+                                0,
+                                1,
+                                3,
+                                1
+                        ],
+                        [
+                                2,
+                                2,
+                                2,
+                                0,
+                                1,
+                                1,
+                                1
+                        ]
+                ]
         }
-    ];
+];
 
     class ChromaGame {
         constructor() {
@@ -159,6 +999,7 @@
             this.history = [];
             this.isWon = false;
             this.isLost = false;
+            this.isPaused = false;
 
             // 涟漪波浪渲染
             this.ripples = [];
@@ -174,6 +1015,16 @@
 
             this.animLoop = this.animLoop.bind(this);
             requestAnimationFrame(this.animLoop);
+
+            this.bridge.emit('ON_READY', { game: 'chroma-paint' });
+        }
+
+        pause() {
+            this.isPaused = true;
+        }
+
+        resume() {
+            this.isPaused = false;
         }
 
         _loadSavedProgress() {
@@ -424,10 +1275,38 @@
                 this.bridge.saveProgress({ level: Math.min(this.currentLevelIdx + 1, LEVELS.length - 1) });
                 this.audio.playVictory();
                 this._spawnVictoryParticles();
+
+                let stars = 1;
+                if (this.stepsRemaining >= 2) {
+                    stars = 3;
+                } else if (this.stepsRemaining === 1) {
+                    stars = 2;
+                }
+                const payload = {
+                    current: score,
+                    best: this.bridge.getHighScore(),
+                    currentScore: score,
+                    highScore: this.bridge.getHighScore(),
+                    level: this.currentLevelIdx + 1,
+                    levelIndex: this.currentLevelIdx,
+                    stars: stars,
+                    stepsRemaining: this.stepsRemaining
+                };
+                this.bridge.emit('SCORE_UPDATE', payload);
+                this.bridge.emit('ON_SCORE_UPDATE', payload);
+                this.bridge.emit('LEVEL_COMPLETE', payload);
+                this.bridge.emit('ON_LEVEL_COMPLETE', payload);
+
                 setTimeout(() => this._showVictoryModal(), 600);
             } else if (this.stepsRemaining <= 0) {
                 this.isLost = true;
                 this.audio.playDefeat();
+                const failPayload = {
+                    level: this.currentLevelIdx + 1,
+                    levelIndex: this.currentLevelIdx
+                };
+                this.bridge.emit('GAME_OVER', failPayload);
+                this.bridge.emit('ON_GAME_OVER', failPayload);
                 setTimeout(() => this._showDefeatModal(), 500);
             }
         }
@@ -606,8 +1485,22 @@
         _showVictoryModal() {
             if (this.dom.victoryModal) {
                 const text = document.getElementById('victory-level-text');
+                let stars = '⭐';
+                let rating = '功德圆满';
+                if (this.stepsRemaining >= 2) {
+                    stars = '⭐⭐⭐';
+                    rating = '神乎其技';
+                } else if (this.stepsRemaining === 1) {
+                    stars = '⭐⭐';
+                    rating = '妙手天成';
+                }
                 if (text) {
-                    text.innerHTML = `恭喜通关 <strong>${LEVELS[this.currentLevelIdx].name}</strong>！<br>剩余步数: <strong>${this.stepsRemaining}</strong> 步`;
+                    text.innerHTML = `
+                        <div style="font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 0 12px #fbbf24); letter-spacing: 6px;">${stars}</div>
+                        <div style="font-size: 15px; color: #fbbf24; font-weight: bold; margin-bottom: 12px;">[ ${rating} ]</div>
+                        恭喜通关 <strong>${LEVELS[this.currentLevelIdx].name}</strong>！<br>
+                        剩余步数: <strong>${this.stepsRemaining}</strong> 步
+                    `;
                 }
                 this.dom.victoryModal.classList.add('visible');
             }
@@ -633,8 +1526,10 @@
         }
 
         animLoop(now) {
-            this._updateRipples(now);
-            this._updateParticles();
+            if (!this.isPaused) {
+                this._updateRipples(now);
+                this._updateParticles();
+            }
             this._render(now);
             requestAnimationFrame(this.animLoop);
         }

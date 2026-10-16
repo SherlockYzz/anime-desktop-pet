@@ -6,138 +6,224 @@
 (function(window) {
     'use strict';
 
-    // 8 关严谨可解关卡配置
+    // 10 关严格数学唯一解关卡配置（深度复刻《鸣潮》乘霄山【照龙映珠】与流照之台大世界探索机制）
     const LEVELS = [
         {
             id: 1,
-            name: '第 1 关: 初光·折射启蒙',
-            rows: 5, cols: 5,
-            targetCount: 1,
-            emitters: [{ r: 0, c: 1, dr: 1, dc: 0 }],
+            name: "第 1 关: 乘霄初光·流照之台",
+            rows: 6, cols: 6,
+            targetCount: 2,
+            minFlips: 4,
+            emitters: [{"r": 0, "c": 2, "dr": 1, "dc": 0}],
             items: [
-                { r: 0, c: 1, type: 'emitter', dr: 1, dc: 0 },
-                { r: 3, c: 1, type: 'mirror', state: 1, rotatable: true },
-                { r: 3, c: 4, type: 'target', id: 't1' }
+                {"r": 0, "c": 2, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 2, "c": 2, "type": "splitter"},
+                {"r": 2, "c": 4, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 4, "c": 4, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 4, "c": 3, "type": "target", "id": "t1"},
+                {"r": 5, "c": 2, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 1, "type": "target", "id": "t2"},
+                {"r": 1, "c": 4, "type": "wall"},
+                {"r": 3, "c": 5, "type": "wall"}
             ]
         },
         {
             id: 2,
-            name: '第 2 关: 迂回·双镜引途',
-            rows: 5, cols: 5,
-            targetCount: 1,
-            emitters: [{ r: 1, c: 0, dr: 0, dc: 1 }],
+            name: "第 2 关: 浅滩群岛·照龙破浪",
+            rows: 6, cols: 6,
+            targetCount: 2,
+            minFlips: 4,
+            emitters: [{"r": 0, "c": 1, "dr": 1, "dc": 0}, {"r": 5, "c": 5, "dr": -1, "dc": 0}],
             items: [
-                { r: 1, c: 0, type: 'emitter', dr: 0, dc: 1 },
-                { r: 1, c: 3, type: 'mirror', state: 0, rotatable: true },
-                { r: 4, c: 3, type: 'mirror', state: 1, rotatable: true },
-                { r: 1, c: 4, type: 'wall' },
-                { r: 4, c: 4, type: 'target', id: 't1' }
+                {"r": 0, "c": 1, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 3, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 4, "type": "target", "id": "t1"},
+                {"r": 5, "c": 5, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 2, "c": 5, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 2, "c": 2, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 4, "c": 2, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 4, "c": 4, "type": "target", "id": "t2"},
+                {"r": 1, "c": 3, "type": "wall"},
+                {"r": 4, "c": 1, "type": "wall"}
             ]
         },
         {
             id: 3,
-            name: '第 3 关: 回环·声索回路',
-            rows: 6, cols: 6,
-            targetCount: 1,
-            emitters: [{ r: 0, c: 0, dr: 1, dc: 0 }],
+            name: "第 3 关: 瀑布汇流·回光溯源",
+            rows: 7, cols: 7,
+            targetCount: 2,
+            minFlips: 5,
+            emitters: [{"r": 0, "c": 3, "dr": 1, "dc": 0}],
             items: [
-                { r: 0, c: 0, type: 'emitter', dr: 1, dc: 0 },
-                { r: 4, c: 0, type: 'mirror', state: 1, rotatable: true },
-                { r: 4, c: 4, type: 'mirror', state: 0, rotatable: true },
-                { r: 1, c: 4, type: 'mirror', state: 1, rotatable: true },
-                { r: 1, c: 1, type: 'target', id: 't1' },
-                { r: 2, c: 2, type: 'wall' },
-                { r: 3, c: 2, type: 'wall' }
+                {"r": 0, "c": 3, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 2, "c": 3, "type": "splitter"},
+                {"r": 5, "c": 3, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 1, "type": "target", "id": "t1"},
+                {"r": 2, "c": 5, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 1, "c": 5, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 1, "c": 2, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 4, "c": 2, "type": "target", "id": "t2"},
+                {"r": 3, "c": 4, "type": "wall"},
+                {"r": 4, "c": 4, "type": "wall"}
             ]
         },
         {
             id: 4,
-            name: '第 4 关: 连珠·一苇双芯',
-            rows: 6, cols: 6,
+            name: "第 4 关: 拱形山石·双龙戏珠",
+            rows: 7, cols: 7,
             targetCount: 2,
-            emitters: [{ r: 1, c: 0, dr: 0, dc: 1 }],
+            minFlips: 5,
+            emitters: [{"r": 0, "c": 1, "dr": 1, "dc": 0}, {"r": 6, "c": 3, "dr": -1, "dc": 0}],
             items: [
-                { r: 1, c: 0, type: 'emitter', dr: 0, dc: 1 },
-                { r: 1, c: 2, type: 'target', id: 't1' },
-                { r: 1, c: 4, type: 'mirror', state: 0, rotatable: true },
-                { r: 4, c: 4, type: 'mirror', state: 1, rotatable: true },
-                { r: 4, c: 1, type: 'mirror', state: 0, rotatable: true },
-                { r: 2, c: 1, type: 'target', id: 't2' },
-                { r: 3, c: 3, type: 'wall' }
+                {"r": 0, "c": 1, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 4, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 4, "c": 5, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 1, "c": 5, "type": "target", "id": "t1"},
+                {"r": 6, "c": 3, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 2, "c": 3, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 2, "c": 0, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 0, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 5, "c": 4, "type": "target", "id": "t2"},
+                {"r": 3, "c": 2, "type": "wall"},
+                {"r": 3, "c": 4, "type": "wall"}
             ]
         },
         {
             id: 5,
-            name: '第 5 关: 裂光·分光化形',
-            rows: 6, cols: 6,
+            name: "第 5 关: 黄白交界·照龙映珠",
+            rows: 7, cols: 7,
             targetCount: 2,
-            emitters: [{ r: 0, c: 2, dr: 1, dc: 0 }],
+            minFlips: 5,
+            emitters: [{"r": 6, "c": 0, "dr": -1, "dc": 0}],
             items: [
-                { r: 0, c: 2, type: 'emitter', dr: 1, dc: 0 },
-                { r: 2, c: 2, type: 'splitter' },
-                { r: 5, c: 2, type: 'target', id: 't1' },
-                { r: 2, c: 4, type: 'mirror', state: 0, rotatable: true },
-                { r: 5, c: 4, type: 'target', id: 't2' },
-                { r: 3, c: 1, type: 'wall' }
+                {"r": 6, "c": 0, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 1, "c": 0, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 1, "c": 4, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 4, "type": "splitter"},
+                {"r": 3, "c": 6, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 5, "c": 6, "type": "target", "id": "t1"},
+                {"r": 5, "c": 4, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 2, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 2, "c": 2, "type": "target", "id": "t2"},
+                {"r": 2, "c": 3, "type": "wall"},
+                {"r": 4, "c": 5, "type": "wall"}
             ]
         },
         {
             id: 6,
-            name: '第 6 关: 迷阵·重峦叠嶂',
+            name: "第 6 关: 盘龙崖·龙口衔珠",
             rows: 7, cols: 7,
             targetCount: 2,
-            emitters: [{ r: 0, c: 1, dr: 1, dc: 0 }],
+            minFlips: 5,
+            emitters: [{"r": 0, "c": 0, "dr": 1, "dc": 0}, {"r": 6, "c": 5, "dr": -1, "dc": 0}],
             items: [
-                { r: 0, c: 1, type: 'emitter', dr: 1, dc: 0 },
-                { r: 2, c: 1, type: 'mirror', state: 0, rotatable: true },
-                { r: 2, c: 5, type: 'mirror', state: 0, rotatable: true },
-                { r: 3, c: 5, type: 'target', id: 't1' },
-                { r: 5, c: 5, type: 'mirror', state: 1, rotatable: true },
-                { r: 5, c: 2, type: 'mirror', state: 0, rotatable: true },
-                { r: 4, c: 2, type: 'target', id: 't2' },
-                { r: 3, c: 3, type: 'wall' },
-                { r: 4, c: 4, type: 'wall' }
+                {"r": 0, "c": 0, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 4, "c": 0, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 4, "c": 2, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 1, "c": 2, "type": "target", "id": "t1"},
+                {"r": 6, "c": 5, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 2, "c": 5, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 2, "c": 4, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 4, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 5, "c": 6, "type": "target", "id": "t2"},
+                {"r": 3, "c": 1, "type": "wall"},
+                {"r": 3, "c": 3, "type": "wall"},
+                {"r": 4, "c": 3, "type": "wall"}
             ]
         },
         {
             id: 7,
-            name: '第 7 关: 双流·日月同辉',
-            rows: 7, cols: 7,
-            targetCount: 2,
-            emitters: [
-                { r: 0, c: 2, dr: 1, dc: 0 },
-                { r: 6, c: 4, dr: -1, dc: 0 }
-            ],
+            name: "第 7 关: 黑石遗迹·析光枢纽",
+            rows: 8, cols: 8,
+            targetCount: 3,
+            minFlips: 3,
+            emitters: [{"r": 0, "c": 2, "dr": 1, "dc": 0}],
             items: [
-                { r: 0, c: 2, type: 'emitter', dr: 1, dc: 0 },
-                { r: 4, c: 2, type: 'mirror', state: 1, rotatable: true },
-                { r: 4, c: 5, type: 'target', id: 't1' },
-                { r: 6, c: 4, type: 'emitter', dr: -1, dc: 0 },
-                { r: 2, c: 4, type: 'mirror', state: 0, rotatable: true },
-                { r: 2, c: 1, type: 'target', id: 't2' },
-                { r: 3, c: 3, type: 'wall' }
+                {"r": 0, "c": 2, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 2, "c": 2, "type": "splitter"},
+                {"r": 2, "c": 6, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 6, "c": 6, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 6, "c": 4, "type": "target", "id": "t1"},
+                {"r": 4, "c": 2, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 4, "c": 0, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 7, "c": 0, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 7, "c": 3, "type": "target", "id": "t2"},
+                {"r": 2, "c": 4, "type": "target", "id": "t3"},
+                {"r": 3, "c": 3, "type": "wall"},
+                {"r": 5, "c": 5, "type": "wall"}
             ]
         },
         {
             id: 8,
-            name: '第 8 关: 终章·万象归元',
-            rows: 7, cols: 7,
-            targetCount: 3,
-            emitters: [{ r: 6, c: 0, dr: -1, dc: 0 }],
+            name: "第 8 关: 黎那汐塔·梦枢天罗",
+            rows: 8, cols: 8,
+            targetCount: 2,
+            minFlips: 6,
+            emitters: [{"r": 0, "c": 1, "dr": 1, "dc": 0}, {"r": 7, "c": 6, "dr": -1, "dc": 0}],
             items: [
-                { r: 6, c: 0, type: 'emitter', dr: -1, dc: 0 },
-                { r: 1, c: 0, type: 'mirror', state: 0, rotatable: true },
-                { r: 1, c: 3, type: 'target', id: 't1' },
-                { r: 1, c: 5, type: 'mirror', state: 1, rotatable: true },
-                { r: 3, c: 5, type: 'mirror', state: 0, rotatable: true },
-                { r: 3, c: 2, type: 'mirror', state: 1, rotatable: true },
-                { r: 5, c: 2, type: 'target', id: 't2' },
-                { r: 6, c: 2, type: 'mirror', state: 0, rotatable: true },
-                { r: 6, c: 6, type: 'target', id: 't3' },
-                { r: 2, c: 1, type: 'wall' },
-                { r: 2, c: 4, type: 'wall' },
-                { r: 4, c: 3, type: 'wall' },
-                { r: 5, c: 5, type: 'wall' }
+                {"r": 0, "c": 1, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 3, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 4, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 1, "c": 4, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 1, "c": 2, "type": "target", "id": "t1"},
+                {"r": 7, "c": 6, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 2, "c": 6, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 2, "c": 3, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 6, "c": 3, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 6, "c": 5, "type": "target", "id": "t2"},
+                {"r": 2, "c": 0, "type": "wall"},
+                {"r": 4, "c": 2, "type": "wall"},
+                {"r": 5, "c": 4, "type": "wall"}
+            ]
+        },
+        {
+            id: 9,
+            name: "第 9 关: 乘霄天穹·四象晶核",
+            rows: 8, cols: 8,
+            targetCount: 3,
+            minFlips: 3,
+            emitters: [{"r": 0, "c": 3, "dr": 1, "dc": 0}],
+            items: [
+                {"r": 0, "c": 3, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 2, "c": 3, "type": "splitter"},
+                {"r": 2, "c": 4, "type": "target", "id": "t1"},
+                {"r": 2, "c": 6, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 5, "c": 6, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 5, "type": "target", "id": "t2"},
+                {"r": 4, "c": 3, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 4, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 7, "c": 1, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 7, "c": 4, "type": "target", "id": "t3"},
+                {"r": 1, "c": 2, "type": "wall"},
+                {"r": 3, "c": 5, "type": "wall"},
+                {"r": 6, "c": 3, "type": "wall"}
+            ]
+        },
+        {
+            id: 10,
+            name: "第 10 关: 终焉溯光·万象同鸣",
+            rows: 8, cols: 8,
+            targetCount: 3,
+            minFlips: 6,
+            emitters: [{"r": 0, "c": 1, "dr": 1, "dc": 0}, {"r": 7, "c": 0, "dr": -1, "dc": 0}],
+            items: [
+                {"r": 0, "c": 1, "type": "emitter", "dr": 1, "dc": 0},
+                {"r": 3, "c": 1, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 3, "c": 3, "type": "splitter"},
+                {"r": 1, "c": 3, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 1, "c": 2, "type": "target", "id": "t1"},
+                {"r": 3, "c": 6, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 6, "c": 6, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 6, "c": 4, "type": "target", "id": "t2"},
+                {"r": 7, "c": 0, "type": "emitter", "dr": -1, "dc": 0},
+                {"r": 5, "c": 0, "type": "mirror", "state": 1, "rotatable": true},
+                {"r": 5, "c": 2, "type": "mirror", "state": 0, "rotatable": true},
+                {"r": 7, "c": 2, "type": "target", "id": "t3"},
+                {"r": 2, "c": 0, "type": "wall"},
+                {"r": 4, "c": 2, "type": "wall"},
+                {"r": 5, "c": 3, "type": "wall"}
             ]
         }
     ];
@@ -159,7 +245,9 @@
             this.litTargets = new Set();
             this.beamSegments = [];
             this.isWon = false;
+            this.isPaused = false;
             this.rotations = []; // 镜子视觉平滑旋转动画
+            this.rotationCount = 0; // 累计旋转操作计数
 
             // 粒子系统
             this.particles = [];
@@ -171,6 +259,16 @@
 
             this.animLoop = this.animLoop.bind(this);
             requestAnimationFrame(this.animLoop);
+
+            this.bridge.emit('ON_READY', { game: 'laser-optics' });
+        }
+
+        pause() {
+            this.isPaused = true;
+        }
+
+        resume() {
+            this.isPaused = false;
         }
 
         _loadSavedProgress() {
@@ -184,6 +282,7 @@
             this.dom = {
                 levelLabel: document.getElementById('level-label-val'),
                 targetsVal: document.getElementById('targets-val'),
+                rotationsVal: document.getElementById('rotations-val'),
                 btnRestart: document.getElementById('btn-restart'),
                 btnMute: document.getElementById('btn-mute'),
                 btnHelp: document.getElementById('btn-help'),
@@ -268,6 +367,7 @@
             this.targetCount = lvl.targetCount;
             this.emitters = lvl.emitters;
             this.isWon = false;
+            this.rotationCount = 0;
             this.particles = [];
             this.rotations = [];
 
@@ -297,6 +397,7 @@
             if (item && item.type === 'mirror' && item.rotatable !== false) {
                 // 切换镜像方向 (0: '/' <-> 1: '\')
                 item.state = (item.state === 0) ? 1 : 0;
+                this.rotationCount++;
                 this.audio.playRotate();
 
                 // 记录旋转平滑过渡
@@ -313,12 +414,44 @@
                 // 检查胜利
                 if (this.litTargets.size === this.targetCount) {
                     this.isWon = true;
-                    const score = (this.currentLevelIdx + 1) * 1000;
+                    const lvl = LEVELS[this.currentLevelIdx];
+                    const minFlips = lvl.minFlips || 4;
+                    let stars = 1;
+                    let rating = '功德圆满';
+                    if (this.rotationCount <= minFlips) {
+                        stars = 3;
+                        rating = '神乎其技·完美通光';
+                    } else if (this.rotationCount <= minFlips + 2) {
+                        stars = 2;
+                        rating = '妙手天成·明察秋毫';
+                    } else {
+                        stars = 1;
+                        rating = '锲而不舍·通明之境';
+                    }
+
+                    const score = (this.currentLevelIdx + 1) * 1000 + Math.max(0, (minFlips + 4 - this.rotationCount) * 100);
                     this.bridge.recordScore(score);
                     this.bridge.saveProgress({ level: Math.min(this.currentLevelIdx + 1, LEVELS.length - 1) });
                     this.audio.playVictory();
                     this._spawnVictoryParticles();
-                    setTimeout(() => this._showVictoryModal(), 600);
+
+                    const payload = {
+                        current: score,
+                        best: this.bridge.getHighScore(),
+                        currentScore: score,
+                        highScore: this.bridge.getHighScore(),
+                        level: this.currentLevelIdx + 1,
+                        levelIndex: this.currentLevelIdx,
+                        stars: stars,
+                        rotations: this.rotationCount,
+                        minRotations: minFlips
+                    };
+                    this.bridge.emit('SCORE_UPDATE', payload);
+                    this.bridge.emit('ON_SCORE_UPDATE', payload);
+                    this.bridge.emit('LEVEL_COMPLETE', payload);
+                    this.bridge.emit('ON_LEVEL_COMPLETE', payload);
+
+                    setTimeout(() => this._showVictoryModal(stars, rating, minFlips), 600);
                 }
             }
         }
@@ -406,6 +539,9 @@
                     this.dom.targetsVal.classList.remove('complete');
                 }
             }
+            if (this.dom.rotationsVal) {
+                this.dom.rotationsVal.textContent = `${this.rotationCount}`;
+            }
             if (this.dom.btnPrev) this.dom.btnPrev.disabled = (this.currentLevelIdx === 0);
             if (this.dom.btnNext) this.dom.btnNext.disabled = (this.currentLevelIdx === LEVELS.length - 1);
         }
@@ -478,11 +614,18 @@
             }
         }
 
-        _showVictoryModal() {
+        _showVictoryModal(stars = 3, rating = '神乎其技·完美通光', minFlips = 4) {
             if (this.dom.victoryModal) {
                 const text = document.getElementById('victory-level-text');
+                const starStr = '⭐'.repeat(stars);
                 if (text) {
-                    text.innerHTML = `恭喜破解 <strong>${LEVELS[this.currentLevelIdx].name}</strong>！<br>所有能量晶核完美贯通！`;
+                    text.innerHTML = `
+                        <div style="font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 0 12px #00f0ff); letter-spacing: 6px;">${starStr}</div>
+                        <div style="font-size: 15px; color: #00f0ff; font-weight: bold; margin-bottom: 12px;">[ ${rating} ]</div>
+                        恭喜破解 <strong>${LEVELS[this.currentLevelIdx].name}</strong>！<br>
+                        旋转尝试: <strong>${this.rotationCount}</strong> 次 (最短步数: ${minFlips} 步)<br>
+                        所有能量晶核完美充能，光枢运转正常！
+                    `;
                 }
                 this.dom.victoryModal.classList.add('visible');
             }
@@ -501,7 +644,9 @@
         }
 
         animLoop(now) {
-            this._updateAnimations();
+            if (!this.isPaused) {
+                this._updateAnimations();
+            }
             this._render(now);
             requestAnimationFrame(this.animLoop);
         }

@@ -371,7 +371,7 @@ class App {
     const titleEl = document.querySelector('.pet-name');
     if (isArcade) {
       if (!this._origPetTitle && titleEl) this._origPetTitle = titleEl.textContent;
-      if (titleEl) titleEl.textContent = '🎮 摸鱼街机 (8款精选微游戏)';
+      if (titleEl) titleEl.textContent = '🎮 摸鱼街机 (10款精选微游戏)';
       // 记录进入街机前的窗口尺寸，视口过小时自适应延展以保证游戏完整显示
       try {
         const bounds = await window.electronAPI?.getWindowBounds?.();

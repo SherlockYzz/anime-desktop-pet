@@ -25,6 +25,8 @@
             this.combo = 0;
             this.isPlaying = false;
             this.isGameOver = false;
+            this.isPaused = false;
+            this.lastTime = performance.now();
 
             // 摄像机
             this.cameraY = 0;
@@ -50,6 +52,8 @@
 
             this.animLoop = this.animLoop.bind(this);
             requestAnimationFrame(this.animLoop);
+
+            this.bridge.emit('ON_READY', { game: 'stack-tower' });
         }
 
         _initDOM() {
@@ -365,9 +369,47 @@
             });
             this.activeBlock = null;
 
+            const isNewRecord = this.bridge.recordScore(this.score);
+            this.highScore = this.bridge.getHighScore();
+            this._notifyScore(this.score, this.highScore);
+
+            const overPayload = {
+                score: this.score,
+                highScore: this.highScore,
+                current: this.score,
+                best: this.highScore,
+                isNewRecord
+            };
+            this.bridge.emit('GAME_OVER', overPayload);
+            this.bridge.emit('ON_GAME_OVER', overPayload);
+
             setTimeout(() => {
                 this._showGameOverModal();
             }, 600);
+        }
+
+        _notifyScore(score, bestScore) {
+            const payload = {
+                current: score,
+                best: bestScore,
+                currentScore: score,
+                highScore: bestScore
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
+        }
+
+        restart() {
+            this.reset();
+        }
+
+        pause() {
+            this.isPaused = true;
+        }
+
+        resume() {
+            this.isPaused = false;
+            this.lastTime = performance.now();
         }
 
         _spawnRingParticles(block) {
@@ -412,6 +454,7 @@
                     this.dom.comboVal.classList.remove('hot');
                 }
             }
+            this._notifyScore(this.score, this.highScore);
         }
 
         _showGameOverModal() {
@@ -433,19 +476,26 @@
             }
         }
 
-        animLoop() {
-            this._update();
+        animLoop(currentTime) {
+            const now = currentTime || performance.now();
+            const deltaMs = Math.min(now - this.lastTime, 50);
+            this.lastTime = now;
+            const timeScale = deltaMs / 16.667;
+
+            if (!this.isPaused) {
+                this._update(timeScale);
+            }
             this._render();
             requestAnimationFrame(this.animLoop);
         }
 
-        _update() {
-            // 平滑镜头缓动
-            this.cameraY += (this.targetCameraY - this.cameraY) * 0.08;
+        _update(timeScale = 1) {
+            // 平滑镜头缓动 (基于时间步长解耦)
+            this.cameraY += (this.targetCameraY - this.cameraY) * Math.min(1, 0.08 * timeScale);
 
-            // 活动方块振荡运动
+            // 活动方块振荡运动 (严格乘以 timeScale 避免 120Hz/144Hz 超速)
             if (this.activeBlock && !this.isGameOver) {
-                this.moveOffset += this.speed * this.moveDirection;
+                this.moveOffset += (this.speed * this.moveDirection) * timeScale;
                 if (Math.abs(this.moveOffset) > this.moveSpan) {
                     this.moveDirection *= -1;
                     this.moveOffset = Math.sign(this.moveOffset) * this.moveSpan;
@@ -464,12 +514,12 @@
             // 更新坠落方块物理 (重力加速度)
             for (let i = this.fallingBlocks.length - 1; i >= 0; i--) {
                 const fb = this.fallingBlocks[i];
-                fb.vy -= 0.6; // 重力
-                fb.y += fb.vy;
-                fb.x += fb.vx;
-                fb.z += fb.vz;
-                fb.rotX += fb.vRotX;
-                fb.rotZ += fb.vRotZ;
+                fb.vy -= 0.6 * timeScale;
+                fb.y += fb.vy * timeScale;
+                fb.x += fb.vx * timeScale;
+                fb.z += fb.vz * timeScale;
+                fb.rotX += fb.vRotX * timeScale;
+                fb.rotZ += fb.vRotZ * timeScale;
 
                 // 超出视野底部移除
                 if (fb.y < this.cameraY - 300) {
@@ -480,11 +530,11 @@
             // 更新粒子
             for (let i = this.particles.length - 1; i >= 0; i--) {
                 const p = this.particles[i];
-                p.x += p.vx;
-                p.z += p.vz;
-                p.y += p.vy;
-                p.vy -= 0.08;
-                p.alpha -= 0.02;
+                p.x += p.vx * timeScale;
+                p.z += p.vz * timeScale;
+                p.y += p.vy * timeScale;
+                p.vy -= 0.08 * timeScale;
+                p.alpha -= 0.02 * timeScale;
                 if (p.alpha <= 0) {
                     this.particles.splice(i, 1);
                 }
@@ -493,8 +543,8 @@
             // 更新浮动文字
             for (let i = this.comboTexts.length - 1; i >= 0; i--) {
                 const ct = this.comboTexts[i];
-                ct.y += ct.vy;
-                ct.alpha -= 0.015;
+                ct.y += ct.vy * timeScale;
+                ct.alpha -= 0.015 * timeScale;
                 if (ct.alpha <= 0) {
                     this.comboTexts.splice(i, 1);
                 }

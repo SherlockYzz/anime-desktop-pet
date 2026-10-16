@@ -20,10 +20,12 @@
     padding: 0;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: manipulation;
 }
 
-body {
+html, body {
+    touch-action: none !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: auto;
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: var(--font-stack);
@@ -33,6 +35,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+canvas {
+    touch-action: none !important;
 }
 
 .game-viewport {

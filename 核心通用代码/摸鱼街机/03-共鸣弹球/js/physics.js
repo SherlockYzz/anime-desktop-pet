@@ -21,6 +21,8 @@
             this.bricks = [];
             this.powerups = [];
             this.particles = [];
+            this.floatingTexts = [];
+            this.hitComboCount = 0;
 
             this.state = 'AIMING'; // 'AIMING' | 'SHOOTING' | 'RESOLVING' | 'GAMEOVER'
             this.speedMultiplier = 1;
@@ -75,6 +77,8 @@
             this.bricks = [];
             this.powerups = [];
             this.particles = [];
+            this.floatingTexts = [];
+            this.hitComboCount = 0;
             this.state = 'AIMING';
             this.speedMultiplier = 1;
             this.launcherX = this.canvas.width / 2;
@@ -255,6 +259,7 @@
             this.state = 'SHOOTING';
             this.newLauncherX = null;
             this.balls = [];
+            this.hitComboCount = 0;
             this.audio.playLaunch();
 
             const recallBtn = document.getElementById('btn-recall');
@@ -291,26 +296,35 @@
         _startLoop() {
             let lastTime = performance.now();
             const loop = (currentTime) => {
-                const dt = Math.min((currentTime - lastTime) / 1000, 0.05); // 限制单帧最大步长
+                const deltaMs = Math.min(currentTime - lastTime, 50); // 限制单帧最大步长
                 lastTime = currentTime;
+                const timeScale = deltaMs / 16.667;
 
-                this._update(dt);
+                this._update(timeScale);
                 this._render();
                 requestAnimationFrame(loop);
             };
             requestAnimationFrame(loop);
         }
 
-        _update(dt) {
+        _update(timeScale = 1) {
             if (this.state === 'PAUSED' || this.state === 'GAMEOVER') return;
 
             // 粒子更新
             for (let i = this.particles.length - 1; i >= 0; i--) {
                 const p = this.particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.alpha -= 0.03;
+                p.x += p.vx * timeScale;
+                p.y += p.vy * timeScale;
+                p.alpha -= 0.03 * timeScale;
                 if (p.alpha <= 0) this.particles.splice(i, 1);
+            }
+
+            // 浮动跳字更新
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y += ft.vy * timeScale;
+                ft.alpha -= 0.025 * timeScale;
+                if (ft.alpha <= 0) this.floatingTexts.splice(i, 1);
             }
 
             if (this.state !== 'SHOOTING') return;
@@ -323,7 +337,7 @@
 
                 this.balls.forEach(ball => {
                     if (ball.delay > 0) {
-                        ball.delay -= 1 / this.SUB_STEPS;
+                        ball.delay -= (1 / this.SUB_STEPS) * timeScale;
                         allLanded = false;
                         return;
                     }
@@ -332,9 +346,9 @@
                     ball.active = true;
                     allLanded = false;
 
-                    // 位移微积分
-                    ball.x += (ball.vx / this.SUB_STEPS);
-                    ball.y += (ball.vy / this.SUB_STEPS);
+                    // 位移微积分 (严格乘以 timeScale 解耦高刷屏)
+                    ball.x += (ball.vx / this.SUB_STEPS) * timeScale;
+                    ball.y += (ball.vy / this.SUB_STEPS) * timeScale;
 
                     // 防横向水平无限反弹死循环微扰
                     if (Math.abs(ball.vy) < 0.6 * this.dpr) {
@@ -350,12 +364,12 @@
                     if (ball.x - this.ballRadius <= 0) {
                         ball.x = this.ballRadius;
                         ball.vx = Math.abs(ball.vx);
-                        this.audio.playHit();
+                        this.audio.playHit(1);
                         this._handleBallWallBounce(ball);
                     } else if (ball.x + this.ballRadius >= this.canvas.width) {
                         ball.x = this.canvas.width - this.ballRadius;
                         ball.vx = -Math.abs(ball.vx);
-                        this.audio.playHit();
+                        this.audio.playHit(1);
                         this._handleBallWallBounce(ball);
                     }
 
@@ -363,7 +377,7 @@
                     if (ball.y - this.ballRadius <= 0) {
                         ball.y = this.ballRadius;
                         ball.vy = Math.abs(ball.vy);
-                        this.audio.playHit();
+                        this.audio.playHit(1);
                         this._handleBallWallBounce(ball);
                     }
 
@@ -430,6 +444,7 @@
 
                             brick.hp--;
                             ball.noHitBounces = 0;
+                            this.hitComboCount = (this.hitComboCount || 0) + 1;
                             this.score += 10;
                             this._updateScoreUI();
 
@@ -440,13 +455,16 @@
                                 this._createSparks(bx + bw / 2, by + bh / 2, '#00f0ff');
                                 this.score += 50;
                                 this._updateScoreUI();
+                                this._addFloatingText('+60', bx + bw / 2, by + bh / 2, '#fbbf24');
 
                                 this.bridge.emit('ON_COMBO_TRIGGER', {
                                     scoreGained: 60,
-                                    currentScore: this.score
+                                    currentScore: this.score,
+                                    combo: this.hitComboCount
                                 });
                             } else {
-                                this.audio.playHit();
+                                this.audio.playHit(this.hitComboCount);
+                                this._addFloatingText('+10', bx + bw / 2, by + bh / 2, '#00f0ff');
                             }
                             break; // 一次子步只处理一个最近砖块
                         }
@@ -506,17 +524,45 @@
             document.getElementById('final-score-val').textContent = this.score;
             document.getElementById('game-over-modal')?.classList.add('active');
 
-            this.bridge.emit('ON_GAME_OVER', {
+            const overPayload = {
                 finalScore: this.score,
-                highScore: this.highScore
-            });
+                score: this.score,
+                highScore: this.highScore,
+                current: this.score,
+                best: this.highScore
+            };
+            this.bridge.emit('GAME_OVER', overPayload);
+            this.bridge.emit('ON_GAME_OVER', overPayload);
         }
 
         _updateScoreUI() {
             document.getElementById('score-val').textContent = this.score;
-            document.getElementById('high-score-val').textContent = Math.max(this.score, this.highScore);
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                window.SafeStorage.set('resonance_ball_high_score', this.highScore);
+            }
+            document.getElementById('high-score-val').textContent = this.highScore;
             document.getElementById('ball-count-val').textContent = this.totalBalls;
-            this.bridge.emit('ON_SCORE_UPDATE', { currentScore: this.score, highScore: this.highScore });
+
+            const payload = {
+                current: this.score,
+                best: this.highScore,
+                currentScore: this.score,
+                highScore: this.highScore
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
+        }
+
+        _addFloatingText(text, x, y, color = '#00f0ff') {
+            this.floatingTexts.push({
+                text,
+                x,
+                y,
+                alpha: 1,
+                vy: -1.4 * this.dpr,
+                color
+            });
         }
 
         _createSparks(x, y, color) {
@@ -684,6 +730,21 @@
                 this.ctx.fill();
                 this.ctx.restore();
             });
+
+            // 7. 浮动得分跳字渲染
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                this.ctx.save();
+                this.ctx.globalAlpha = ft.alpha;
+                this.ctx.fillStyle = ft.color;
+                this.ctx.font = `bold ${Math.round(14 * this.dpr)}px monospace`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.shadowColor = ft.color;
+                this.ctx.shadowBlur = 6;
+                this.ctx.fillText(ft.text, ft.x, ft.y);
+                this.ctx.restore();
+            }
         }
     }
 

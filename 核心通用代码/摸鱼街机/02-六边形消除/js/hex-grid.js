@@ -58,6 +58,7 @@
 
             this.docks = [null, null, null];
             this.particles = [];
+            this.floatingTexts = [];
             this.shake = { intensity: 0, duration: 0, startTime: 0 };
 
             this.dragState = {
@@ -99,6 +100,7 @@
             this.centerY = this.canvas.height / 2;
             // 61格最大跨度：直径 9 格，自适应半径
             this.hexRadius = (this.canvas.width / 2) / 8.5;
+            this.dragState.liftOffset = 70 * dpr; // 动态乘以 DPR 防手指遮挡
         }
 
         restart() {
@@ -117,6 +119,7 @@
             this.isGameOver = false;
             this.isPaused = false;
             this.particles = [];
+            this.floatingTexts = [];
             this._updateScoreUI();
             this._spawnDocks();
             document.getElementById('game-over-modal')?.classList.remove('active');
@@ -133,17 +136,32 @@
         }
 
         /**
-         * 发牌保底算法：第 1 个手牌确保能放入当前蜂巢
+         * 发牌保底算法：第 1 个手牌确保能放入当前蜂巢，残局避免绝杀大牌
          */
         _spawnDocks() {
+            let occupiedCount = 0;
+            for (let [, color] of this.grid) {
+                if (color) occupiedCount++;
+            }
+            // 棋盘占用超过 25 格时过滤掉超级大花环 ring7，避免猝死
+            const candidatePool = occupiedCount > 25
+                ? HEX_SHAPES.filter(s => s.name !== 'ring7')
+                : HEX_SHAPES;
+
             for (let i = 0; i < 3; i++) {
                 if (i === 0) {
-                    const validShapes = HEX_SHAPES.filter(s => this._canPlaceAnywhere(s.cells));
+                    const validShapes = candidatePool.filter(s => this._canPlaceAnywhere(s.cells));
                     this.docks[i] = validShapes.length > 0
                         ? validShapes[Math.floor(Math.random() * validShapes.length)]
-                        : HEX_SHAPES[Math.floor(Math.random() * HEX_SHAPES.length)];
+                        : candidatePool[Math.floor(Math.random() * candidatePool.length)];
                 } else {
-                    this.docks[i] = HEX_SHAPES[Math.floor(Math.random() * HEX_SHAPES.length)];
+                    // 后续手牌：70% 概率倾向于可放置形状
+                    const validShapes = candidatePool.filter(s => this._canPlaceAnywhere(s.cells));
+                    if (validShapes.length > 0 && Math.random() < 0.7) {
+                        this.docks[i] = validShapes[Math.floor(Math.random() * validShapes.length)];
+                    } else {
+                        this.docks[i] = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+                    }
                 }
             }
             this._renderDockElements();
@@ -411,6 +429,14 @@
                 this.audio.playClear(linesToClear.length, this.combo);
                 this.bridge.vibrate(this.combo > 1 ? [15, 30, 20] : 15);
                 this.triggerShake(linesToClear.length > 1 ? 5 : 3.5, 120);
+                this.floatingTexts.push({
+                    text: `+${bonus}${this.combo > 1 ? ` 🔥x${this.combo}` : ''}`,
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height / 2,
+                    alpha: 1.0,
+                    vy: -1.2,
+                    color: this.combo > 1 ? '#f43f5e' : '#fbbf24'
+                });
 
                 const clearedSet = new Set();
                 linesToClear.forEach(line => {
@@ -466,20 +492,34 @@
                 }
                 this._updateScoreUI();
 
-                document.getElementById('final-score-val').textContent = this.score;
-                document.getElementById('game-over-modal')?.classList.add('active');
-
-                this.bridge.emit('ON_GAME_OVER', {
+                const overPayload = {
                     finalScore: this.score,
-                    highScore: this.highScore
-                });
+                    score: this.score,
+                    highScore: this.highScore,
+                    current: this.score,
+                    best: this.highScore
+                };
+                this.bridge.emit('GAME_OVER', overPayload);
+                this.bridge.emit('ON_GAME_OVER', overPayload);
             }
         }
 
         _updateScoreUI() {
             document.getElementById('score-val').textContent = this.score;
-            document.getElementById('high-score-val').textContent = Math.max(this.score, this.highScore);
-            this.bridge.emit('ON_SCORE_UPDATE', { currentScore: this.score, highScore: this.highScore });
+            if (this.score > this.highScore) {
+                this.highScore = this.score;
+                window.SafeStorage.set('hex_frvr_high_score', this.highScore);
+            }
+            document.getElementById('high-score-val').textContent = this.highScore;
+
+            const payload = {
+                current: this.score,
+                best: this.highScore,
+                currentScore: this.score,
+                highScore: this.highScore
+            };
+            this.bridge.emit('SCORE_UPDATE', payload);
+            this.bridge.emit('ON_SCORE_UPDATE', payload);
         }
 
         _createParticles(x, y, color) {
@@ -576,6 +616,26 @@
                     this.ctx.beginPath();
                     this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+
+            // 4. 浮动得分跳字渲染
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) {
+                    this.floatingTexts.splice(i, 1);
+                } else {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = ft.alpha;
+                    this.ctx.fillStyle = ft.color || '#fbbf24';
+                    this.ctx.font = `bold ${Math.round(18 * this.dpr)}px system-ui, -apple-system, sans-serif`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.shadowColor = ft.color || '#fbbf24';
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.fillText(ft.text, ft.x, ft.y);
                     this.ctx.restore();
                 }
             }

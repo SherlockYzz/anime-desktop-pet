@@ -1,6 +1,6 @@
 // ========================================
 //  二次元桌宠 - 摸鱼街机管理器 (ArcadeManager)
-//  管理 8 款通用轻量微游戏生命周期、Iframe 双向通信总线、CV 语音喝彩与好感度联动
+//  管理 10 款通用轻量微游戏生命周期、Iframe 双向通信总线、CV 语音喝彩与好感度联动
 // ========================================
 
 (function(window) {
@@ -14,7 +14,9 @@
     { id: '04-点点引光',     name: '点点引光',     icon: '💡',  tag: '拓扑回路', path: '../摸鱼街机/04-点点引光/index.html' },
     { id: '05-溢彩画',       name: '溢彩水墨',     icon: '🎨',  tag: '水墨同化', path: '../摸鱼街机/05-溢彩画/index.html' },
     { id: '06-堆叠高塔',     name: '堆叠高塔',     icon: '🏰',  tag: '切片登顶', path: '../摸鱼街机/06-堆叠高塔/index.html' },
-    { id: '07-镜光引路',     name: '镜光引路',     icon: '🪞',  tag: '激光折射', path: '../摸鱼街机/07-镜光引路/index.html' }
+    { id: '07-镜光引路',     name: '镜光引路',     icon: '🪞',  tag: '激光折射', path: '../摸鱼街机/07-镜光引路/index.html' },
+    { id: '08-数独',         name: '极意数独',     icon: '🔢',  tag: '九宫数独', path: '../摸鱼街机/08-数独/index.html' },
+    { id: '09-律动共鸣',     name: '律动共鸣',     icon: '🎵',  tag: '4轨音游',  path: '../摸鱼街机/09-律动共鸣/index.html' }
   ];
 
   // 全角色原声 CV 街机定制联动词典 (与各角色音频素材严格对齐)
@@ -195,14 +197,24 @@
     }
 
     /**
-     * 核心事件总线：接收全 8 款微游戏通过 UniversalBridge 广播的事件
+     * 核心事件总线：接收全 10 款微游戏通过 UniversalBridge 广播的事件
      */
     _handleGameEvent(e) {
       const data = e.data;
-      if (!data || data.type !== 'GAME_EVENT') return;
+      if (!data) return;
 
-      const eventName = data.event || data.action;
-      const payload = data.payload || {};
+      let eventName = null;
+      let payload = data.payload || {};
+
+      if (data.type === 'GAME_EVENT') {
+        eventName = data.event || data.action;
+      } else if (data.source === 'mini-game-engine' || data.source === 'mini-game') {
+        eventName = data.type || data.action || data.event;
+      } else if (data.event || data.action) {
+        eventName = data.event || data.action;
+      }
+
+      if (!eventName) return;
 
       switch (eventName) {
         // 1. 连击消除喝彩
@@ -216,13 +228,15 @@
           break;
         }
 
-        // 2. 关卡大通关
+        // 2. 关卡大通关 (数独完成、音游通关、鸣潮谜题通关等)
         case 'ON_LEVEL_COMPLETE':
+        case 'LEVEL_COMPLETE':
         case 'LEVEL_CLEAR':
         case 'VICTORY': {
-          const lvl = (typeof payload.level === 'number') ? (payload.level + 1) : '';
-          this._triggerReward(3, `第 ${lvl} 关大通关！`);
-          this._triggerCheer('win', `🎉 恭喜第 ${lvl} 关通关！`);
+          const lvl = (typeof payload.level === 'number') ? (payload.level + 1) : (payload.difficulty ? `${payload.difficulty}难度` : '');
+          const desc = lvl ? `【${lvl}】圆满通关！` : '大通关！';
+          this._triggerReward(5, desc);
+          this._triggerCheer('win', `🎉 恭喜${desc}`);
           break;
         }
 

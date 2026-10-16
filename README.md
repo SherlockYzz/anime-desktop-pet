@@ -1,8 +1,8 @@
-﻿<div align="center">
+<div align="center">
 
-# ✨ 二次元AI桌宠 v07.22（双版本发布 / Dual-Language Edition）
+# ✨ 二次元AI桌宠 v08.00（双版本发布 / Dual-Language Edition）
 
-**九大经典动漫角色全阵容 · 摸鱼街机套件(8款微游戏) · 133段CV原声喝彩联动 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 隐藏「创世神」管理员彩蛋 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
+**全量十款轻量H5独立微游戏套件 · 鸣潮关卡深度复刻 · 133段CV原声喝彩联动 · 纯净沉浸街机视窗 · 真透明与像素级物理穿透 · 九大经典动漫角色全阵容 · 官方考据十阶羁绊 · 角色专属手账与长期记忆 · 桌面管家三件套 · 双核 Live2D (Cubism 2/4/5) · 广播级原生CV声库**
 
 <br>
 
@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/github/license/SherlockYzz/anime-desktop-pet?style=for-the-badge&color=ff69b4" alt="License">
   <img src="https://img.shields.io/badge/Edition-Dual%20(CN%20%2F%20EN)-8A2BE2?style=for-the-badge" alt="Edition">
   <img src="https://img.shields.io/badge/Electron-28.x-blue?style=for-the-badge&logo=electron&logoColor=white" alt="Electron">
-  <img src="https://img.shields.io/badge/Arcade-8%20Mini%20Games-orange?style=for-the-badge" alt="Arcade">
+  <img src="https://img.shields.io/badge/Arcade-10%20Mini%20Games-orange?style=for-the-badge" alt="Arcade">
   <img src="https://img.shields.io/badge/Live2D-Cubism%202%2F4%2F5-ff69b4?style=for-the-badge" alt="Live2D">
   <img src="https://img.shields.io/badge/Voice-133%20Broadcast%20CV-00cec9?style=for-the-badge" alt="Voice">
   <img src="https://img.shields.io/badge/Memory-10%20Tier%20Bond%20%26%20Diary-ff4757?style=for-the-badge" alt="BondDiary">
@@ -26,7 +26,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI-DesktopPet-v07.22-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (147MB)</b></a>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v08.00/AI-DesktopPet-v08.00-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (v08.00)</b></a>
   <br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>🌍 Direct Download 【English Edition】 Setup (147MB)</b></a>
   <br><br>
@@ -341,10 +341,10 @@
 
 | 版本分类 / Edition | 安装包文件名 | 安装向导语言 | 适用群体 | 高速下载链接 |
 | :--- | :--- | :--- | :--- | :--- |
-| 🇨🇳 **简体中文版（国内推荐）** | `AI-DesktopPet-v07.22-Setup.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包 (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.22/AI-DesktopPet-v07.22-Setup.exe) |
+| 🇨🇳 **简体中文版（国内推荐）** | `AI-DesktopPet-v08.00-Setup.exe` | 简体中文 | 国内用户（推荐） | [👉 点击直接下载中文安装包 (v08.00)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v08.00/AI-DesktopPet-v08.00-Setup.exe) |
 | 🌍 **English Edition** | `AI-Desktop-Pet-v07.21-Setup.exe` | 纯英文 (NSIS 1033) | 海外 / 英语用户 | [👉 Click to Download English Setup (147MB)](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe) |
 
-> 📌 **完整 Release 发布页**：[GitHub Releases - v07.22 发布页](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v07.22)  
+> 📌 **完整 Release 发布页**：[GitHub Releases - v08.00 发布页](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v08.00)  
 > **安装流程**：
 > 1. 下载对应安装包后双击运行；
 > 2. 跟随向导**自由选择安装盘符与目录（如 D 盘 / E 盘 / F 盘）**；
@@ -373,9 +373,15 @@ npm run build:win
 
 ## 🛠️ 五、近期版本优化与问题修复记录 (Changelog & Bug Fixes)
 
-> 以下为 `v07.22` 及近期版本针对稳定性、国际化与交互细节完成的底层治理记录：
+> 以下为 `v08.00` 及近期版本针对稳定性、国际化与交互细节完成的底层治理记录：
 
-- **🎉 [v07.22 重磅实装] 「摸鱼街机」微游戏套件深度接入与桌宠情感闭环**：
+- **🎉 [v08.00 重磅大版本更新] 全量 10 款轻量 H5 独立微游戏套件 · 极意数独与律动共鸣音游 · 鸣潮关卡深度复刻 · 沉浸纯净街机视窗 · 真透明与像素级物理穿透**：
+  - **10 款精选独立微游戏全量收录**：在原有 8 款游戏基础上，重磅新增《08-极意数独》（涵盖简单到专家 4 级难度合法数独题库，零死局发牌）与《09-律动共鸣》（4 轨下落式节奏打击音游，含动态频谱与选歌大厅），微游戏宇宙全面成型；
+  - **鸣潮关卡深度复刻与数学严谨性验证**：《05-溢彩水墨》升级至 15 关战役，《07-镜光引路》升级至 10 关乘霄山光枢谜题，均通过 BFS 逆向最短路与数学唯一解严密质检；
+  - **纯净沉浸街机视窗与自适应延展**：打开小游戏时自动隐匿 Live2D 角色与无关标签栏，窗口视窗 100% 聚焦游戏画面，支持小窗智能延展与 `🗖` 最大化全屏畅玩，附带一键退出街机按钮与 Esc 快捷退回；
+  - **真透明与像素级物理穿透引擎**：彻底根除 Windows DWM 1px 虚边与阴影遮挡，实现桌宠角色实体像素级抓取（Alpha > 20），周围透明区域 100% 物理穿透至底层桌面，无阻碍点击桌面图标与底层窗口；
+  - **CV 原声喝彩联动与好感度闭环**：10 款游戏全面接入 UniversalBridge 通信契约，连击、破纪录、过关实时触发全角色原声喝彩并增加亲密度好感度。
+- **🎉 [v07.22] 「摸鱼街机」微游戏套件深度接入与桌宠情感闭环**：
   - **8 款精选微型游戏全量实装**：内置拉海洛放置版、拉海洛重力版、六边形消除、共鸣弹球、点点引光、溢彩画、堆叠高塔与镜光引路；
   - **视听爽感（Game Juice）升级**：消除类游戏引入 Canvas 屏幕微震动（Screen Shake）与五声音阶循环升调反馈；弹球加入 2x 倍速与召回；
   - **全角色 133 段原生 CV 实时喝彩联动**：小游戏连击、破纪录、通关、失败等关键节点，桌宠均会根据当前角色播放地道原声 CV 与专属气泡台词；

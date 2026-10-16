@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>律动共鸣 · Echo Beats (极意音轨)</title>
+    <link rel="stylesheet" href="css/style.css?v=20261016_3">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 曲目选择大厅 (Song Selection Hub - 默认开启) -->
+        <div id="song-select-screen" class="song-select-screen">
+            <div class="select-header">
+                <div class="select-title-group">
+                    <h2>ECHO BEATS // 曲目大厅</h2>
+                    <p>挑选原声名曲 · 感受极意节拍呼吸</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="btn-hub-mute" class="btn-icon" title="静音切换">🔊</button>
+                    <button id="btn-hub-help" class="btn-icon" title="玩法规则">❓</button>
+                </div>
+            </div>
+
+            <!-- 歌曲卡片列表 (由 JS 动态生成并绑定历史最高分/评级) -->
+            <div class="song-list-container" id="song-list-container"></div>
+
+            <div class="select-footer">
+                <button id="btn-start-play" class="btn-start-play">
+                    <span>⚡ 开始演奏</span>
+                    <span style="font-size: 0.85rem; opacity: 0.85;">(START)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 准备开始 3-2-1 倒计时覆盖层 -->
+        <div id="countdown-overlay" class="countdown-overlay">
+            <div id="countdown-num" class="countdown-number">3</div>
+        </div>
+
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>ECHO BEATS</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-open-select" class="btn-icon" title="返回选歌大厅 (Songs)">🎵</button>
+                <button id="btn-restart" class="btn-icon" title="重开曲目 (R)">🔄</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-help" class="btn-icon" title="玩法说明 (?)">❓</button>
+            </div>
+        </header>
+
+        <!-- 状态展示板 -->
+        <section class="score-board">
+            <div class="score-item" id="hud-track-btn" style="cursor: pointer;" title="点击返回曲目选择">
+                <div class="score-label">TRACK</div>
+                <div id="track-label-val" class="score-value track" style="font-size: 13px; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">COMBO</div>
+                <div id="combo-val" class="score-value combo">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">ACCURACY</div>
+                <div id="acc-val" class="score-value acc">100%</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value">0</div>
+            </div>
+        </section>
+
+        <!-- 4 轨下落判定画布区域 -->
+        <main class="board-container">
+            <canvas id="beats-canvas"></canvas>
+        </main>
+
+        <!-- 底部虚拟打击键盘 (支持移动端触控) -->
+        <footer class="hit-pad-container">
+            <div id="pad-0" class="hit-pad-btn lane-0">
+                <div class="key-label">D</div>
+                <div class="sub-label">PYRO</div>
+            </div>
+            <div id="pad-1" class="hit-pad-btn lane-1">
+                <div class="key-label">F</div>
+                <div class="sub-label">HYDRO</div>
+            </div>
+            <div id="pad-2" class="hit-pad-btn lane-2">
+                <div class="key-label">J</div>
+                <div class="sub-label">ELECTRO</div>
+            </div>
+            <div id="pad-3" class="hit-pad-btn lane-3">
+                <div class="key-label">K</div>
+                <div class="sub-label">GEO</div>
+            </div>
+        </footer>
+
+        <!-- 曲目完成结算弹窗 -->
+        <div id="victory-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">TRACK COMPLETE!</h2>
+                <div id="victory-stat-text" class="modal-desc" style="line-height: 1.6; font-size: 14px; margin-bottom: 16px;">
+                    恭喜完成律动演奏！
+                </div>
+                <button id="btn-next-modal" class="btn-primary">挑战下一首名曲 (NEXT)</button>
+                <button id="btn-modal-select" class="btn-primary" style="margin-top: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none;">返回选歌大厅 (SELECT)</button>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align: center;">RHYTHM GUIDE</h2>
+                <h3>🎵 真实乐曲与音游打击</h3>
+                <p>音符随歌曲节奏飞驰，当音符到达底部<strong>发光判定线</strong>时，按下对应按键或触碰底部按键区：</p>
+                <ul>
+                    <li><strong>PC 键盘</strong>：分别对应按键 <code>D</code>、<code>F</code>、<code>J</code>、<code>K</code></li>
+                    <li><strong>触控模式</strong>：直接点击屏幕下方 4 个打击垫或对应象限</li>
+                </ul>
+
+                <h3>⚡ 精准判定窗口</h3>
+                <ul>
+                    <li><strong style="color:#00f0ff;">PERFECT</strong>：精准击打 (±45ms)，高额计分，连击倍率持续叠加</li>
+                    <li><strong style="color:#fbbf24;">GREAT</strong>：良好击打 (±95ms)，维持连击</li>
+                    <li><strong style="color:#f43f5e;">MISS</strong>：漏击或过早过晚，连击中断</li>
+                </ul>
+
+                <h3>⭐ 评价体系</h3>
+                <ul>
+                    <li>⭐⭐⭐ <strong>极意破晓 (SSS / SS)</strong>：准度 $\ge 94\%$ 或 0 Miss 全连</li>
+                    <li>⭐⭐ <strong>声动九霄 (S / A)</strong>：准度 $\ge 80\%$ 且通关</li>
+                    <li>⭐ <strong>功德圆满 (B)</strong>：顺利演奏完乐曲</li>
+                </ul>
+
+                <button id="btn-close-help" class="btn-primary" style="margin-top: 14px;">我知道了 (GOT IT)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 原生背景音乐播放器 DOM 挂载点 (确保不被浏览器意外垃圾回收) -->
+    <audio id="bgm-player" preload="auto"></audio>
+
+    <!-- 核心脚本依赖 -->
+    <script src="js/bridge.js?v=20261016_5"></script>
+    <script src="js/synth.js?v=20261016_5"></script>
+    <script src="js/beatmaps.js?v=20261016_5"></script>
+    <script src="js/beats.js?v=20261016_5"></script>
+</body>
+</html>

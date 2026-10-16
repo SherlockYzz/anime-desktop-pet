@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>极意数独 (Sudoku) - 经典逻辑解谜</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部 HUD -->
+        <header class="header-bar">
+            <div class="title-group">
+                <h1>极意数独</h1>
+                <p>9×9 纯粹数理演绎 · 草稿笔记 · 唯一定解</p>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="btn-restart" title="重新开始">🔄</button>
+                <button class="icon-btn" id="btn-mute" title="静音切换">🔊</button>
+            </div>
+        </header>
+
+        <!-- 难度切换 -->
+        <nav class="diff-tabs">
+            <button class="diff-tab active" data-diff="easy">简单</button>
+            <button class="diff-tab" data-diff="medium">普通</button>
+            <button class="diff-tab" data-diff="hard">困难</button>
+            <button class="diff-tab" data-diff="expert">专家</button>
+        </nav>
+
+        <!-- 状态指示栏 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span>失误:</span>
+                <strong id="mistakes-val">0/3</strong>
+            </div>
+            <div class="stat-item">
+                <span>用时:</span>
+                <strong id="timer-val">00:00</strong>
+            </div>
+        </div>
+
+        <!-- 9x9 数独棋盘网格 -->
+        <div class="grid-wrapper">
+            <div class="sudoku-grid" id="sudoku-grid"></div>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <button class="tool-btn" id="btn-pencil">
+                <span class="icon">✏️</span>
+                <span>草稿笔记</span>
+            </button>
+            <button class="tool-btn" id="btn-erase">
+                <span class="icon">🧹</span>
+                <span>橡皮擦</span>
+            </button>
+            <button class="tool-btn" id="btn-undo">
+                <span class="icon">↩️</span>
+                <span>撤销回退</span>
+            </button>
+            <button class="tool-btn" id="btn-hint">
+                <span class="icon">💡</span>
+                <span>灵感提示</span>
+            </button>
+        </div>
+
+        <!-- 数字键盘 (1~9) -->
+        <div class="keypad" id="num-keypad">
+            <button class="num-key" data-num="1">1</button>
+            <button class="num-key" data-num="2">2</button>
+            <button class="num-key" data-num="3">3</button>
+            <button class="num-key" data-num="4">4</button>
+            <button class="num-key" data-num="5">5</button>
+            <button class="num-key" data-num="6">6</button>
+            <button class="num-key" data-num="7">7</button>
+            <button class="num-key" data-num="8">8</button>
+            <button class="num-key" data-num="9">9</button>
+        </div>
+    </div>
+
+    <!-- 通关结算弹窗 -->
+    <div class="modal-overlay" id="victory-modal">
+        <div class="modal-card victory">
+            <h2>🎉 解谜圆满</h2>
+            <div class="modal-content" id="victory-text"></div>
+            <button class="modal-btn" id="btn-next">挑战下一局</button>
+        </div>
+    </div>
+
+    <!-- 失败弹窗 (失误达到上限) -->
+    <div class="modal-overlay" id="defeat-modal">
+        <div class="modal-card defeat">
+            <h2>💔 失误过多</h2>
+            <div class="modal-content">
+                连续失误已达 3 次，定力稍显紊乱。<br>
+                沉下心神，重振旗鼓再战一局吧！
+            </div>
+            <button class="modal-btn" id="btn-retry">重新挑战</button>
+        </div>
+    </div>
+
+    <!-- 核心驱动与桥接通信脚本 -->
+    <script src="js/bridge.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/sudoku.js"></script>
+</body>
+</html>
