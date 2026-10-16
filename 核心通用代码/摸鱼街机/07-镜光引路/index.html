@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>镜光引路 · Laser Optics</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>LASER OPTICS</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-restart" class="btn-icon" title="重置本关 (R)">🔄</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-help" class="btn-icon" title="玩法说明 (?)">❓</button>
+            </div>
+        </header>
+
+        <!-- 关卡与目标状态板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">LEVEL</div>
+                <div id="level-label-val" class="score-value level">1/8</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">CRYSTALS LIT</div>
+                <div id="targets-val" class="score-value targets">0/1</div>
+            </div>
+        </section>
+
+        <!-- 核心光线画布区域 -->
+        <main class="board-container">
+            <canvas id="optics-canvas"></canvas>
+        </main>
+
+        <!-- 底部切关栏 -->
+        <footer class="bottom-panel">
+            <button id="btn-prev-lvl" class="level-switch-btn">◀ 上一关</button>
+            <button id="btn-next-lvl" class="level-switch-btn">下一关 ▶</button>
+        </footer>
+
+        <!-- 关卡通关结算弹窗 -->
+        <div id="victory-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">CIRCUIT RESONATED!</h2>
+                <p id="victory-level-text" class="modal-desc">
+                    全阵列光学回路完美贯通！
+                </p>
+                <button id="btn-next-modal" class="btn-primary">进入下一关 (NEXT LEVEL)</button>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align: center;">🔦 镜光引路 · 玩法说明</h2>
+                <div class="help-section">
+                    <div class="help-section-title">🎯 核心目标</div>
+                    <div class="help-text">灵感源自《鸣潮》声索回路与《原神》导光之印解谜。通过旋转场上的反光镜片，引导高能激光束精准穿透并点亮全部能量晶核！</div>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">⚡ 光学元件法则</div>
+                    <ul class="help-list">
+                        <li><strong>发射器 (Emitter)：</strong> 持续向指定方向发射贯穿全场的极光束。</li>
+                        <li><strong>反射镜 (Mirror)：</strong> 点击可切换 45° 偏转方向（<span class="help-key">/</span> 与 <span class="help-key">\</span>），实现激光 90° 直角折射。</li>
+                        <li><strong>分光棱镜 (Splitter)：</strong> 紫色菱形水晶，光线照射时既保持直行穿透，又垂直分流出一道新光束。</li>
+                        <li><strong>能量晶核 (Target)：</strong> 目标靶标，必须被激光照射充能。当全场所有晶核全部被点亮时通关。</li>
+                        <li><strong>阻隔黑石 (Wall)：</strong> 吸收并阻断任何穿过的激光束。</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">🕹️ 操作指南</div>
+                    <ul class="help-list">
+                        <li><strong>旋转镜面：</strong> 鼠标点击或触摸反射镜立即触发 90° 旋转。</li>
+                        <li><strong>快捷键：</strong> 按 <span class="help-key">R</span> 重置本关，按 <span class="help-key">◀</span> <span class="help-key">▶</span> 自由切关，按 <span class="help-key">?</span> 调出本指南。</li>
+                    </ul>
+                </div>
+                <button id="btn-close-help" class="btn-primary" style="margin-top: 10px;">我知道了，开始引路！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/optics.js"></script>
+</body>
+</html>

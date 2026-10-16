@@ -453,6 +453,9 @@ class ActionMenuManager {
         <button class="pet-action-footer-btn btn-open-shortcuts-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:2px;">
           <span>⌨️</span> 快捷键
         </button>
+        <button class="pet-action-footer-btn btn-open-arcade-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(255,159,67,0.35);background:rgba(255,159,67,0.1);cursor:pointer;color:#e67e22;display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span>🎮</span> 街机
+        </button>
         <button class="pet-action-footer-btn btn-exit-pet-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid #d94f4f;background:#d94f4f;color:#fff;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:2px;">
           <span>🔄</span> 网页
         </button>
@@ -478,6 +481,12 @@ class ActionMenuManager {
         window.app?.petMode?._toggleActionMenu?.(false);
         menu.classList.remove('show');
         window.shortcutManager?.toggleMenu?.(true);
+        return;
+      }
+      if (e.target.closest('.btn-open-arcade-from-menu')) {
+        window.app?.petMode?._toggleActionMenu?.(false);
+        menu.classList.remove('show');
+        window.arcadeManager?.openArcade?.();
         return;
       }
       if (e.target.closest('.btn-exit-pet-from-menu')) {

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>点点引光 · Flow Link</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>FLOW LINK</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重置本关">🔄</button>
+            </div>
+        </header>
+
+        <!-- 积分显示板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">LEVEL</div>
+                <div id="level-label-val" class="score-value">1/8</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">COVERAGE</div>
+                <div id="fill-percent-val" class="score-value fill">0%</div>
+            </div>
+        </section>
+
+        <!-- 核心连线画布 -->
+        <main class="board-container">
+            <canvas id="flow-canvas"></canvas>
+        </main>
+
+        <!-- 底部切关栏 -->
+        <footer class="bottom-panel">
+            <button id="btn-prev-lvl" class="level-switch-btn">◀ 上一关</button>
+            <button id="btn-next-lvl" class="level-switch-btn">下一关 ▶</button>
+        </footer>
+
+        <!-- 关卡通关结算弹窗 -->
+        <div id="victory-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">CIRCUIT COMPLETE!</h2>
+                <p id="victory-level-text" class="modal-desc">
+                    全盘共鸣流光 100% 贯通！
+                </p>
+                <button id="btn-next-modal" class="btn-primary">进入下一关 (NEXT LEVEL)</button>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align: center;">💡 点点引光 · 玩法说明</h2>
+                <div class="help-section">
+                    <div class="help-section-title">🎯 核心目标</div>
+                    <div class="help-text">在网格中连接相同颜色的发光节点，铺设完整能量回路，实现全盘 100% 贯通。</div>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">⚡ 胜负规则 (两条铁律)</div>
+                    <ul class="help-list">
+                        <li><strong>无交叉：</strong> 任何两条不同颜色的光缆不得相互重叠交叉。若后画的光缆穿过已存在的线，原线路会被自动冲散截断。</li>
+                        <li><strong>全填满：</strong> 仅连通所有颜色还不够，必须将盘面上的每一个格子全部填满（COVERAGE 达到 100%）方可过关！</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">🕹️ 操作指南</div>
+                    <ul class="help-list">
+                        <li><strong>移动端 / 平板：</strong> 手指按住发光端点，滑动绘制光纤回路；沿原路往回滑可快速撤销缩回。</li>
+                        <li><strong>电脑端：</strong> 鼠标左键按住拖拽连线，松开确认。</li>
+                        <li><strong>快捷键：</strong> <span class="help-key">R</span> 重置本关 / <span class="help-key">◀</span> <span class="help-key">▶</span> 切换上下关卡 / <span class="help-key">?</span> 开启本说明。</li>
+                    </ul>
+                </div>
+                <button id="btn-close-help" class="btn-primary" style="margin-top: 10px;">我知道了，开始引光！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/flow-puzzle.js"></script>
+</body>
+</html>

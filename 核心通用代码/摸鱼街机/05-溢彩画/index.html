@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>溢彩画 · Chroma Paint</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>CHROMA PAINT</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-undo" class="btn-icon" title="撤销一步 (Z)">↩</button>
+                <button id="btn-restart" class="btn-icon" title="重置本关 (R)">🔄</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-help" class="btn-icon" title="玩法说明 (?)">❓</button>
+            </div>
+        </header>
+
+        <!-- 关卡与步数状态板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">LEVEL</div>
+                <div id="level-label-val" class="score-value">1/10</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">STEPS LEFT</div>
+                <div id="steps-val" class="score-value steps">2</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">COVERAGE</div>
+                <div id="coverage-val" class="score-value fill">50%</div>
+            </div>
+        </section>
+
+        <!-- 核心画布区域 -->
+        <main class="board-container">
+            <canvas id="chroma-canvas"></canvas>
+        </main>
+
+        <!-- 底部国风调色盘 -->
+        <section class="palette-container">
+            <div id="palette-bar" class="palette-bar">
+                <!-- 动态由 JS 填充 -->
+            </div>
+        </section>
+
+        <!-- 底部切关与操作栏 -->
+        <footer class="bottom-panel">
+            <button id="btn-prev-lvl" class="level-switch-btn">◀ 上一关</button>
+            <button id="btn-next-lvl" class="level-switch-btn">下一关 ▶</button>
+        </footer>
+
+        <!-- 关卡通关结算弹窗 -->
+        <div id="victory-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">CHROMA UNIFIED!</h2>
+                <p id="victory-level-text" class="modal-desc">
+                    全盘墨彩浑然一体！
+                </p>
+                <button id="btn-next-modal" class="btn-primary">进入下一关 (NEXT LEVEL)</button>
+            </div>
+        </div>
+
+        <!-- 关卡失败弹窗 -->
+        <div id="defeat-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title defeat">OUT OF STEPS!</h2>
+                <p class="modal-desc">
+                    墨意未尽，步数已竭！<br>
+                    可以撤销回退一步，或重新挑战本关。
+                </p>
+                <div class="modal-btns">
+                    <button id="btn-undo-modal" class="btn-secondary">↩ 撤销一步</button>
+                    <button id="btn-retry-modal" class="btn-primary">🔄 重新开始</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align: center;">🎨 溢彩画 · 玩法说明</h2>
+                <div class="help-section">
+                    <div class="help-section-title">🎯 核心目标</div>
+                    <div class="help-text">灵感源自《鸣潮》与经典日式折纸艺术《KAMI》。在限定的步数之内，通过向区域浸染色彩，使整个棋盘完全化为单一纯色（COVERAGE 达到 100%）。</div>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">💧 浸染扩散规则</div>
+                    <ul class="help-list">
+                        <li><strong>连通蔓延：</strong> 在调色盘选择画笔颜色后，点击棋盘上任意色块，该色块及其所有上下左右相连的同色区域将瞬间被新色彩浸润吞并。</li>
+                        <li><strong>步数限制：</strong> 每次有效染色消耗 1 点步数。当步数归零前若未实现全盘纯色即告失败。</li>
+                        <li><strong>每关必解：</strong> 本游戏全部 10 个关卡均通过广度优先算法验证，100% 存在完美最优解。</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">🕹️ 操作指南</div>
+                    <ul class="help-list">
+                        <li><strong>选择颜色：</strong> 点击底部的调色盘颜色圆环，或使用键盘数字键 <span class="help-key">1</span> ~ <span class="help-key">5</span> 极速切换。</li>
+                        <li><strong>染色方块：</strong> 点击或触摸目标方块即可泼墨染色。</li>
+                        <li><strong>撤销与重试：</strong> 随时按 <span class="help-key">Z</span> 撤销上一步（步数自动恢复），按 <span class="help-key">R</span> 重置本关，按 <span class="help-key">◀</span> <span class="help-key">▶</span> 自由切关。</li>
+                    </ul>
+                </div>
+                <button id="btn-close-help" class="btn-primary" style="margin-top: 10px;">我知道了，开始泼墨！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/chroma.js"></script>
+</body>
+</html>

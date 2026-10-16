@@ -18,6 +18,7 @@
       <button class="btn-back-pet" id="btn-back-pet" title="返回桌宠模式">桌宠</button>
       <button class="btn-shortcuts-titlebar" id="btn-pomodoro-titlebar" title="专注番茄钟 (25分钟)">💼</button>
       <button class="btn-shortcuts-titlebar" id="btn-memory-diary-titlebar" title="羁绊手账与长期记忆">📖</button>
+      <button class="btn-shortcuts-titlebar" id="btn-arcade-titlebar" title="摸鱼街机 (8款精选微游戏)">🎮</button>
       <button class="btn-shortcuts-titlebar" id="btn-shortcuts-titlebar" title="快捷键一览与自定义 (⌨️ / F1)">⌨️</button>
       <button class="btn-character-select" id="btn-character-select" title="切换角色">&#x1f464;</button>
       <button class="btn-settings" id="btn-settings" title="settings">&#x2699;</button>
@@ -40,6 +41,7 @@
     <div class="tab-bar">
       <button class="tab active" data-tab="chat">聊天</button>
       <button class="tab" data-tab="code">写代码</button>
+      <button class="tab" data-tab="arcade">🎮 摸鱼街机</button>
     </div>
 
     <!-- 聊天模式 -->
@@ -90,6 +92,21 @@
       <div class="code-ai-area">
         <textarea id="code-ai-input" placeholder="描述你想要的代码功能..." rows="2"></textarea>
         <button class="btn-ai-code" id="btn-ai-code">帮忙写代码</button>
+      </div>
+    </div>
+
+    <!-- 摸鱼街机模式 -->
+    <div class="tab-content" id="tab-arcade">
+      <div class="arcade-sub-bar">
+        <div class="arcade-game-pills" id="arcade-game-pills"></div>
+        <div class="arcade-actions">
+          <button class="arcade-action-btn" id="btn-arcade-restart" title="重新开始当前游戏">🔄 重来</button>
+          <button class="arcade-action-btn" id="btn-arcade-mute" title="小游戏静音切换">🔊 声音</button>
+          <button class="arcade-action-btn" id="btn-arcade-reload" title="重载游戏视窗">⚡ 刷新</button>
+        </div>
+      </div>
+      <div class="arcade-viewport-container">
+        <iframe id="arcade-viewport" class="arcade-iframe" src="../摸鱼街机/01-拉海洛方块01/index.html" frameborder="0" allow="autoplay"></iframe>
       </div>
     </div>
   </div>
@@ -472,6 +489,7 @@
   <script src="情感记忆.js"></script>
   <script src="桌宠模式.js"></script>
   <script src="桌面管家.js"></script>
+  <script src="摸鱼街机管理器.js"></script>
   <script src="主界面.js"></script>
 </body>
 </html>

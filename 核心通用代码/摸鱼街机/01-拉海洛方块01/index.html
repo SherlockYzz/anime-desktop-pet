@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>拉海洛方块 · Lahairo Blocks</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>LAHAIRO BLOCKS</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重开一局">🔄</button>
+            </div>
+        </header>
+
+        <!-- 积分显示板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">BEST</div>
+                <div id="high-score-val" class="score-value high">0</div>
+            </div>
+        </section>
+
+        <!-- 8x8 核心棋盘 -->
+        <main class="board-container">
+            <canvas id="board-canvas"></canvas>
+            <div id="combo-banner" class="combo-banner">🔥 COMBO x2</div>
+        </main>
+
+        <!-- 底部候选手牌区 -->
+        <footer class="dock-container">
+            <div id="slot-0" class="dock-slot"></div>
+            <div id="slot-1" class="dock-slot"></div>
+            <div id="slot-2" class="dock-slot"></div>
+        </footer>
+
+        <!-- 游戏结束结算弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">RESONANCE OVER</h2>
+                <p class="modal-desc">
+                    空间已收束，无可用共鸣位<br>
+                    最终得分：<span id="final-score-val" style="color:var(--cyan); font-weight:700; font-size:1.2rem;">0</span>
+                </p>
+                <button id="btn-restart-modal" class="btn-primary">再来一局 (RESTART)</button>
+            </div>
+        </div>
+
+        <!-- 暂停弹窗 -->
+        <div id="pause-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">PAUSED</h2>
+                <p class="modal-desc">已挂起共鸣循环</p>
+                <button id="btn-resume" class="btn-primary">继续游戏 (RESUME)</button>
+            </div>
+        </div>
+
+        <!-- 📖 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align:center;">📖 玩法指南 (HOW TO PLAY)</h2>
+                
+                <div class="help-section">
+                    <div class="help-section-title">🎯 游戏目标</div>
+                    <p class="help-text">将底部的方块拖入 8×8 网格中，填满完整的行或列进行消除，冲击历史最高得分！</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📜 核心规则</div>
+                    <ul class="help-list">
+                        <li><b>不可旋转</b>：方块方向固定，极为考验空间排布规划。</li>
+                        <li><b>消除得分</b>：填满任一横行或竖列立即触发共鸣消除。</li>
+                        <li><b>多巴胺连击</b>：单步消除多行或连续消除可触发高倍 <b>COMBO 阶梯和弦</b>。</li>
+                        <li><b>手牌轮转</b>：3 个方块全部用完后刷新下一批；若手牌中没有任何一个能在盘面上放下，游戏结束。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🎮 触控与鼠标操作</div>
+                    <ul class="help-list">
+                        <li><b>电脑端</b>：按住鼠标左键拖动候选方块，松手吸附入格。</li>
+                        <li><b>手机/平板</b>：手指按住拖拽，自带 70px 防手指遮挡视差抬升，精准对齐。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">💡 逃课高分秘籍</div>
+                    <p class="help-text">时刻预留 3×3 或 1×5 的大空间；优先消除中间区域，避免边缘产生单个碎洞卡死！</p>
+                </div>
+
+                <button id="btn-close-help" class="btn-primary" style="margin-top:10px;">知道了，开始摸鱼！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>

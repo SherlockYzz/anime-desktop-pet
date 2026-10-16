@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>堆叠高塔 · Stack Tower</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>STACK TOWER</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-restart" class="btn-icon" title="重开一局 (R)">🔄</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-help" class="btn-icon" title="玩法说明 (?)">❓</button>
+            </div>
+        </header>
+
+        <!-- 积分显示板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value current">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">BEST</div>
+                <div id="high-score-val" class="score-value best">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">COMBO</div>
+                <div id="combo-val" class="score-value combo">-</div>
+            </div>
+        </section>
+
+        <!-- 核心 3D 等距投影画布区域 -->
+        <main class="board-container">
+            <canvas id="stack-canvas"></canvas>
+        </main>
+
+        <!-- 底部轻提示 -->
+        <footer class="tap-hint">
+            点击屏幕或按 <span>[空格/回车]</span> 精准放置方块
+        </footer>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">TOWER COLLAPSED!</h2>
+                <p class="modal-desc">
+                    高塔倾覆，定格云端！<br>
+                    本次最终层数:
+                    <strong id="final-score-val">0</strong>
+                </p>
+                <button id="btn-retry-modal" class="btn-primary">再筑摩天塔 (PLAY AGAIN)</button>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align: center; color: var(--accent-cyan);">🏰 堆叠高塔 · 玩法说明</h2>
+                <div class="help-section">
+                    <div class="help-section-title">🎯 核心目标</div>
+                    <div class="help-text">向着云巅无止境攀登！观察滑块来回平移的节奏，在与下一层完全重叠的瞬间果断点击，堆叠出无懈可击的绚丽摩天高塔。</div>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">⚡ 物理切片与连击法则</div>
+                    <ul class="help-list">
+                        <li><strong>悬空切割：</strong> 新放置的方块若超出下方承托边缘，悬空部分将被精准切除并跌落深渊，方块面积随之缩小。</li>
+                        <li><strong>完美判定：</strong> 误差小于 3.5 像素即可触发 <strong>PERFECT!</strong>，方块严丝合缝自动校准，并奏响空灵琶音。</li>
+                        <li><strong>连击复原：</strong> 连续多次打出 PERFECT 连击，高塔将获得微量尺寸复原奖励，力挽狂澜！</li>
+                        <li><strong>全空倒塌：</strong> 一旦方块未接触到下层任何部分，整块跌落，游戏结束。</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">🕹️ 操作指南</div>
+                    <ul class="help-list">
+                        <li><strong>触控 / 鼠标：</strong> 轻触屏幕任意区域或鼠标左键点击立即下落。</li>
+                        <li><strong>键盘快捷键：</strong> 按 <span class="help-key">Space</span> (空格) / <span class="help-key">Enter</span> / <span class="help-key">↑</span> 下落，按 <span class="help-key">R</span> 重开，按 <span class="help-key">?</span> 调出帮助。</li>
+                    </ul>
+                </div>
+                <button id="btn-close-help" class="btn-primary" style="margin-top: 10px;">我知道了，登峰造极！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/stack.js"></script>
+</body>
+</html>

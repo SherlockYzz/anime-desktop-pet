@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>六边形消除 · Hex FRVR</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>HEX FRVR</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重开一局">🔄</button>
+            </div>
+        </header>
+
+        <!-- 积分显示板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">BEST</div>
+                <div id="high-score-val" class="score-value high">0</div>
+            </div>
+        </section>
+
+        <!-- 蜂巢 61 格核心棋盘 -->
+        <main class="board-container">
+            <canvas id="hex-canvas"></canvas>
+            <div id="combo-banner" class="combo-banner">🔥 HEX BLAST</div>
+        </main>
+
+        <!-- 底部候选手牌区 -->
+        <footer class="dock-container">
+            <div id="slot-0" class="dock-slot"></div>
+            <div id="slot-1" class="dock-slot"></div>
+            <div id="slot-2" class="dock-slot"></div>
+        </footer>
+
+        <!-- 游戏结束结算弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">HEX MATRIX FULL</h2>
+                <p class="modal-desc">
+                    蜂巢已饱和，无可用连结路径<br>
+                    最终得分：<span id="final-score-val" style="color:var(--violet); font-weight:700; font-size:1.2rem;">0</span>
+                </p>
+                <button id="btn-restart-modal" class="btn-primary">再来一局 (RESTART)</button>
+            </div>
+        </div>
+
+        <!-- 暂停弹窗 -->
+        <div id="pause-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">PAUSED</h2>
+                <p class="modal-desc">已挂起蜂巢矩阵循环</p>
+                <button id="btn-resume" class="btn-primary">继续游戏 (RESUME)</button>
+            </div>
+        </div>
+
+        <!-- 📖 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align:center;">📖 玩法指南 (HOW TO PLAY)</h2>
+                
+                <div class="help-section">
+                    <div class="help-section-title">🎯 游戏目标</div>
+                    <p class="help-text">在 61 格蜂巢正六边形棋盘中拖入组合晶块，连成完整对角线消除得分，防止死局！</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📜 核心规则与三向消除</div>
+                    <ul class="help-list">
+                        <li><b>不可旋转</b>：组合晶块保持初始形态，考验大局空间预判。</li>
+                        <li><b>三向常数消除</b>：支持 <b>横向水平线</b>、<b>左斜向下</b>、<b>右斜向下</b> 3 个不同轴向连满即消！</li>
+                        <li><b>高容错率</b>：死局率比四方网格降低 70%，极易触发<b>三向十字全屏大引爆</b>。</li>
+                        <li><b>手牌轮换</b>：底部 3 个方块全部用完即刷新下一批；全部槽位均无法放入时游戏结束。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🎮 触控与鼠标操作</div>
+                    <ul class="help-list">
+                        <li><b>电脑端</b>：按住鼠标左键拖动候选方块，蜂巢高亮虚影吸附对齐。</li>
+                        <li><b>手机/平板</b>：手指触控拖拽，自带 70px 抬升视野，不挡格子。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">💡 逃课高分秘籍</div>
+                    <p class="help-text">尽量保留对角线通道；中心格（原点）是 3 条轴线的交汇中枢，优先保持通畅！</p>
+                </div>
+
+                <button id="btn-close-help" class="btn-primary" style="margin-top:10px;">领略蜂巢奥妙，开始！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/hex-grid.js"></script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+/* ========================================================
+   拉海洛方块 (Lahairo Blocks) · 赛博极光高质感 UI 样式表
+   严守规则：touch-action: none, overscroll-behavior: contain
+   ======================================================== */
+
+:root {
+    --bg-dark: #070a13;
+    --bg-card: rgba(14, 20, 36, 0.75);
+    --border-dim: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(0, 240, 255, 0.35);
+    
+    --cyan: #00f0ff;
+    --cyan-glow: rgba(0, 240, 255, 0.5);
+    --violet: #a855f7;
+    --amber: #fbbf24;
+    --pink: #ff3388;
+    --text-main: #f8fafc;
+    --text-dim: #94a3b8;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    touch-action: none;
+    overscroll-behavior: contain;
+}
+
+/* 渐晕星尘背景 */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at 50% 20%, #0d1527 0%, #070a13 80%);
+    position: relative;
+}
+
+/* 核心游戏外框容器 - 响应式等比居中 */
+.game-viewport {
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(10px, 3vh, 20px) 16px;
+    position: relative;
+}
+
+/* 顶部状态栏 HUD */
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-dim);
+}
+
+.brand-title {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.brand-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+.hud-ctrls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-dim);
+    color: var(--text-dim);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.btn-icon:hover {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    background: rgba(0, 240, 255, 0.1);
+}
+
+/* 积分展示面板 */
+.score-board {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin: 8px 0;
+}
+
+.score-item {
+    text-align: center;
+}
+.score-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+}
+.score-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #fff;
+    margin-top: 2px;
+}
+.score-value.high {
+    color: var(--amber);
+}
+
+/* Canvas 棋盘主渲染区 */
+.board-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 0;
+}
+
+#board-canvas {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1 / 1;
+    display: block;
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 240, 255, 0.12);
+    touch-action: none;
+}
+
+/* 底部候选方块区域 */
+.dock-container {
+    width: 100%;
+    height: clamp(110px, 18vh, 140px);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-dim);
+    border-radius: 14px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    position: relative;
+}
+
+.dock-slot {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: grab;
+}
+.dock-slot:active {
+    cursor: grabbing;
+}
+
+/* 浮动连击/高分提示横幅 */
+.combo-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    background: rgba(0, 240, 255, 0.95);
+    color: #050811;
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+    white-space: nowrap;
+}
+.combo-banner.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* 弹窗通用 (游戏结束 / 暂停) */
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 17, 0.85);
+    backdrop-filter: blur(16px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--border-glow);
+    border-radius: 20px;
+    padding: 30px 24px;
+    width: 86%;
+    max-width: 340px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.2);
+    transform: translateY(16px);
+    transition: transform 0.25s ease;
+}
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-title {
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+    color: var(--cyan);
+    margin-bottom: 12px;
+}
+.modal-desc {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 240, 255, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%;
+}
+.btn-primary:active {
+    transform: scale(0.97);
+}
+
+/* 玩法说明弹窗样式 */
+.modal-content.help-box {
+    max-width: 400px;
+    max-height: 84vh;
+    overflow-y: auto;
+    text-align: left;
+    padding: 24px 20px;
+}
+.help-section {
+    margin-bottom: 14px;
+}
+.help-section-title {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.help-text {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+.help-list {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    padding-left: 18px;
+    margin: 4px 0;
+}
+.help-key {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    color: #fff;
+    font-size: 0.72rem;
+}

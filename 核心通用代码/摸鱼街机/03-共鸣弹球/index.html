@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>共鸣弹球 · Resonance Ball</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>RESONANCE BALL</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重开一局">🔄</button>
+            </div>
+        </header>
+
+        <!-- 积分显示板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">BEST</div>
+                <div id="high-score-val" class="score-value high">0</div>
+            </div>
+        </section>
+
+        <!-- 弹球画布主区域 -->
+        <main class="board-container">
+            <canvas id="ball-canvas"></canvas>
+            <div id="combo-banner" class="combo-banner">🔥 STRIKE</div>
+        </main>
+
+        <!-- 底部控制面板 -->
+        <footer class="bottom-panel">
+            <div class="ball-counter">
+                BALLS: <span id="ball-count-val">10</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button id="btn-recall" class="btn-speed" style="display:none; color:var(--rose); border-color:rgba(244,63,94,0.4); background:rgba(244,63,94,0.15);" title="一键收回所有弹珠">⚡ 召回</button>
+                <button id="btn-speed" class="btn-speed">1x ⏩</button>
+            </div>
+        </footer>
+
+        <!-- 游戏结束结算弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">DEFENSE BREACHED</h2>
+                <p class="modal-desc">
+                    共鸣砖块突破防线！<br>
+                    最终得分：<span id="final-score-val" style="color:var(--cyan); font-weight:700; font-size:1.2rem;">0</span>
+                </p>
+                <button id="btn-restart-modal" class="btn-primary">再来一局 (RESTART)</button>
+            </div>
+        </div>
+
+        <!-- 暂停弹窗 -->
+        <div id="pause-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">PAUSED</h2>
+                <p class="modal-desc">已挂起弹射模拟</p>
+                <button id="btn-resume" class="btn-primary">继续游戏 (RESUME)</button>
+            </div>
+        </div>
+
+        <!-- 📖 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align:center;">📖 玩法指南 (HOW TO PLAY)</h2>
+                
+                <div class="help-section">
+                    <div class="help-section-title">🎯 游戏目标</div>
+                    <p class="help-text">调整发射角度齐射共鸣弹珠，击碎向下逼近的砖块，阻止砖块突破底部红线！</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📜 核心规则与物理反弹</div>
+                    <ul class="help-list">
+                        <li><b>耐久削减</b>：砖块上的数字代表剩余耐久，每被弹珠击中 1 次数字减 1。</li>
+                        <li><b>步进推进</b>：每回合所有弹珠收回后，全场砖块整体向下逼近 1 行。</li>
+                        <li><b>强化收集</b>：拾取绿色的 <b>+1 环</b> 可永久增加弹珠发射总数！</li>
+                        <li><b>败北底线</b>：任何带有耐久的砖块触碰到底部防守红线，游戏宣告失败。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🎮 触控与瞄准操作</div>
+                    <ul class="help-list">
+                        <li><b>双模瞄准</b>：支持两种直觉手势 —— 既可<b>直接按住指向目标</b>（直瞄激光线），也可<b>向下拉动蓄力</b>（弹弓反向射击）；带有实时墙壁反射预判线。</li>
+                        <li><b>回合加速与召回</b>：点击右下角 <span class="help-key">1x ⏩ / 2x ⏩</span> 双倍加速；若弹珠弹跳过久，点击 <span class="help-key">⚡ 召回</span> 可一键收回全场弹珠立刻结算！</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">💡 逃课高分秘籍</div>
+                    <p class="help-text">寻找两块砖之间的窄缝，将弹珠打入砖块群后方，利用天花板形成“机关枪暴风式”无限高频反弹！</p>
+                </div>
+
+                <button id="btn-close-help" class="btn-primary" style="margin-top:10px;">锁定角度，全弹发射！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/physics.js"></script>
+</body>
+</html>

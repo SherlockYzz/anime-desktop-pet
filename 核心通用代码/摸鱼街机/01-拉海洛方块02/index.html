@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>拉海洛方块 02 · Lahairo Falling Blocks</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>LAHAIRO 02 · 下落重力版</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重开一局">🔄</button>
+            </div>
+        </header>
+
+        <!-- 主游戏操作区 -->
+        <main class="play-area">
+            <!-- 左侧面板：HOLD + 积分 -->
+            <aside class="side-panel">
+                <div class="panel-box">
+                    <div class="panel-title">HOLD</div>
+                    <canvas id="hold-canvas" class="panel-canvas"></canvas>
+                </div>
+                <div class="panel-box">
+                    <div class="panel-title">SCORE</div>
+                    <div id="score-val" class="panel-stat-val score">0</div>
+                </div>
+                <div class="panel-box">
+                    <div class="panel-title">BEST</div>
+                    <div id="high-score-val" class="panel-stat-val best">0</div>
+                </div>
+            </aside>
+
+            <!-- 核心下落井口 Canvas -->
+            <section class="well-container">
+                <canvas id="well-canvas"></canvas>
+                <div id="combo-banner" class="combo-banner">🔥 COMBO x2</div>
+            </section>
+
+            <!-- 右侧面板：NEXT + 等级 -->
+            <aside class="side-panel">
+                <div class="panel-box">
+                    <div class="panel-title">NEXT</div>
+                    <canvas id="next-canvas" class="panel-canvas"></canvas>
+                </div>
+                <div class="panel-box">
+                    <div class="panel-title">LEVEL</div>
+                    <div id="level-val" class="panel-stat-val">1</div>
+                </div>
+                <div class="panel-box">
+                    <div class="panel-title">LINES</div>
+                    <div id="lines-val" class="panel-stat-val">0</div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- 触控虚拟手柄控制盘 (移动端/平板/PC双兼容) -->
+        <footer class="gamepad-container">
+            <div class="pad-row">
+                <button id="btn-hold" class="pad-btn" title="暂存当前块">
+                    📦 暂存
+                    <span class="sub">[C / Shift]</span>
+                </button>
+                <button id="btn-flip-h" class="pad-btn action-flip" title="左右镜像翻转">
+                    ⇋ 左右翻转
+                    <span class="sub">[Q / F]</span>
+                </button>
+                <button id="btn-flip-v" class="pad-btn action-flip" title="上下倒转">
+                    ⇅ 上下翻转
+                    <span class="sub">[E / V]</span>
+                </button>
+                <button id="btn-rotate" class="pad-btn accent" title="旋转 90 度">
+                    ↻ 旋转
+                    <span class="sub">[W / ↑]</span>
+                </button>
+            </div>
+            <div class="pad-row">
+                <button id="btn-left" class="pad-btn" title="向左移动">
+                    ◀ 左移
+                    <span class="sub">[A / ←]</span>
+                </button>
+                <button id="btn-down" class="pad-btn" title="慢速下落">
+                    ▼ 慢降
+                    <span class="sub">[S / ↓]</span>
+                </button>
+                <button id="btn-right" class="pad-btn" title="向右移动">
+                    ▶ 右移
+                    <span class="sub">[D / →]</span>
+                </button>
+                <button id="btn-hard-drop" class="pad-btn accent" title="快速硬下落锁定">
+                    ⚡ 瞬降
+                    <span class="sub">[Space]</span>
+                </button>
+            </div>
+        </footer>
+
+        <!-- 游戏结束结算弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">WELL COLLAPSED</h2>
+                <p class="modal-desc">
+                    重力井堆积饱和！<br>
+                    最终得分：<span id="final-score-val" style="color:var(--cyan); font-weight:700; font-size:1.2rem;">0</span>
+                </p>
+                <button id="btn-restart-modal" class="btn-primary">再来一局 (RESTART)</button>
+            </div>
+        </div>
+
+        <!-- 暂停弹窗 -->
+        <div id="pause-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">PAUSED</h2>
+                <p class="modal-desc">已挂起重力下落循环</p>
+                <button id="btn-resume" class="btn-primary">继续游戏 (RESUME)</button>
+            </div>
+        </div>
+
+        <!-- 📖 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align:center;">📖 玩法指南 (HOW TO PLAY)</h2>
+                
+                <div class="help-section">
+                    <div class="help-section-title">🎯 游戏目标</div>
+                    <p class="help-text">在 10×20 冰原重力井中操作方块下落，填满水平整行进行爆破消除，防止堆积触顶！</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📜 核心机制与翻转特性</div>
+                    <ul class="help-list">
+                        <li><b>大小形状不变</b>：方块具备坚实刚体结构，几何大小恒定。</li>
+                        <li><b>90° 旋转</b>：按 <span class="help-key">W / ↑</span> 顺时针旋转方位，带踢墙与踢地保护。</li>
+                        <li><b>左右水平镜像</b>：按 <span class="help-key">Q / F</span> 键进行左右方位对调翻转。</li>
+                        <li><b>上下垂直翻转</b>：按 <span class="help-key">E / V</span> 键进行上下翻转，可倒转卡进复杂缝隙。</li>
+                        <li><b>暂存 Hold</b>：按 <span class="help-key">C / Shift</span> 键可将当前块存入备用仓换牌（每回合限一次）。</li>
+                        <li><b>虚影预览 (Ghost)</b>：井底实时投射半透明虚影，提前知晓精准落点。</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🎮 双端操作键位指南</div>
+                    <ul class="help-list">
+                        <li><b>电脑端键盘</b>：
+                            <br>• 平移：<span class="help-key">A / ←</span> 左移，<span class="help-key">D / →</span> 右移
+                            <br>• 下落：<span class="help-key">S / ↓</span> 慢降，<span class="help-key">Space</span> 瞬降锁定
+                            <br>• 姿态：<span class="help-key">W / ↑</span> 旋转，<span class="help-key">Q / F</span> 左右翻转，<span class="help-key">E / V</span> 上下翻转
+                            <br>• 暂存：<span class="help-key">C / Shift</span>
+                        </li>
+                        <li><b>手机/平板触控</b>：
+                            <br>直接点击底部虚拟手柄对应的【左移】【右移】【慢降】【瞬降】【旋转】【左右翻转】【上下翻转】【暂存】即可。
+                        </li>
+                    </ul>
+                </div>
+
+                <button id="btn-close-help" class="btn-primary" style="margin-top:10px;">掌握诀窍，开始下落！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑模块 (解耦自包含) -->
+    <script src="js/audio.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>

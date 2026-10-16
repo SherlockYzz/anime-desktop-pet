@@ -1,0 +1,311 @@
+:root {
+    --bg-main: #0b0e14;
+    --bg-card: #151b26;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-glow: rgba(0, 240, 255, 0.3);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent-cyan: #00f0ff;
+    --accent-gold: #fbbf24;
+    --accent-rose: #f43f5e;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-viewport {
+    width: 100%;
+    max-width: 520px;
+    height: 100%;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px;
+    position: relative;
+    background: radial-gradient(circle at 50% 25%, #182235 0%, #0b0e14 75%);
+}
+
+/* 顶部 HUD 栏 */
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+}
+
+.brand-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    text-shadow: 0 0 12px var(--accent-cyan);
+}
+
+.brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.hud-ctrls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px var(--border-glow);
+}
+
+/* 状态展示板 */
+.score-board {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    background: var(--bg-card);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+
+.score-item {
+    text-align: center;
+}
+
+.score-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.score-value {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+.score-value.level {
+    color: var(--accent-cyan);
+}
+
+.score-value.targets {
+    color: var(--text-secondary);
+}
+
+.score-value.targets.complete {
+    color: var(--accent-gold);
+    text-shadow: 0 0 8px var(--accent-gold);
+}
+
+/* 核心画布区域 */
+.board-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 280px;
+}
+
+#optics-canvas {
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.15);
+    background: #0f141f;
+    cursor: pointer;
+}
+
+/* 底部切关栏 */
+.bottom-panel {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.level-switch-btn {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.level-switch-btn:hover:not(:disabled) {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: rgba(0, 240, 255, 0.08);
+}
+
+.level-switch-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* 弹窗通用样式 */
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 14, 20, 0.88);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glow);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 240, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent-cyan);
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.modal-desc {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-align: center;
+}
+
+.modal-desc strong {
+    color: #ffffff;
+}
+
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #00f0ff, #0088ff);
+    border: none;
+    color: #0b0e14;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 240, 255, 0.4);
+}
+
+/* 玩法说明弹窗专项 */
+.help-box {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.help-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.help-section-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+}
+
+.help-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.help-list {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding-left: 18px;
+}
+
+.help-list strong {
+    color: var(--text-primary);
+}
+
+.help-key {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: var(--accent-cyan);
+}

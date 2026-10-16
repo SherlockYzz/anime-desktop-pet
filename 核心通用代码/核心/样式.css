@@ -3249,4 +3249,129 @@ body.web-mode-active .pet-shortcuts-menu.show {
   transform: scale(1.1);
 }
 
+/* ========================================
+   🎮 摸鱼街机模式专属样式 (Arcade Styles)
+   ======================================== */
+#tab-arcade {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-light);
+}
+
+#tab-arcade.active {
+  display: flex;
+}
+
+.arcade-sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--settings-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.arcade-game-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+  flex: 1;
+}
+
+.arcade-game-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.arcade-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.arcade-pill-btn:hover {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.arcade-pill-btn.active {
+  background: var(--gradient-main);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px var(--glow-color);
+  font-weight: 600;
+}
+
+.arcade-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.arcade-action-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.arcade-action-btn:hover {
+  background: var(--hover-color);
+  border-color: var(--primary-color);
+}
+
+.arcade-action-btn.active {
+  background: #ff7675;
+  color: #fff;
+  border-color: transparent;
+}
+
+.arcade-viewport-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  position: relative;
+}
+
+.arcade-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
+
 
