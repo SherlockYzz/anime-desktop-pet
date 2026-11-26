@@ -4,136 +4,108 @@ class SettingsManager {
   constructor(app) {
     this.app = app;
     this.settings = this.load();
-    this._bindPromptEvents();
-    this._bindApiControls();
+    this._bindPanelEvents();
+    this._loadSecureApiKey();
   }
 
-  _bindApiControls() {
-    // 恢复默认地址
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-reset-url') {
-        this.resetBaseUrl();
+  /** 将设置面板内的全部交互合并为单一事件委托，避免向 document 注册十余个全局监听器 */
+  _bindPanelEvents() {
+    const root = document.getElementById('settings-panel') || document;
+
+    root.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!target) return;
+
+      switch (target.id) {
+        case 'btn-reset-url':
+          this.resetBaseUrl();
+          return;
+        case 'btn-refresh-models':
+          this.refreshModels();
+          return;
+        case 'btn-start-local':
+          this.startLocalService();
+          return;
+        case 'btn-prompt-save':
+          this._savePrompt();
+          return;
+        case 'btn-prompt-reset':
+          this._resetPrompt();
+          return;
+        case 'btn-delete-character':
+          this._deleteCharacter();
+          return;
+        case 'btn-export-character': {
+          const charSelect = document.getElementById('prompt-character-select');
+          if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
+          return;
+        }
+        case 'btn-canonical-add':
+          this._addCanonicalLine();
+          return;
+        case 'btn-canonical-import':
+          document.getElementById('canonical-file-input')?.click();
+          return;
+        case 'btn-canonical-reset':
+          this._resetCanonical();
+          return;
       }
-    });
 
-    // 动态拉取模型
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-refresh-models') {
-        this.refreshModels();
-      }
-    });
-
-    // 一键启动本地 Ollama 服务
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-start-local') {
-        this.startLocalService();
-      }
-    });
-  }
-
-
-  _bindPromptEvents() {
-    // 角色选择切换 → 加载对应提示词
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'prompt-character-select') {
-        this._updatePromptEditor();
-      }
-    });
-
-    // 保存提示词
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-prompt-save') {
-        this._savePrompt();
-      }
-    });
-
-    // 恢复默认
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-prompt-reset') {
-        this._resetPrompt();
-      }
-    });
-
-    // 删除自定义角色
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-delete-character') {
-        this._deleteCharacter();
-      }
-    });
-
-    // 导出角色
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-export-character') {
-        const charSelect = document.getElementById('prompt-character-select');
-        if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
-      }
-    });
-
-    // ★ 原作台词集管理事件
-    this._bindCanonicalEvents();
-  }
-
-  /** 绑定原作台词集管理的所有事件 */
-  _bindCanonicalEvents() {
-    // 添加台词
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-add') {
-        this._addCanonicalLine();
-      }
-    });
-
-    // 输入框回车添加
-    document.addEventListener('keydown', (e) => {
-      if (e.target.id === 'canonical-input' && e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this._addCanonicalLine();
-      }
-    });
-
-    // 删除单条台词（事件委托）
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('canonical-item-delete')) {
-        const index = parseInt(e.target.dataset.index, 10);
+      if (target.classList?.contains('canonical-item-delete')) {
+        const index = parseInt(target.dataset.index, 10);
         if (!isNaN(index)) this._removeCanonicalLine(index);
-      }
-    });
-
-    // 编辑单条台词（事件委托）
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('canonical-item-edit')) {
-        const index = parseInt(e.target.dataset.index, 10);
+      } else if (target.classList?.contains('canonical-item-edit')) {
+        const index = parseInt(target.dataset.index, 10);
         if (!isNaN(index)) this._editCanonicalLine(index);
       }
     });
 
-    // 批量导入按钮
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-import') {
-        document.getElementById('canonical-file-input')?.click();
-      }
-    });
-
-    // 恢复默认原作台词集
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-reset') {
-        this._resetCanonical();
-      }
-    });
-
-    // 文件选择
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'canonical-file-input') {
-        this._importCanonicalFile(e.target.files);
-        e.target.value = '';
-      }
-    });
-
-    // 角色切换时刷新台词列表
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'prompt-character-select') {
+    root.addEventListener('change', (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.id === 'prompt-character-select') {
+        this._updatePromptEditor();
         this._refreshCanonicalList();
+      } else if (target.id === 'canonical-file-input') {
+        this._importCanonicalFile(target.files);
+        target.value = '';
       }
     });
+
+    root.addEventListener('keydown', (e) => {
+      if (e.target?.id === 'canonical-input' && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this._addCanonicalLine();
+      }
+    });
+  }
+
+  /** 启动时从主进程 safeStorage 读取加密 API Key（兼容迁移旧 localStorage 明文） */
+  async _loadSecureApiKey() {
+    if (!window.electronAPI?.getSecureApiKey) return;
+    try {
+      const res = await window.electronAPI.getSecureApiKey();
+      if (res?.success && res.apiKey) {
+        this.settings.apiKey = res.apiKey;
+        window.mimoAPI?.setApiKey?.(res.apiKey);
+        const keyInput = document.getElementById('api-key');
+        if (keyInput && !keyInput.value) keyInput.value = res.apiKey;
+      } else if (this.settings.apiKey) {
+        // 首次迁移：把旧 localStorage 明文 Key 加密写入主进程并抹除明文
+        await window.electronAPI.setSecureApiKey?.(this.settings.apiKey);
+        this._persistSettingsWithoutPlainKey();
+      }
+    } catch (e) {
+      console.warn('[Settings] 读取安全 API Key 失败:', e);
+    }
+  }
+
+  _persistSettingsWithoutPlainKey() {
+    const toStore = { ...this.settings };
+    if (window.electronAPI?.setSecureApiKey) {
+      toStore.apiKey = '';
+    }
+    localStorage.setItem('megumi-pet-settings', JSON.stringify(toStore));
   }
 
   /** 添加一句原作台词 */
@@ -759,7 +731,8 @@ class SettingsManager {
       provider, baseUrl, apiKey, model,
       customModel: provider === 'custom' ? model : (this.settings.customModel || ''),
     };
-    localStorage.setItem('megumi-pet-settings', JSON.stringify(this.settings));
+    window.electronAPI?.setSecureApiKey?.(apiKey)?.catch?.(() => {});
+    this._persistSettingsWithoutPlainKey();
     this.apply();
   }
 
@@ -864,7 +837,8 @@ class SettingsManager {
       opacity: parseInt(document.getElementById('opacity-slider')?.value || '95'),
     };
 
-    localStorage.setItem('megumi-pet-settings', JSON.stringify(this.settings));
+    window.electronAPI?.setSecureApiKey?.(apiKey)?.catch?.(() => {});
+    this._persistSettingsWithoutPlainKey();
     this.apply();
     this.hide();
     this.app.showToast('设置已保存');

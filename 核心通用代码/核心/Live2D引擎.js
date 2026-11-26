@@ -68,8 +68,9 @@ class Live2DManager {
 
   async loadScripts() {
     if (window.PIXI && window.PIXI.live2d) return;
+    if (this._scriptsLoadingPromise) return this._scriptsLoadingPromise;
 
-    return new Promise((resolve, reject) => {
+    this._scriptsLoadingPromise = new Promise((resolve, reject) => {
       const addScript = (src) => new Promise((res, rej) => {
         const s = document.createElement('script');
         s.src = src;
@@ -83,8 +84,21 @@ class Live2DManager {
         .then(() => addScript(window.CDN_CONFIG.cubismCore))
         .then(() => addScript(window.CDN_CONFIG.pixiLive2d))
         .then(resolve)
-        .catch(reject);
+        .catch((err) => {
+          this._scriptsLoadingPromise = null;
+          reject(err);
+        });
     });
+    return this._scriptsLoadingPromise;
+  }
+
+  /** 窗口隐藏/显示时暂停或恢复 PIXI 渲染循环以降低待机功耗 */
+  setPaused(paused) {
+    if (!this.app?.ticker) return;
+    try {
+      if (paused) this.app.ticker.stop();
+      else this.app.ticker.start();
+    } catch (e) {}
   }
 
   // 获取当前角色的GIF路径
@@ -342,6 +356,7 @@ class Live2DManager {
       if (oldGif) oldGif.remove();
 
       this._cleanupSpriteMode();
+      await this.loadScripts();
       this._ensurePixiApp();
       if (!this.app) throw new Error('PIXI Application 初始化失败');
 

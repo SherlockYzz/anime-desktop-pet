@@ -75,32 +75,81 @@ class CodeEditor {
       return;
     }
 
-    const logs = [];
-    const orig = { log: console.log, error: console.error, warn: console.warn };
+    output.textContent = '正在沙箱中运行...';
+    output.style.color = '#888';
 
-    console.log = (...args) => {
-      logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-      orig.log.apply(console, args);
-    };
-    console.error = (...args) => {
-      logs.push('[ERROR] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-      orig.error.apply(console, args);
-    };
-    console.warn = (...args) => {
-      logs.push('[WARN] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-      orig.warn.apply(console, args);
-    };
+    // 使用独立 Web Worker 沙箱执行，彻底隔离 DOM、localStorage 与 electronAPI，并加 3 秒超时保护防死循环
+    const workerSource = `
+      self.onmessage = function(e) {
+        const logs = [];
+        const fmt = (a) => {
+          if (typeof a === 'object' && a !== null) {
+            try { return JSON.stringify(a, null, 2); } catch (_) { return String(a); }
+          }
+          return String(a);
+        };
+        const sandboxConsole = {
+          log: (...args) => logs.push(args.map(fmt).join(' ')),
+          error: (...args) => logs.push('[ERROR] ' + args.map(fmt).join(' ')),
+          warn: (...args) => logs.push('[WARN] ' + args.map(fmt).join(' ')),
+          info: (...args) => logs.push(args.map(fmt).join(' ')),
+        };
+        try {
+          const fn = new Function('console', e.data);
+          const result = fn(sandboxConsole);
+          if (result !== undefined) logs.push('返回值: ' + fmt(result));
+          self.postMessage({ ok: true, logs });
+        } catch (err) {
+          self.postMessage({ ok: false, message: err.message || String(err), stack: err.stack || '' });
+        }
+      };
+    `;
 
     try {
-      const result = new Function(code)();
-      if (result !== undefined) logs.push('返回值: ' + (typeof result === 'object' ? JSON.stringify(result, null, 2) : result));
-      output.textContent = logs.length > 0 ? logs.join('\n') : '代码运行成功（无输出）';
-      output.style.color = '#5a8a64';
+      const blob = new Blob([workerSource], { type: 'application/javascript' });
+      const blobUrl = URL.createObjectURL(blob);
+      const worker = new Worker(blobUrl);
+      let finished = false;
+
+      const cleanup = () => {
+        finished = true;
+        clearTimeout(timer);
+        worker.terminate();
+        URL.revokeObjectURL(blobUrl);
+      };
+
+      const timer = setTimeout(() => {
+        if (!finished) {
+          cleanup();
+          output.textContent = '错误: 代码执行超时（超过 3 秒），已自动终止以防止界面卡死';
+          output.style.color = '#c45a5a';
+        }
+      }, 3000);
+
+      worker.onmessage = (ev) => {
+        if (finished) return;
+        cleanup();
+        const data = ev.data || {};
+        if (data.ok) {
+          output.textContent = data.logs && data.logs.length > 0 ? data.logs.join('\n') : '代码运行成功（无输出）';
+          output.style.color = '#5a8a64';
+        } else {
+          output.textContent = `错误: ${data.message}\n\n${data.stack || ''}`;
+          output.style.color = '#c45a5a';
+        }
+      };
+
+      worker.onerror = (err) => {
+        if (finished) return;
+        cleanup();
+        output.textContent = `错误: ${err.message || '沙箱执行异常'}`;
+        output.style.color = '#c45a5a';
+      };
+
+      worker.postMessage(code);
     } catch (err) {
-      output.textContent = `错误: ${err.message}\n\n${err.stack}`;
+      output.textContent = `错误: 无法初始化沙箱 (${err.message})`;
       output.style.color = '#c45a5a';
-    } finally {
-      console.log = orig.log; console.error = orig.error; console.warn = orig.warn;
     }
   }
 

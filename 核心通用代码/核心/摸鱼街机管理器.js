@@ -95,9 +95,44 @@
       // 3. 监听全局小游戏 postMessage 广播总线
       window.addEventListener('message', this._handleGameEvent.bind(this));
 
-      // 4. 恢复上次游玩的游戏
+      // 4. 仅恢复上次游玩的 ID 与按钮高亮，不预先加载 iframe（切入街机 Tab 时再懒加载，大幅降低冷启动与后台开销）
       const lastGame = localStorage.getItem('arcade_last_game') || '01-拉海洛方块01';
-      this.switchGame(lastGame, false);
+      this.currentGameId = this.games.some(g => g.id === lastGame) ? lastGame : this.games[0].id;
+      this._updatePillActive(this.currentGameId);
+      this._active = false;
+    }
+
+    _updatePillActive(gameId) {
+      if (!this.pillsContainer) return;
+      const btns = this.pillsContainer.querySelectorAll('.arcade-pill-btn');
+      btns.forEach(b => b.classList.toggle('active', b.dataset.gameId === gameId));
+    }
+
+    /** 切入街机 Tab 时按需加载当前游戏 */
+    activate() {
+      this._active = true;
+      const target = this.games.find(g => g.id === this.currentGameId) || this.games[0];
+      if (this.iframe && (!this.iframe.src || this.iframe.src === 'about:blank' || !this.iframe.src.endsWith(target.path.replace(/^\.\.\//, '')))) {
+        this.iframe.src = target.path;
+      } else {
+        this._sendControl('RESUME');
+      }
+    }
+
+    /** 切出街机 Tab 时发送暂停并卸载 iframe，释放内存与 GPU */
+    deactivate() {
+      if (!this._active) return;
+      this._active = false;
+      this._sendControl('PAUSE');
+      if (this.iframe) {
+        this.iframe.src = 'about:blank';
+      }
+    }
+
+    /** 窗口隐藏/显示时同步暂停/恢复当前游戏 */
+    setPaused(paused) {
+      if (!this._active) return;
+      this._sendControl(paused ? 'PAUSE' : 'RESUME');
     }
 
     _renderGamePills() {
@@ -149,13 +184,10 @@
       localStorage.setItem('arcade_last_game', target.id);
 
       // 更新按钮高亮
-      if (this.pillsContainer) {
-        const btns = this.pillsContainer.querySelectorAll('.arcade-pill-btn');
-        btns.forEach(b => b.classList.toggle('active', b.dataset.gameId === target.id));
-      }
+      this._updatePillActive(target.id);
 
-      // 切换 Iframe 地址
-      if (this.iframe) {
+      // 仅在街机处于激活态时加载 Iframe
+      if (this.iframe && this._active) {
         this.iframe.src = target.path;
       }
     }
@@ -200,6 +232,8 @@
      * 核心事件总线：接收全 10 款微游戏通过 UniversalBridge 广播的事件
      */
     _handleGameEvent(e) {
+      // 安全校验：仅接收当前内嵌街机 iframe 发出的消息
+      if (this.iframe && e.source !== this.iframe.contentWindow) return;
       const data = e.data;
       if (!data) return;
 
@@ -217,6 +251,20 @@
       if (!eventName) return;
 
       switch (eventName) {
+        // 0. 游戏就绪：向小游戏下发当前角色上下文与静音状态
+        case 'READY':
+        case 'ON_GAME_READY': {
+          const char = window.characterManager?.getCurrentCharacter?.();
+          this._sendControl('INIT', {
+            characterId: char?.id || 'ruoxi',
+            characterName: char?.name || '若曦',
+            primaryColor: char?.theme?.primary || '#f0a0b0',
+            muted: this.isMuted
+          });
+          if (this.isMuted) this._sendControl('SET_MUTE', { muted: true });
+          break;
+        }
+
         // 1. 连击消除喝彩
         case 'ON_COMBO_TRIGGER':
         case 'ON_LINE_CLEAR':
@@ -232,7 +280,8 @@
         case 'ON_LEVEL_COMPLETE':
         case 'LEVEL_COMPLETE':
         case 'LEVEL_CLEAR':
-        case 'VICTORY': {
+        case 'VICTORY':
+        case 'WIN': {
           const lvl = (typeof payload.level === 'number') ? (payload.level + 1) : (payload.difficulty ? `${payload.difficulty}难度` : '');
           const desc = lvl ? `【${lvl}】圆满通关！` : '大通关！';
           this._triggerReward(5, desc);
@@ -242,7 +291,8 @@
 
         // 3. 分数刷新与打破历史纪录
         case 'ON_SCORE_UPDATE':
-        case 'SCORE_UPDATE': {
+        case 'SCORE_UPDATE':
+        case 'SCORE': {
           if (payload.current && payload.best && payload.current >= payload.best && payload.current >= 200) {
             // 达到新纪录
             this._triggerReward(5, '打破最高纪录');
@@ -253,7 +303,8 @@
 
         // 4. 游戏结束
         case 'ON_GAME_OVER':
-        case 'GAME_OVER': {
+        case 'GAME_OVER':
+        case 'FAIL': {
           this._triggerCheer('fail', '惜败！再接再厉哦～');
           break;
         }

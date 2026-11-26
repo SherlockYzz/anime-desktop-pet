@@ -41,6 +41,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ★ 桌面贴心管家：系统负荷与气象感知
   getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
   getWeatherInfo: () => ipcRenderer.invoke('get-weather-info'),
+
+  // ★ 安全密钥存储（Electron safeStorage）
+  getSecureApiKey: () => ipcRenderer.invoke('get-secure-api-key'),
+  setSecureApiKey: (apiKey) => ipcRenderer.invoke('set-secure-api-key', apiKey),
+
+  // ★ 窗口显隐状态通知（用于隐藏到托盘/最小化时暂停渲染循环降低功耗）
+  onWindowVisibilityChanged: (callback) => ipcRenderer.on('window-visibility-changed', (_event, visible) => callback(visible)),
 });
 
 

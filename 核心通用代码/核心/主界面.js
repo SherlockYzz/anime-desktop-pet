@@ -114,9 +114,13 @@ class App {
     this._initHighlighting();
   }
 
-  // ★ 后台初始化 Live2D（不阻塞 UI）
+  // ★ 后台惰性初始化 Live2D（仅当需要 Live2D 时才创建 PIXI WebGL 上下文，默认精灵帧角色零显存浪费）
   async _initLive2D() {
     try {
+      const char = window.characterManager?.getCurrentCharacter?.();
+      const isSprite = window.SpriteAtlasManager?.isSpriteCharacter?.(char);
+      const isWebMode = document.body.classList.contains('web-mode-active');
+      if (isSprite && !isWebMode) return;
       await window.live2dManager.init();
       this._live2dReady = true;
       const savedMode = window.live2dManager.getDisplayMode();
@@ -164,7 +168,7 @@ class App {
       sp.style.top = (10 + Math.random() * 80) + '%';
       sp.style.setProperty('--sparkle-duration', (4 + Math.random() * 4) + 's');
       sp.style.setProperty('--sparkle-delay', (Math.random() * 5) + 's');
-      if (Math.random() > 0.5) sp.style.width = '4px'; sp.style.height = '4px';
+      if (Math.random() > 0.5) { sp.style.width = '4px'; sp.style.height = '4px'; }
       c.appendChild(sp);
     }
   }
@@ -238,6 +242,14 @@ class App {
       document.getElementById('opacity-value').textContent = e.target.value + '%';
     });
     window.electronAPI?.onShowSettings?.(() => this.settings.show());
+    // ★ 窗口隐藏到托盘/最小化时暂停所有渲染循环，显示时恢复，大幅降低待机 GPU/CPU 占用
+    window.electronAPI?.onWindowVisibilityChanged?.((visible) => {
+      const paused = !visible;
+      window.live2dManager?.setPaused?.(paused);
+      this.petMode?.setPaused?.(paused);
+      window.spriteAtlasManager?.setPaused?.(paused);
+      window.arcadeManager?.setPaused?.(paused);
+    });
     document.getElementById('btn-character-select')?.addEventListener('click', () => this._showCharacterSelector());
     document.getElementById('btn-close-character')?.addEventListener('click', () => this._hideCharacterSelector());
     document.getElementById('btn-create-character')?.addEventListener('click', () => {
@@ -250,8 +262,15 @@ class App {
     document.getElementById('live2d-container')?.addEventListener('click', (e) => {
       if (document.body.classList.contains('web-mode-active')) this.chat.handleCharacterClick(e);
     });
-    document.addEventListener('mousemove', () => this._resetIdle());
-    document.addEventListener('keydown', () => this._resetIdle());
+    const throttledResetIdle = () => {
+      const now = Date.now();
+      if (!this._lastIdleReset || now - this._lastIdleReset > 500) {
+        this._lastIdleReset = now;
+        this._resetIdle();
+      }
+    };
+    document.addEventListener('mousemove', throttledResetIdle, { passive: true });
+    document.addEventListener('keydown', throttledResetIdle, { passive: true });
     document.getElementById('chat-messages')?.addEventListener('click', (e) => {
       if (e.target.closest('.message.ai .message-avatar')) this.chat.handleCharacterClick();
     });
@@ -299,8 +318,10 @@ class App {
   }
 
   _bindCharacterOrderEvents() {
+    if (this._characterOrderBound) return;
     const grid = document.getElementById('character-grid');
     if (!grid) return;
+    this._characterOrderBound = true;
 
     grid.addEventListener('click', (e) => {
       const btn = e.target.closest('.character-order-btn');
@@ -370,6 +391,7 @@ class App {
 
     const titleEl = document.querySelector('.pet-name');
     if (isArcade) {
+      window.arcadeManager?.activate?.();
       if (!this._origPetTitle && titleEl) this._origPetTitle = titleEl.textContent;
       if (titleEl) titleEl.textContent = '🎮 摸鱼街机 (10款精选微游戏)';
       // 记录进入街机前的窗口尺寸，视口过小时自适应延展以保证游戏完整显示
@@ -387,6 +409,7 @@ class App {
         console.warn('调整街机视口出错:', e);
       }
     } else {
+      window.arcadeManager?.deactivate?.();
       if (titleEl && this._origPetTitle) titleEl.textContent = this._origPetTitle;
       // 恢复进入街机前的窗口尺寸
       if (this._savedBoundsBeforeArcade) {

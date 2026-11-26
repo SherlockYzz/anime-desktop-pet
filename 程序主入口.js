@@ -1,8 +1,9 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, screen, globalShortcut, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen, globalShortcut, dialog, shell, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
-const { spawn, execSync } = require('child_process');
+const { spawn, execFile } = require('child_process');
+const { pathToFileURL } = require('url');
 
 let mainWindow;
 let tray;
@@ -59,6 +60,34 @@ function createWindow() {
 
   mainWindow.loadFile('核心通用代码/核心/index.html');
 
+  // ★ 安全加固：拦截 window.open 和页面外跳，外部 http(s) 链接统一走系统浏览器
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//i.test(url)) {
+      shell.openExternal(url).catch(() => {});
+    }
+    return { action: 'deny' };
+  });
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const appFilePrefix = pathToFileURL(path.resolve(__dirname)).href;
+    if (!url.startsWith(appFilePrefix)) {
+      event.preventDefault();
+      if (/^https?:\/\//i.test(url)) {
+        shell.openExternal(url).catch(() => {});
+      }
+    }
+  });
+
+  // ★ 功耗优化：窗口隐藏/最小化时通知渲染进程暂停动画循环，显示/恢复时重启
+  const notifyVisibility = (visible) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('window-visibility-changed', visible);
+    }
+  };
+  mainWindow.on('hide', () => notifyVisibility(false));
+  mainWindow.on('minimize', () => notifyVisibility(false));
+  mainWindow.on('show', () => notifyVisibility(true));
+  mainWindow.on('restore', () => notifyVisibility(true));
+
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
@@ -78,7 +107,12 @@ function createOrUpdateTray(label, avatarPath) {
     }
   }
 
-  const iconPath = path.isAbsolute(currentTrayAvatar) ? currentTrayAvatar : path.join(__dirname, currentTrayAvatar);
+  let iconPath = path.isAbsolute(currentTrayAvatar) ? currentTrayAvatar : path.join(__dirname, currentTrayAvatar);
+  // 兼容 asar 打包模式：Windows Tray 图标需从 app.asar.unpacked 真实磁盘路径读取
+  if (iconPath.includes('app.asar') && !iconPath.includes('app.asar.unpacked')) {
+    const unpackedPath = iconPath.replace('app.asar', 'app.asar.unpacked');
+    if (fs.existsSync(unpackedPath)) iconPath = unpackedPath;
+  }
 
   if (!tray) {
     try {
@@ -270,32 +304,130 @@ ipcMain.handle('update-tray-label', (event, label, avatarPath) => {
   createOrUpdateTray(label, relPath);
 });
 
-// ★ 高性能文件存在性检测（彻底解决渲染进程 file:// 协议下 fetch HEAD 抛出 Failed to fetch 的致命问题）
-ipcMain.handle('check-file-exists', (event, relPath) => {
-  if (!relPath) return false;
+// ===== 安全路径校验与用户数据目录（迁至 app.getPath('userData')，解决 Program Files 写权限与覆盖安装丢数据） =====
+
+/** 校验目标路径严格位于指定根目录内部（防范 ../ 路径穿越与空子路径误删整目录） */
+function resolveSafeSubPath(rootDir, subPath, allowRoot = false) {
+  if (typeof subPath !== 'string' || !subPath.trim()) return null;
+  if (subPath.includes('\0')) return null;
+  const resolvedRoot = path.resolve(rootDir);
+  const resolvedTarget = path.resolve(resolvedRoot, subPath);
+  if (resolvedTarget === resolvedRoot) {
+    return allowRoot ? resolvedTarget : null;
+  }
+  const rel = path.relative(resolvedRoot, resolvedTarget);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+  return resolvedTarget;
+}
+
+function getCustomCharsRoot() {
+  const userRoot = path.join(app.getPath('userData'), 'custom-characters');
+  const legacyRoot = path.join(__dirname, '自定义角色');
   try {
+    if (!fs.existsSync(userRoot)) {
+      fs.mkdirSync(userRoot, { recursive: true });
+      if (fs.existsSync(legacyRoot)) {
+        fs.cpSync(legacyRoot, userRoot, { recursive: true, errorOnExist: false });
+      }
+    }
+  } catch (e) {
+    console.warn('[UserData] 初始化或迁移自定义角色目录失败:', e);
+  }
+  return userRoot;
+}
+
+function getCanonicalOverridePath(folder) {
+  const safeFolder = String(folder || '').replace(/[^a-zA-Z0-9_\-\u4e00-\u9fff]/g, '');
+  if (!safeFolder) return null;
+  const dir = path.join(app.getPath('userData'), 'canonical-lines');
+  fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, `${safeFolder}.txt`);
+}
+
+// ★ 高性能文件存在性检测（带根目录边界校验，防止任意路径探测）
+ipcMain.handle('check-file-exists', (event, relPath) => {
+  if (typeof relPath !== 'string' || !relPath.trim()) return false;
+  try {
+    // 允许检测应用根目录及 userData 下的自定义角色资源
+    if (relPath.startsWith('file://')) {
+      const filePath = decodeURIComponent(new URL(relPath).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+      const customRoot = getCustomCharsRoot();
+      if (resolveSafeSubPath(customRoot, path.relative(customRoot, filePath)) || resolveSafeSubPath(__dirname, path.relative(__dirname, filePath))) {
+        return fs.existsSync(filePath);
+      }
+      return false;
+    }
     const basePath = path.join(__dirname, '核心通用代码', '核心');
     const fullPath = path.resolve(basePath, relPath);
+    const appRoot = path.resolve(__dirname);
+    const relToRoot = path.relative(appRoot, fullPath);
+    if (!relToRoot || relToRoot.startsWith('..') || path.isAbsolute(relToRoot)) {
+      return false;
+    }
     return fs.existsSync(fullPath);
   } catch (e) {
     return false;
   }
 });
 
+// ===== 安全 API Key 存储（Electron safeStorage / Windows DPAPI） =====
+
+function getSecretsPath() {
+  return path.join(app.getPath('userData'), 'secrets.json');
+}
+
+ipcMain.handle('get-secure-api-key', async () => {
+  try {
+    const file = getSecretsPath();
+    if (!fs.existsSync(file)) return { success: true, apiKey: '' };
+    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!data.apiKeyEnc) return { success: true, apiKey: '' };
+    if (safeStorage.isEncryptionAvailable() && data.encrypted) {
+      const plain = safeStorage.decryptString(Buffer.from(data.apiKeyEnc, 'base64'));
+      return { success: true, apiKey: plain };
+    }
+    return { success: true, apiKey: Buffer.from(data.apiKeyEnc, 'base64').toString('utf-8') };
+  } catch (e) {
+    return { success: false, apiKey: '', error: e.message };
+  }
+});
+
+ipcMain.handle('set-secure-api-key', async (event, apiKey) => {
+  try {
+    const file = getSecretsPath();
+    const raw = typeof apiKey === 'string' ? apiKey : '';
+    let payload;
+    if (!raw) {
+      payload = { encrypted: false, apiKeyEnc: '' };
+    } else if (safeStorage.isEncryptionAvailable()) {
+      const buf = safeStorage.encryptString(raw);
+      payload = { encrypted: true, apiKeyEnc: buf.toString('base64') };
+    } else {
+      payload = { encrypted: false, apiKeyEnc: Buffer.from(raw, 'utf-8').toString('base64') };
+    }
+    fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf-8');
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
 // ===== 自定义角色 IPC =====
 
-/** 安全化角色ID：只允许小写字母数字下划线 */
+/** 安全化角色ID：只允许小写字母数字下划线和中文 */
 function sanitizeId(name) {
-  return 'custom_' + name.replace(/[^a-zA-Z0-9一-鿿]/g, '_').toLowerCase().slice(0, 30)
+  return 'custom_' + String(name || 'char').replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_').toLowerCase().slice(0, 30)
     + '_' + Date.now().toString(36);
 }
 
-/** 保存角色数据到磁盘（共用逻辑，供创建和导入使用） */
+/** 保存角色数据到 userData 磁盘（共用逻辑，供创建和导入使用） */
 function saveCharacterData(data) {
   const { name, series, tagline, description, systemPrompt, primaryColor, avatarBase64, coverBase64, live2dModelBase64, live2dModelFileName, canonicalLines } = data;
 
+  const customRoot = getCustomCharsRoot();
   const charId = sanitizeId(name);
-  const charDir = path.join(__dirname, '自定义角色', charId);
+  const charDir = resolveSafeSubPath(customRoot, charId);
+  if (!charDir) throw new Error('非法角色 ID');
   const imgDir = path.join(charDir, '图片素材');
   const live2dDir = path.join(charDir, 'Live2D模型');
   const dialogueDir = path.join(charDir, '触发台词');
@@ -304,25 +436,29 @@ function saveCharacterData(data) {
   fs.mkdirSync(live2dDir, { recursive: true });
   fs.mkdirSync(dialogueDir, { recursive: true });
 
-  const avatarRelPath = `../../自定义角色/${charId}/图片素材/头像.png`;
+  const avatarAbsPath = path.join(imgDir, '头像.png');
+  const avatarRelPath = pathToFileURL(avatarAbsPath).href;
   if (avatarBase64) {
     const buf = Buffer.from(avatarBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-    fs.writeFileSync(path.join(imgDir, '头像.png'), buf);
+    fs.writeFileSync(avatarAbsPath, buf);
   }
 
   let coverRelPath = avatarRelPath;
   if (coverBase64) {
+    const coverAbsPath = path.join(imgDir, '封面.png');
     const buf = Buffer.from(coverBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-    fs.writeFileSync(path.join(imgDir, '封面.png'), buf);
-    coverRelPath = `../../自定义角色/${charId}/图片素材/封面.png`;
+    fs.writeFileSync(coverAbsPath, buf);
+    coverRelPath = pathToFileURL(coverAbsPath).href;
   }
 
   let live2dModelPath = '';
   if (live2dModelBase64 && live2dModelFileName) {
     const buf = Buffer.from(live2dModelBase64.replace(/^data:.+;base64,/, ''), 'base64');
-    const fileName = live2dModelFileName.endsWith('.model3.json') ? live2dModelFileName : 'model.model3.json';
-    fs.writeFileSync(path.join(live2dDir, fileName), buf);
-    live2dModelPath = `../../自定义角色/${charId}/Live2D模型/${fileName}`;
+    const baseName = path.basename(live2dModelFileName);
+    const fileName = baseName.endsWith('.model3.json') ? baseName : 'model.model3.json';
+    const live2dAbsPath = path.join(live2dDir, fileName);
+    fs.writeFileSync(live2dAbsPath, buf);
+    live2dModelPath = pathToFileURL(live2dAbsPath).href;
   }
 
   fs.writeFileSync(path.join(charDir, '系统提示词.txt'), systemPrompt || '', 'utf-8');
@@ -332,7 +468,7 @@ function saveCharacterData(data) {
     fs.writeFileSync(path.join(charDir, '原作台词集.txt'), canonicalLines.join('\n'), 'utf-8');
   }
 
-  const registryPath = path.join(__dirname, '自定义角色', 'registry.json');
+  const registryPath = path.join(customRoot, 'registry.json');
   let registry = {};
   try { registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8')); } catch {}
 
@@ -357,13 +493,15 @@ ipcMain.handle('save-custom-character', async (event, data) => {
 
 /** 导出角色：打包为 JSON 文件 */
 ipcMain.handle('export-custom-character', async (event, characterId) => {
-  const registryPath = path.join(__dirname, '自定义角色', 'registry.json');
+  const customRoot = getCustomCharsRoot();
+  const charDir = resolveSafeSubPath(customRoot, characterId);
+  if (!charDir) return { success: false, message: '非法角色 ID' };
+
+  const registryPath = path.join(customRoot, 'registry.json');
   let registry = {};
   try { registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8')); } catch {}
   const charMeta = registry[characterId];
   if (!charMeta) return { success: false, message: '角色不存在' };
-
-  const charDir = path.join(__dirname, '自定义角色', characterId);
 
   // 读取图片文件转 base64
   const imgToBase64 = (filePath) => {
@@ -457,7 +595,8 @@ ipcMain.handle('import-custom-character', async (event) => {
 });
 
 ipcMain.handle('get-custom-characters', async () => {
-  const registryPath = path.join(__dirname, '自定义角色', 'registry.json');
+  const customRoot = getCustomCharsRoot();
+  const registryPath = path.join(customRoot, 'registry.json');
   try {
     return JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
   } catch {
@@ -466,7 +605,14 @@ ipcMain.handle('get-custom-characters', async () => {
 });
 
 ipcMain.handle('delete-custom-character', async (event, id) => {
-  const charDir = path.join(__dirname, '自定义角色', id);
+  // ★ 严格校验：拒绝空字符串与路径穿越，彻底防止误删整个自定义角色目录
+  if (typeof id !== 'string' || !/^custom_[a-zA-Z0-9_\u4e00-\u9fff]+$/.test(id)) {
+    return { success: false, error: '非法角色 ID' };
+  }
+  const customRoot = getCustomCharsRoot();
+  const charDir = resolveSafeSubPath(customRoot, id);
+  if (!charDir) return { success: false, error: '非法角色路径' };
+
   try {
     fs.rmSync(charDir, { recursive: true, force: true });
   } catch (e) {
@@ -474,7 +620,7 @@ ipcMain.handle('delete-custom-character', async (event, id) => {
   }
 
   // 更新注册表
-  const registryPath = path.join(__dirname, '自定义角色', 'registry.json');
+  const registryPath = path.join(customRoot, 'registry.json');
   let registry = {};
   try { registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8')); } catch {}
   delete registry[id];
@@ -483,22 +629,29 @@ ipcMain.handle('delete-custom-character', async (event, id) => {
   return { success: true };
 });
 
-// ★ 保存原作台词集到文件
+// ★ 保存原作台词集到 userData 覆盖目录（兼容只读安装目录与 asar，且严格校验 folder）
 ipcMain.handle('save-canonical-lines', async (event, folder, lines) => {
-  const filePath = path.join(__dirname, folder, '原作台词集.txt');
+  if (!Array.isArray(lines)) return { success: false, error: '无效的台词列表' };
+  const builtInTarget = resolveSafeSubPath(__dirname, path.join(String(folder || ''), '原作台词集.txt'));
+  if (!builtInTarget) return { success: false, error: '非法角色目录' };
+  const overridePath = getCanonicalOverridePath(folder);
+  if (!overridePath) return { success: false, error: '非法角色目录' };
   try {
-    fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
+    fs.writeFileSync(overridePath, lines.join('\n'), 'utf-8');
     return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
 });
 
-// ★ 读取原作台词集
+// ★ 读取原作台词集（优先读 userData 覆盖文件，不存在则回退读取内置文件）
 ipcMain.handle('load-canonical-lines', async (event, folder) => {
-  const filePath = path.join(__dirname, folder, '原作台词集.txt');
+  const builtInTarget = resolveSafeSubPath(__dirname, path.join(String(folder || ''), '原作台词集.txt'));
+  if (!builtInTarget) return [];
+  const overridePath = getCanonicalOverridePath(folder);
   try {
-    const text = fs.readFileSync(filePath, 'utf-8');
+    const targetPath = (overridePath && fs.existsSync(overridePath)) ? overridePath : builtInTarget;
+    const text = fs.readFileSync(targetPath, 'utf-8');
     return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   } catch {
     return [];
@@ -507,23 +660,28 @@ ipcMain.handle('load-canonical-lines', async (event, folder) => {
 
 // ===== 本地 Ollama 探测与自启动服务 =====
 
-/** 智能定位本地已安装的 ollama.exe */
+/** 异步智能定位本地已安装的 ollama.exe（不阻塞主进程拖拽与穿透） */
 function findOllamaExe() {
   const candidates = [
-    'F:\\开发工具\\Ollama\\ollama.exe',
+    process.env.OLLAMA_EXE || '',
     path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'),
     path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Ollama', 'ollama.exe'),
     path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Ollama', 'ollama.exe'),
-  ];
+  ].filter(Boolean);
+
   for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
+    if (fs.existsSync(p)) return Promise.resolve(p);
   }
-  try {
-    const stdout = execSync('where ollama', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const lines = stdout.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (lines.length > 0 && fs.existsSync(lines[0])) return lines[0];
-  } catch (e) {}
-  return null;
+
+  return new Promise((resolve) => {
+    const cmd = process.platform === 'win32' ? 'where' : 'which';
+    execFile(cmd, ['ollama'], { encoding: 'utf-8', timeout: 2000, windowsHide: true }, (err, stdout) => {
+      if (err || !stdout) return resolve(null);
+      const lines = stdout.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length > 0 && fs.existsSync(lines[0])) return resolve(lines[0]);
+      resolve(null);
+    });
+  });
 }
 
 /** 探测本地 Ollama 服务是否正在监听 */
@@ -539,8 +697,7 @@ function probeOllamaRunning(port = 11434, timeoutMs = 1200) {
 
 // ★ 检测本地 Ollama 状态
 ipcMain.handle('detect-local-ollama', async () => {
-  const running = await probeOllamaRunning(11434);
-  const exePath = findOllamaExe();
+  const [running, exePath] = await Promise.all([probeOllamaRunning(11434), findOllamaExe()]);
   return {
     running,
     installed: Boolean(exePath),
@@ -555,7 +712,7 @@ ipcMain.handle('start-local-ollama', async () => {
     return { success: true, message: 'Ollama 服务已在运行中' };
   }
 
-  const exePath = findOllamaExe();
+  const exePath = await findOllamaExe();
   if (!exePath) {
     return { success: false, message: '未找到本地 ollama.exe，请先下载安装 Ollama (ollama.com)' };
   }

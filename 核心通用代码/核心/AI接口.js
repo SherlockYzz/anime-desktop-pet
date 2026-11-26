@@ -61,14 +61,6 @@ class MimoAPI {
     return h;
   }
 
-  abort() {
-    if (this._currentController) {
-      this._abortedByUser = true;
-      this._currentController.abort();
-      this._currentController = null;
-    }
-  }
-
   _buildSystemPrompt(isCodeMode) {
     let sys = this.getSystemPrompt();
 
@@ -258,11 +250,16 @@ class MimoAPI {
     const maxRetries = this._maxRetries;
 
     while (attempt <= maxRetries) {
+      let timeoutId = null;
       try {
         const controller = new AbortController();
         this._currentController = controller;
         this._abortedByUser = false;
-        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s 超时
+        const resetTimeout = (ms) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), ms);
+        };
+        resetTimeout(120000); // 建连 120s 超时
 
         const res = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
@@ -270,9 +267,10 @@ class MimoAPI {
           body: JSON.stringify(body),
           signal: controller.signal,
         });
-        clearTimeout(timeoutId);
 
         if (!res.ok) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
           // 4xx 不重试
           if (res.status < 500) {
             const err = await res.json().catch(() => ({}));
@@ -283,10 +281,18 @@ class MimoAPI {
           throw new Error(`服务器错误 HTTP ${res.status}`);
         }
 
-        const streamResult = await this._readStream(res, onChunk);
+        // 流式读取阶段：每收到数据包刷新 60s 空闲超时，防止半断开卡死
+        resetTimeout(60000);
+        const streamResult = await this._readStream(res, onChunk, () => resetTimeout(60000));
+        clearTimeout(timeoutId);
+        timeoutId = null;
         this._currentController = null;
         return streamResult;
       } catch (err) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         if (err.name === 'AbortError') {
           if (this._abortedByUser) {
             err = new Error('已停止生成');
@@ -311,7 +317,7 @@ class MimoAPI {
   }
 
   // ★ 读取流式响应
-  async _readStream(res, onChunk) {
+  async _readStream(res, onChunk, onActivity) {
     let reasoningText = '';
     let contentText = '';
     const reader = res.body.getReader();
@@ -321,6 +327,7 @@ class MimoAPI {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      onActivity?.();
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');

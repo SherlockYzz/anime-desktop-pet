@@ -54,8 +54,7 @@ class CharacterManager {
     this._cachedTheme = null;
     this._precacheTimer = null;
     this._modelExistsCache = new Map();
-    // ★ 启动时清除所有台词缓存，确保从文件读取最新内容
-    this._clearAllDialogueCache();
+    // 保留基于日期版本号的 localStorage 缓存以加速冷启动（仅在需要时手动清除）
     // ★ 等待自定义角色加载完成
     // ★ 自定义角色加载带3秒超时，防止IPC卡住阻塞整个启动流程
     const customCharPromise = window.customCharManager

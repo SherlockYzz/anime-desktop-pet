@@ -844,9 +844,23 @@ class EmotionMemory {
     });
   }
 
-  /** 在线挂机计时器（每 10 分钟自动 +2 EXP，挂机放置无每日上限） */
+  /** 在线挂机计时器（每 10 分钟自动 +2 EXP；每 5 分钟及页面关闭前批量落盘，降低同步写 localStorage 卡顿） */
   _startOnlineTicker() {
     if (this._onlineTickerTimer) clearInterval(this._onlineTickerTimer);
+    if (!this._unloadSaveBound) {
+      this._unloadSaveBound = true;
+      const flushSave = () => {
+        if (this._dirtyOnlineSave) {
+          this._saveAffinityData();
+          this._saveMemoryData();
+          this._dirtyOnlineSave = false;
+        }
+      };
+      window.addEventListener('beforeunload', flushSave);
+      window.addEventListener('pagehide', flushSave);
+    }
+
+    let tickCount = 0;
     this._onlineTickerTimer = setInterval(() => {
       const charId = window.characterManager?.getCurrentCharacter()?.id || 'ruoxi';
       if (!this.affinityData[charId]) {
@@ -854,12 +868,18 @@ class EmotionMemory {
       }
       this.affinityData[charId].companionMinutes = (this.affinityData[charId].companionMinutes || 0) + 1;
       this.memoryData.stats.totalCompanionMinutes = (this.memoryData.stats.totalCompanionMinutes || 0) + 1;
+      this._dirtyOnlineSave = true;
+      tickCount++;
 
       if (this.affinityData[charId].companionMinutes % 10 === 0) {
         this.addExp(charId, 2, '挂机陪伴');
       }
-      this._saveAffinityData();
-      this._saveMemoryData();
+      // 每 5 分钟落盘一次，避免每分钟全量 JSON.stringify 阻塞主线程
+      if (tickCount % 5 === 0) {
+        this._saveAffinityData();
+        this._saveMemoryData();
+        this._dirtyOnlineSave = false;
+      }
     }, 60000);
   }
 

@@ -4,7 +4,6 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
-package-lock.json
 yarn.lock
 
 # IDE

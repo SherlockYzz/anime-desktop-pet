@@ -6,6 +6,7 @@ class ChatManager {
     this.maxMessages = 50;
     this._kaomojiInterval = null;
     this._isNearBottom = true; // 追踪用户是否在底部
+    this._scrollListenerBound = false;
   }
 
   // ===== 关键词触发台词系统 =====
@@ -63,7 +64,7 @@ class ChatManager {
     try {
       if (window.marked && type === 'ai') {
         const cleaned = (content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-        rendered = marked.parse(cleaned || content || '');
+        rendered = sanitizeHtml(marked.parse(cleaned || content || ''));
       } else {
         rendered = escapeHtml(content || '').replace(/\n/g, '<br>');
       }
@@ -76,7 +77,7 @@ class ChatManager {
       let rt;
       try {
         rt = window.marked
-          ? marked.parse(thinking)
+          ? sanitizeHtml(marked.parse(thinking))
           : escapeHtml(thinking).replace(/\n/g, '<br>');
       } catch (e) {
         rt = escapeHtml(thinking).replace(/\n/g, '<br>');
@@ -94,10 +95,10 @@ class ChatManager {
     const container = document.getElementById('chat-messages');
     if (!container) return;
     const path = window.characterManager.getAvatarPath();
-    const name = window.characterManager.getCurrentCharacter()?.name || '';
+    const name = escapeHtml(window.characterManager.getCurrentCharacter()?.name || '');
     const div = document.createElement('div');
     div.className = 'message ai';
-    div.innerHTML = `<div class="message-avatar"><img src="${path}" alt="${name}"></div><div class="message-content"><div class="message-text">${text || ''}</div></div>`;
+    div.innerHTML = `<div class="message-avatar"><img src="${escapeHtml(path)}" alt="${name}"></div><div class="message-content"><div class="message-text">${escapeHtml(text || '').replace(/\n/g, '<br>')}</div></div>`;
     container.appendChild(div);
     this._scrollToBottom(container);
   }
@@ -168,8 +169,11 @@ class ChatManager {
     container.appendChild(div);
     this._scrollToBottom(container);
 
-    // 监听滚动，用户手动翻看历史时停止自动滚
-    container.addEventListener('scroll', () => this._trackScroll(container), { passive: true });
+    // 仅绑定一次滚动监听，避免每次发消息重复挂载
+    if (!this._scrollListenerBound) {
+      this._scrollListenerBound = true;
+      container.addEventListener('scroll', () => this._trackScroll(container), { passive: true });
+    }
 
     return {
       el: div,
@@ -264,7 +268,7 @@ class ChatManager {
     if (window.marked) {
       try {
         const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-        return marked.parse(cleaned || text);
+        return sanitizeHtml(marked.parse(cleaned || text));
       } catch (e) { /* fall through */ }
     }
     return escapeHtml(text).replace(/\n/g, '<br>');

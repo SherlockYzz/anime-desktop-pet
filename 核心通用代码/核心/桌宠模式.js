@@ -105,7 +105,15 @@ class PetMode {
       }
 
       if (isDragging) {
-        window.electronAPI?.setWindowPosition?.(startWindow.x + dx, startWindow.y + dy);
+        this._pendingDragPos = { x: startWindow.x + dx, y: startWindow.y + dy };
+        if (!this._dragRaf) {
+          this._dragRaf = requestAnimationFrame(() => {
+            this._dragRaf = null;
+            if (this._pendingDragPos) {
+              window.electronAPI?.setWindowPosition?.(this._pendingDragPos.x, this._pendingDragPos.y);
+            }
+          });
+        }
         if (dx < -2) this._setMoveAnim(-1, 0);
         else if (dx > 2) this._setMoveAnim(1, 0);
         this._lastInteraction = Date.now();
@@ -334,14 +342,19 @@ class PetMode {
     this._hitCanvas.height = 1;
     this._hitCtx = this._hitCanvas.getContext('2d', { willReadFrequently: true });
 
+    this._lastHitX = -999;
+    this._lastHitY = -999;
     this._onMouseMovePassThrough = (e) => {
       if (document.body.classList.contains('web-mode-active')) {
         if (this._mouseIgnored) this._setIgnoreMouse(false);
         return;
       }
       const now = performance.now();
-      if (now - this._lastHitCheckTime < 20) return; // 50Hz 极速检测，超低 CPU 占用
+      if (now - this._lastHitCheckTime < 33) return; // ~30Hz 检测，大幅降低 gl.readPixels 开销
+      if (Math.hypot(e.clientX - this._lastHitX, e.clientY - this._lastHitY) < 2) return; // 微小抖动跳过
       this._lastHitCheckTime = now;
+      this._lastHitX = e.clientX;
+      this._lastHitY = e.clientY;
 
       const isHit = this._checkHit(e.clientX, e.clientY);
       this._setIgnoreMouse(!isHit);
@@ -377,6 +390,15 @@ class PetMode {
     window.removeEventListener('mousemove', this._onMouseMovePassThrough);
     window.removeEventListener('mouseleave', this._onMouseLeavePassThrough);
     window.removeEventListener('blur', this._onBlurPassThrough);
+  }
+
+  /** 窗口隐藏/显示时暂停或恢复桌宠模式 PIXI 渲染循环 */
+  setPaused(paused) {
+    if (!this._pixiApp?.ticker) return;
+    try {
+      if (paused) this._pixiApp.ticker.stop();
+      else this._pixiApp.ticker.start();
+    } catch (e) {}
   }
 
   _setIgnoreMouse(ignore) {

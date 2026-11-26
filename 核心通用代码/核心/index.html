@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' file: blob:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: data: blob: https: http:; media-src 'self' file: data: blob:; connect-src 'self' file: http: https: ws: wss:; frame-src 'self' file: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self';">
   <title>桌宠</title>
   <link rel="stylesheet" href="样式.css">
   <!-- ★ preload 核心库，让浏览器尽早开始加载而不阻塞渲染 -->
@@ -110,7 +111,7 @@
         </div>
       </div>
       <div class="arcade-viewport-container">
-        <iframe id="arcade-viewport" class="arcade-iframe" src="../摸鱼街机/01-拉海洛方块01/index.html" frameborder="0" allow="autoplay"></iframe>
+        <iframe id="arcade-viewport" class="arcade-iframe" src="about:blank" frameborder="0" allow="autoplay" sandbox="allow-scripts allow-same-origin"></iframe>
       </div>
     </div>
   </div>
@@ -460,11 +461,7 @@
   <!-- 快捷键一览与自定义弹出面板（全局直达，双形态通达） -->
   <div class="pet-shortcuts-menu" id="pet-shortcuts-menu"></div>
 
-  <!-- Live2D & Pixi 本地运行库（同步直载，杜绝异步竞争与脚本冲突） -->
-  <script src="../lib/pixi.min.js"></script>
-  <script src="../lib/live2d.min.js"></script>
-  <script src="../lib/live2dcubismcore.min.js"></script>
-  <script src="../lib/pixi-live2d-display.min.js"></script>
+  <!-- Live2D & Pixi 运行库已改为由 Live2DManager.loadScripts() 按需懒加载，默认精灵帧角色启动不再阻塞 1MB+ 脚本 -->
   <script src="CDN配置.js"></script>
   <script src="工具函数.js"></script>
   <script src="角色注册表.js"></script>

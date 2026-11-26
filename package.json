@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "8.0.0",
-  "description": "二次元AI桌宠 v08.00 - 全量十款轻量H5独立微游戏套件(含极意数独与律动共鸣音游) · 鸣潮关卡深度复刻 · 133段CV原声喝彩联动 · 真透明与像素级物理穿透 · 官方考据十阶羁绊与零OOC隔离 · 角色专属手账与长期记忆 · 桌面管家三件套 · 双核Live2D · 广播级原生CV声库",
+  "version": "8.0.1",
+  "description": "二次元AI桌宠 v8.0.1 - 安全加固(HTML净化/IPC白名单/Worker沙箱/safeStorage加密/userData持久化) · 功耗与启动优化(街机懒加载/渲染库惰性化/隐藏停帧/30Hz穿透) · 十款H5微游戏 · 133段CV原声 · 真透明物理穿透 · 双核Live2D",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
@@ -18,7 +18,7 @@
     "desktop-pet",
     "mimo", "sprite-animation", "精灵帧"
   ],
-  "author": "Your Name",
+  "author": "SherlockYzz",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.1.0",
@@ -27,13 +27,18 @@
   "build": {
     "appId": "com.ai-desktop-pet",
     "productName": "AI桌宠",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "AI桌宠.ico",
+      "角色-*/图片素材/头像.png"
+    ],
     "directories": {
       "output": "dist"
     },
     "files": [
       "程序主入口.js",
       "安全桥接.js",
+      "AI桌宠.ico",
       "核心通用代码/**/*",
       "角色-加藤惠/**/*",
       "角色-蕾姆/**/*",
@@ -43,10 +48,10 @@
       "角色-若曦/**/*",
       "角色-惠惠/**/*",
       "角色-初音未来/**/*",
-      "角色-土间埋/**/*",
-      "node_modules/**/*"
+      "角色-土间埋/**/*"
     ],
     "win": {
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "nsis",
@@ -56,7 +61,7 @@
         }
       ],
       "icon": "AI桌宠.ico",
-      "artifactName": "${productName}-v08.00-安装向导.${ext}"
+      "artifactName": "${productName}-v${version}-安装向导.${ext}"
     },
     "mac": {
       "target": "dmg"
