@@ -844,20 +844,23 @@ class EmotionMemory {
     });
   }
 
+  /** 立即将挂机脏数据落盘（用于窗口关闭 destroy 前防丢陪伴时长） */
+  flushSave() {
+    if (this._dirtyOnlineSave) {
+      this._saveAffinityData();
+      this._saveMemoryData();
+      this._dirtyOnlineSave = false;
+    }
+  }
+
   /** 在线挂机计时器（每 10 分钟自动 +2 EXP；每 5 分钟及页面关闭前批量落盘，降低同步写 localStorage 卡顿） */
   _startOnlineTicker() {
     if (this._onlineTickerTimer) clearInterval(this._onlineTickerTimer);
     if (!this._unloadSaveBound) {
       this._unloadSaveBound = true;
-      const flushSave = () => {
-        if (this._dirtyOnlineSave) {
-          this._saveAffinityData();
-          this._saveMemoryData();
-          this._dirtyOnlineSave = false;
-        }
-      };
-      window.addEventListener('beforeunload', flushSave);
-      window.addEventListener('pagehide', flushSave);
+      const flush = () => this.flushSave();
+      window.addEventListener('beforeunload', flush);
+      window.addEventListener('pagehide', flush);
     }
 
     let tickCount = 0;

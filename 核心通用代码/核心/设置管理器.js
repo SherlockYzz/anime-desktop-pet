@@ -279,14 +279,11 @@ class SettingsManager {
     const charName = character.name || characterId;
 
     if (character.isCustom) {
-      // 自定义角色：从自定义角色文件夹重新加载
+      // 自定义角色：通过主进程 IPC 从 userData 重新加载原作台词集
       try {
-        const canonPath = `../../自定义角色/${characterId}/原作台词集.txt`;
-        const resp = await fetch(canonPath);
-        if (resp.ok) {
-          const text = await resp.text();
-          const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-          character.lines._canonical = lines;
+        if (window.electronAPI?.loadCanonicalLines) {
+          const lines = await window.electronAPI.loadCanonicalLines(characterId);
+          character.lines._canonical = Array.isArray(lines) ? lines : [];
         } else {
           character.lines._canonical = [];
         }
@@ -294,7 +291,7 @@ class SettingsManager {
         character.lines._canonical = [];
       }
     } else {
-      // 内建角色：从角色文件夹重新加载
+      // 内建角色：从内置原始文件重新加载，并同步写回覆盖 userData 覆写文件
       const folder = CHARACTER_FOLDER_MAP[characterId];
       if (!folder) return;
       try {
@@ -304,6 +301,7 @@ class SettingsManager {
           const text = await resp.text();
           const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
           character.lines._canonical = lines;
+          window.electronAPI?.saveCanonicalLines?.(folder, lines);
         } else {
           character.lines._canonical = [];
         }

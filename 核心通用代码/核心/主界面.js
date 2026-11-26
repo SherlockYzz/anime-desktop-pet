@@ -227,7 +227,10 @@ class App {
   _bindEvents() {
     document.getElementById('btn-minimize')?.addEventListener('click', () => { window.electronAPI?.minimizeWindow?.()?.catch?.(e => console.warn('最小化失败:', e)); });
     document.getElementById('btn-maximize-win')?.addEventListener('click', () => { window.electronAPI?.maximizeWindow?.()?.catch?.(e => console.warn('最大化失败:', e)); });
-    document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e)); });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      try { window.emotionMemory?.flushSave?.(); } catch (e) {}
+      window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e));
+    });
     document.getElementById('btn-settings')?.addEventListener('click', () => this.settings.show());
     document.getElementById('btn-pomodoro-titlebar')?.addEventListener('click', () => window.desktopButler?.togglePomodoro?.());
     document.getElementById('btn-memory-diary-titlebar')?.addEventListener('click', () => window.emotionMemory?.showMemoryDiary?.());
@@ -246,6 +249,7 @@ class App {
     window.electronAPI?.onWindowVisibilityChanged?.((visible) => {
       const paused = !visible;
       window.live2dManager?.setPaused?.(paused);
+      window.vrmManager?.setPaused?.(paused);
       this.petMode?.setPaused?.(paused);
       window.spriteAtlasManager?.setPaused?.(paused);
       window.arcadeManager?.setPaused?.(paused);

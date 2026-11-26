@@ -261,15 +261,14 @@ class CharacterManager {
   async loadCharacterDialoguesInBackground(characterId) {
     const character = this.registry[characterId];
 
-    // ★ 自定义角色：加载原作台词集（触发台词为可选，暂不加载）
+    // ★ 自定义角色：通过主进程 IPC 从 userData 读取原作台词集
     if (character?.isCustom) {
       try {
-        const canonPath = `../../自定义角色/${characterId}/原作台词集.txt`;
-        const canonResp = await fetch(canonPath);
-        if (canonResp.ok) {
-          const canonText = await canonResp.text();
-          const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-          if (canonLines.length > 0) character.lines._canonical = canonLines;
+        if (window.electronAPI?.loadCanonicalLines) {
+          const canonLines = await window.electronAPI.loadCanonicalLines(characterId);
+          if (Array.isArray(canonLines) && canonLines.length > 0) {
+            character.lines._canonical = canonLines;
+          }
         }
       } catch (e) { /* 跳过 */ }
       this._loadedCharacters.add(characterId);
@@ -308,14 +307,21 @@ class CharacterManager {
     });
     await Promise.all(linePromises);
 
-    // ★ 加载原作台词集
+    // ★ 加载原作台词集：优先通过 IPC 读取 userData 覆写文件，无 IPC 时回退内置文件
     try {
-      const canonPath = `../../${folder}/原作台词集.txt`;
-      const canonResp = await fetch(canonPath);
-      if (canonResp.ok) {
-        const canonText = await canonResp.text();
-        const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (canonLines.length > 0) character.lines._canonical = canonLines;
+      if (window.electronAPI?.loadCanonicalLines) {
+        const canonLines = await window.electronAPI.loadCanonicalLines(folder);
+        if (Array.isArray(canonLines) && canonLines.length > 0) {
+          character.lines._canonical = canonLines;
+        }
+      } else {
+        const canonPath = `../../${folder}/原作台词集.txt`;
+        const canonResp = await fetch(canonPath);
+        if (canonResp.ok) {
+          const canonText = await canonResp.text();
+          const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          if (canonLines.length > 0) character.lines._canonical = canonLines;
+        }
       }
     } catch (e) { /* 跳过 */ }
 
@@ -545,15 +551,19 @@ class CharacterManager {
     this._saveCanonicalToFile();
   }
 
-  // 将原作台词集保存到文件（通过 IPC 调用主进程）
+  // 将原作台词集保存到文件（通过 IPC 调用主进程，兼容内置与自定义角色并刷新台词缓存）
   async _saveCanonicalToFile() {
-    const folder = CHARACTER_FOLDER_MAP[this.currentCharacterId];
+    const folder = this.currentCharacter?.isCustom
+      ? this.currentCharacterId
+      : CHARACTER_FOLDER_MAP[this.currentCharacterId];
     if (!folder) return;
     const lines = this.currentCharacter?.lines?._canonical || [];
     try {
       if (window.electronAPI?.saveCanonicalLines) {
         await window.electronAPI.saveCanonicalLines(folder, lines);
       }
+      // 同步刷新缓存，防止重启时命中旧缓存覆盖刚编辑的台词
+      localStorage.removeItem(`dialogue_cache_${this.currentCharacterId}`);
     } catch (e) { /* 忽略 */ }
   }
 

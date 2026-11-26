@@ -100,6 +100,8 @@
       this.currentGameId = this.games.some(g => g.id === lastGame) ? lastGame : this.games[0].id;
       this._updatePillActive(this.currentGameId);
       this._active = false;
+      this._loadedGameId = null;
+      this._idleUnloadTimer = null;
     }
 
     _updatePillActive(gameId) {
@@ -108,25 +110,37 @@
       btns.forEach(b => b.classList.toggle('active', b.dataset.gameId === gameId));
     }
 
-    /** 切入街机 Tab 时按需加载当前游戏 */
+    /** 切入街机 Tab 时按需加载当前游戏；若 3 分钟内切回则直接 RESUME 保留当前对局 */
     activate() {
       this._active = true;
+      if (this._idleUnloadTimer) {
+        clearTimeout(this._idleUnloadTimer);
+        this._idleUnloadTimer = null;
+      }
       const target = this.games.find(g => g.id === this.currentGameId) || this.games[0];
-      if (this.iframe && (!this.iframe.src || this.iframe.src === 'about:blank' || !this.iframe.src.endsWith(target.path.replace(/^\.\.\//, '')))) {
-        this.iframe.src = target.path;
-      } else {
-        this._sendControl('RESUME');
+      if (this.iframe) {
+        if (this._loadedGameId !== target.id || !this.iframe.src || this.iframe.src === 'about:blank') {
+          this._loadedGameId = target.id;
+          this.iframe.src = target.path;
+        } else {
+          this._sendControl('RESUME');
+        }
       }
     }
 
-    /** 切出街机 Tab 时发送暂停并卸载 iframe，释放内存与 GPU */
+    /** 切出街机 Tab 时发送 PAUSE 保留当前局，闲置 3 分钟后再卸载 iframe 释放内存与 GPU */
     deactivate() {
       if (!this._active) return;
       this._active = false;
       this._sendControl('PAUSE');
-      if (this.iframe) {
-        this.iframe.src = 'about:blank';
-      }
+      if (this._idleUnloadTimer) clearTimeout(this._idleUnloadTimer);
+      this._idleUnloadTimer = setTimeout(() => {
+        if (!this._active && this.iframe) {
+          this.iframe.src = 'about:blank';
+          this._loadedGameId = null;
+        }
+        this._idleUnloadTimer = null;
+      }, 180000);
     }
 
     /** 窗口隐藏/显示时同步暂停/恢复当前游戏 */
@@ -188,6 +202,7 @@
 
       // 仅在街机处于激活态时加载 Iframe
       if (this.iframe && this._active) {
+        this._loadedGameId = target.id;
         this.iframe.src = target.path;
       }
     }

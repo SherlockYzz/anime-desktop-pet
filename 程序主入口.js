@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { spawn, execFile } = require('child_process');
-const { pathToFileURL } = require('url');
+const { pathToFileURL, fileURLToPath } = require('url');
 
 let mainWindow;
 let tray;
@@ -101,9 +101,16 @@ function createWindow() {
 function createOrUpdateTray(label, avatarPath) {
   if (label) currentTrayLabel = label;
   if (avatarPath) {
-    const fullAvatar = path.isAbsolute(avatarPath) ? avatarPath : path.join(__dirname, avatarPath);
+    let resolvedAvatar = avatarPath;
+    if (typeof resolvedAvatar === 'string' && resolvedAvatar.startsWith('file://')) {
+      try { resolvedAvatar = fileURLToPath(resolvedAvatar); } catch (e) {}
+    }
+    const fullAvatar = path.isAbsolute(resolvedAvatar) ? resolvedAvatar : path.join(__dirname, resolvedAvatar);
     if (fs.existsSync(fullAvatar)) {
-      currentTrayAvatar = avatarPath;
+      currentTrayAvatar = resolvedAvatar;
+    } else if (fullAvatar.includes('app.asar') && !fullAvatar.includes('app.asar.unpacked')) {
+      const unpacked = fullAvatar.replace('app.asar', 'app.asar.unpacked');
+      if (fs.existsSync(unpacked)) currentTrayAvatar = unpacked;
     }
   }
 
@@ -629,12 +636,30 @@ ipcMain.handle('delete-custom-character', async (event, id) => {
   return { success: true };
 });
 
-// ★ 保存原作台词集到 userData 覆盖目录（兼容只读安装目录与 asar，且严格校验 folder）
+// ★ 保存原作台词集（同时支持内置角色 userData 覆写与自定义角色目录，严格路径校验）
 ipcMain.handle('save-canonical-lines', async (event, folder, lines) => {
   if (!Array.isArray(lines)) return { success: false, error: '无效的台词列表' };
-  const builtInTarget = resolveSafeSubPath(__dirname, path.join(String(folder || ''), '原作台词集.txt'));
+  const rawFolder = String(folder || '').trim();
+  if (!rawFolder) return { success: false, error: '非法角色目录' };
+
+  // 分支 A：自定义角色（传 custom_xxx 或 自定义角色/custom_xxx）
+  const customId = rawFolder.startsWith('自定义角色/') ? rawFolder.slice('自定义角色/'.length) : rawFolder;
+  if (/^custom_[a-zA-Z0-9_\u4e00-\u9fff]+$/.test(customId)) {
+    const charDir = resolveSafeSubPath(getCustomCharsRoot(), customId);
+    if (!charDir) return { success: false, error: '非法自定义角色路径' };
+    try {
+      fs.mkdirSync(charDir, { recursive: true });
+      fs.writeFileSync(path.join(charDir, '原作台词集.txt'), lines.join('\n'), 'utf-8');
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // 分支 B：内置角色（写入 userData 覆写目录，兼容只读安装目录与 asar）
+  const builtInTarget = resolveSafeSubPath(__dirname, path.join(rawFolder, '原作台词集.txt'));
   if (!builtInTarget) return { success: false, error: '非法角色目录' };
-  const overridePath = getCanonicalOverridePath(folder);
+  const overridePath = getCanonicalOverridePath(rawFolder);
   if (!overridePath) return { success: false, error: '非法角色目录' };
   try {
     fs.writeFileSync(overridePath, lines.join('\n'), 'utf-8');
@@ -644,11 +669,28 @@ ipcMain.handle('save-canonical-lines', async (event, folder, lines) => {
   }
 });
 
-// ★ 读取原作台词集（优先读 userData 覆盖文件，不存在则回退读取内置文件）
+// ★ 读取原作台词集（自定义角色读 userData；内置角色优先读 userData 覆写，不存在回退内置文件）
 ipcMain.handle('load-canonical-lines', async (event, folder) => {
-  const builtInTarget = resolveSafeSubPath(__dirname, path.join(String(folder || ''), '原作台词集.txt'));
+  const rawFolder = String(folder || '').trim();
+  if (!rawFolder) return [];
+
+  // 分支 A：自定义角色
+  const customId = rawFolder.startsWith('自定义角色/') ? rawFolder.slice('自定义角色/'.length) : rawFolder;
+  if (/^custom_[a-zA-Z0-9_\u4e00-\u9fff]+$/.test(customId)) {
+    const charDir = resolveSafeSubPath(getCustomCharsRoot(), customId);
+    if (!charDir) return [];
+    try {
+      const text = fs.readFileSync(path.join(charDir, '原作台词集.txt'), 'utf-8');
+      return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    } catch {
+      return [];
+    }
+  }
+
+  // 分支 B：内置角色
+  const builtInTarget = resolveSafeSubPath(__dirname, path.join(rawFolder, '原作台词集.txt'));
   if (!builtInTarget) return [];
-  const overridePath = getCanonicalOverridePath(folder);
+  const overridePath = getCanonicalOverridePath(rawFolder);
   try {
     const targetPath = (overridePath && fs.existsSync(overridePath)) ? overridePath : builtInTarget;
     const text = fs.readFileSync(targetPath, 'utf-8');

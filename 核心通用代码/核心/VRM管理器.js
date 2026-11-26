@@ -199,7 +199,12 @@ class VRMManager {
   }
 
   _startLoop() {
+    if (this._animFrameId) cancelAnimationFrame(this._animFrameId);
     const animate = () => {
+      if (this._paused) {
+        this._animFrameId = null;
+        return;
+      }
       this._animFrameId = requestAnimationFrame(animate);
       const delta = this.clock ? this.clock.getDelta() : 0.016;
 
@@ -212,6 +217,20 @@ class VRMManager {
       }
     };
     animate();
+  }
+
+  /** 窗口隐藏/显示时暂停或恢复 VRM 渲染循环 */
+  setPaused(paused) {
+    this._paused = !!paused;
+    if (this._paused) {
+      if (this._animFrameId) {
+        cancelAnimationFrame(this._animFrameId);
+        this._animFrameId = null;
+      }
+    } else if (this.vrm && !this._animFrameId) {
+      if (this.clock) this.clock.getDelta();
+      this._startLoop();
+    }
   }
 
   _handleResize() {
