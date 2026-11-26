@@ -26,7 +26,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v08.00/AI-DesktopPet-v08.00-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (v08.00)</b></a>
+  <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v8.0.1/AI-DesktopPet-v8.0.1-Setup.exe"><b>📥 点击直接下载【简体中文版】安装向导 (v8.0.1)</b></a>
   <br>
   <a href="https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v07.21/AI-Desktop-Pet-v07.21-Setup.exe"><b>🌍 Direct Download 【English Edition】 Setup (147MB)</b></a>
   <br><br>
