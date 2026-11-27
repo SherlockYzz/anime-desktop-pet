@@ -1745,20 +1745,28 @@ body.web-mode-active .pet-overlay {
   display: none;
 }
 
-/* 文字气泡容器（定位至角色右上角，彻底避开人物额头与面部） */
+/* 文字气泡容器（默认智能贴合角色头顶正斜上方，支持按住气泡自由拖动与自定义缩放） */
 .pet-bubble-container {
   position: absolute;
-  left: auto;
-  right: 8px;
-  top: 10px;
-  transform: none;
+  left: var(--bubble-left, 56%);
+  top: var(--bubble-top, 36px);
+  transform: translateX(-50%) scale(var(--bubble-scale, 1));
+  transform-origin: center bottom;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   max-width: 220px;
   gap: 6px;
   z-index: 520;
   pointer-events: none;
+}
+.pet-bubble-container .pet-bubble {
+  cursor: grab;
+  user-select: none;
+}
+.pet-bubble-container .pet-bubble.is-dragging {
+  cursor: grabbing;
+}
   width: 92%;
   max-width: 320px;
 }

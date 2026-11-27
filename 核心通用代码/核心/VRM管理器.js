@@ -319,15 +319,43 @@ class VRMManager {
             rUpper.rotation.z = -baseZ + breath * 0.012;
           }
 
-          // 点击时的极柔和轻点头/微弹反馈（不折臂、不抽搐）
+          // ★ 点击分部位零开销自然反馈（摸头歪头蹭 / 戳身俏皮微扭 / 连击鼓嘴轻跳，全部严格限幅在自然关节角度内）
           if (this._nodAnim) {
             this._nodAnim.t += delta;
             const p = Math.min(1, this._nodAnim.t / this._nodAnim.dur);
             const env = Math.sin(p * Math.PI);
-            this.vrm.scene.position.y = env * 0.018;
-            if (chest) chest.rotation.x = breath * 0.014 + env * 0.04;
+            const mode = this._nodAnim.part || 'body';
+            const spine = h.getNormalizedBoneNode('spine');
+            const head = h.getNormalizedBoneNode('head');
+            const lLower = h.getNormalizedBoneNode('leftLowerArm');
+            const rLower = h.getNormalizedBoneNode('rightLowerArm');
+
+            if (mode === 'head') {
+              // 摸头：温柔歪头 + 轻柔舒展
+              if (head) head.rotation.z = env * 0.14;
+              if (chest) chest.rotation.x = breath * 0.014 - env * 0.03;
+              this.vrm.scene.position.y = env * 0.01;
+            } else if (mode === 'rage') {
+              // 连点暴走：鼓嘴抗议 + 轻微左右摇头 + 小跳
+              if (head) head.rotation.y = Math.sin(p * Math.PI * 4) * 0.14 * env;
+              this.vrm.scene.position.y = Math.abs(Math.sin(p * Math.PI * 2)) * 0.028;
+              if (lUpper) lUpper.rotation.z = baseZ - env * 0.12;
+              if (rUpper) rUpper.rotation.z = -baseZ + env * 0.12;
+            } else {
+              // 戳身体：轻俏微扭腰 + 轻点头 + 前臂柔和微收（绝不折臂）
+              if (spine) spine.rotation.y = Math.sin(p * Math.PI * 2) * 0.08 * env;
+              if (chest) chest.rotation.x = breath * 0.014 + env * 0.04;
+              if (lLower) lLower.rotation.y = -0.22 - env * 0.18;
+              if (rLower) rLower.rotation.y = 0.22 + env * 0.18;
+              this.vrm.scene.position.y = env * 0.016;
+            }
+
             if (p >= 1) {
               this.vrm.scene.position.y = 0;
+              if (head) head.rotation.z = 0;
+              if (spine) spine.rotation.y = 0;
+              if (lLower) lLower.rotation.y = -0.22;
+              if (rLower) rLower.rotation.y = 0.22;
               this._nodAnim = null;
             }
           }
@@ -432,6 +460,17 @@ class VRMManager {
     }
   }
 
+  /** 零开销分部位点击互动（摸头 head / 戳身 body / 连击 rage），不加载额外文件 */
+  playPartAnimation(part = 'body') {
+    if (!this.vrm || !this.vrm.humanoid) return;
+    const durMap = { head: 0.9, body: 0.75, rage: 0.95 };
+    this._nodAnim = { part, t: 0, dur: durMap[part] || 0.75 };
+    const expr = part === 'rage' ? 'annoyed' : 'happy';
+    this.playExpression(expr);
+    if (this._exprResetTimer) clearTimeout(this._exprResetTimer);
+    this._exprResetTimer = setTimeout(() => this.playExpression('idle'), 1500);
+  }
+
   // 播放柔和反馈动画（轻点头 + 微笑表情，绝不鬼畜折臂）
   playAnimation(type) {
     if (!this.vrm || !this.vrm.humanoid) return;
@@ -439,9 +478,7 @@ class VRMManager {
       this._nodAnim = null;
       return;
     }
-    this._nodAnim = { t: 0, dur: 0.45 };
-    this.playExpression('happy');
-    setTimeout(() => this.playExpression('idle'), 1400);
+    this.playPartAnimation(type === 'rage' ? 'rage' : (type === 'head' ? 'head' : 'body'));
   }
 
   // 根据 AI 回复更新表情（由 Live2DManager.updateByAIResponse 委托调用）
