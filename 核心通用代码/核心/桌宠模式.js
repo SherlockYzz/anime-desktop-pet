@@ -39,17 +39,17 @@ class PetMode {
     this._onMouseMovePassThrough = null;
     this._onMouseLeavePassThrough = null;
     this._onBlurPassThrough = null;
-    // ★ 严守纪律：每次重新登录/打开程序时，必须强制恢复为默认窗口大小（1.0，即 400x600）
+    // ★ 每次重新打开程序时恢复为默认桌宠窗口大小（90%，即 360x540）
     try { localStorage.removeItem('pet-scale'); } catch (e) {}
-    this._petScale = 1.0;
+    this._petScale = 0.9;
     this._scaleMenuOpen = false;
   }
 
   init(skipTransition) {
     try { localStorage.removeItem('pet-scale'); } catch (e) {}
-    this._petScale = 1.0;
+    this._petScale = 0.9;
     this._bindEvents();
-    this.setPetScale(1.0);
+    this.setPetScale(0.9);
     this.enter(skipTransition);
   }
 
@@ -1151,9 +1151,9 @@ class PetMode {
     menu.classList.toggle('show', next);
   }
 
-  /** 恢复默认 100% 原始尺寸 */
+  /** 恢复默认 90% 桌宠尺寸 */
   resetPetScale() {
-    return this.setPetScale(1.0);
+    return this.setPetScale(0.9);
   }
 
   /** 设置桌宠整体显示尺寸（大小滑动窗口核心实现 · 严格等比例 + 屏幕安全保护） */

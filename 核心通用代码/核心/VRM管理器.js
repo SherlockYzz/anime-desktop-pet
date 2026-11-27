@@ -11,22 +11,94 @@ class VRMManager {
     this._animFrameId = null;
     this._onMouseMove = null;
     this._scriptsLoaded = false;
+    this._scriptsLoadingPromise = null;
     this._loadSeq = 0;
     this._vrmCache = new Map();
+    this._vrmLoadingPromises = new Map();
+    this._boundCanvas = null;
+    this._prewarmStarted = false;
     this._activeAnim = null;
     this._nextGestureAt = 8 + Math.random() * 6;
   }
 
-  // 通过 script 标签动态加载 three.js 和 three-vrm（UMD 方式）
+  // 通过 script 标签动态加载 three.js 和 three-vrm（支持去重 + 并行加载插件，缩短首次载入时间）
   async loadScripts() {
     if (this._scriptsLoaded && window.THREE && window.THREE_VRM) return;
+    if (this._scriptsLoadingPromise) return this._scriptsLoadingPromise;
 
-    const cdn = window.CDN_CONFIG || {};
-    if (!window.THREE) await this._loadScript(cdn.three);
-    if (!window.THREE?.GLTFLoader) await this._loadScript(cdn.threeGltfLoader);
-    if (!window.THREE_VRM) await this._loadScript(cdn.threeVrm);
+    this._scriptsLoadingPromise = (async () => {
+      const cdn = window.CDN_CONFIG || {};
+      if (!window.THREE) await this._loadScript(cdn.three);
+      // GLTFLoader 与 three-vrm 彼此独立，并行加载
+      const tasks = [];
+      if (!window.THREE?.GLTFLoader) tasks.push(this._loadScript(cdn.threeGltfLoader));
+      if (!window.THREE_VRM) tasks.push(this._loadScript(cdn.threeVrm));
+      if (tasks.length) await Promise.all(tasks);
+      this._scriptsLoaded = true;
+    })().catch((err) => {
+      this._scriptsLoadingPromise = null;
+      throw err;
+    });
 
-    this._scriptsLoaded = true;
+    return this._scriptsLoadingPromise;
+  }
+
+  /** 启动空闲期后台静默预热：提前加载 Three.js 并后台解析 VRM 模型到内存缓存，切换桌宠时秒出 */
+  prewarm(modelPaths = []) {
+    if (this._prewarmStarted) return;
+    this._prewarmStarted = true;
+    const paths = [...new Set((modelPaths || []).filter(Boolean))];
+    if (!paths.length) return;
+
+    const runIdle = (fn) => {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => fn(), { timeout: 2500 });
+      } else {
+        setTimeout(fn, 250);
+      }
+    };
+
+    runIdle(async () => {
+      try {
+        await this.loadScripts();
+        for (const p of paths) {
+          if (this._vrmCache.has(p)) continue;
+          await new Promise((resolve) => runIdle(async () => {
+            try {
+              await this._parseAndCacheVrm(p);
+            } catch (e) {}
+            resolve();
+          }));
+        }
+      } catch (e) {}
+    });
+  }
+
+  /** 解析并缓存单个 VRM（带并发去重：预热与实时点击共享同一个解析 Promise） */
+  async _parseAndCacheVrm(modelPath) {
+    if (this._vrmCache.has(modelPath)) return this._vrmCache.get(modelPath);
+    if (this._vrmLoadingPromises.has(modelPath)) return this._vrmLoadingPromises.get(modelPath);
+
+    const promise = (async () => {
+      await this.loadScripts();
+      const loader = new THREE.GLTFLoader();
+      loader.register((parser) => new THREE_VRM.VRMLoaderPlugin(parser));
+      const gltf = await new Promise((resolve, reject) => {
+        loader.load(modelPath, resolve, undefined, reject);
+      });
+      const vrm = gltf?.userData?.vrm;
+      if (!vrm) throw new Error('VRM 解析结果为空: ' + modelPath);
+      if (window.THREE_VRM?.VRMUtils?.rotateVRM0) {
+        THREE_VRM.VRMUtils.rotateVRM0(vrm);
+      }
+      this._vrmCache.set(modelPath, vrm);
+      return vrm;
+    })().finally(() => {
+      this._vrmLoadingPromises.delete(modelPath);
+    });
+
+    this._vrmLoadingPromises.set(modelPath, promise);
+    return promise;
   }
 
   _loadScript(src) {
@@ -108,24 +180,43 @@ class VRMManager {
   }
 
   _setupRenderer(canvas, width, height) {
-    const w = Math.max(200, width || 380);
-    const h = Math.max(300, height || 570);
+    const w = Math.max(200, Math.round(width || 342));
+    const h = Math.max(300, Math.round(height || 513));
+    // ★ 持久化复用已有 WebGLRenderer（同一画布不销毁重建，保留已编译 MToon 着色器与 GPU 贴图，彻底消除二次进入 3~4 秒卡顿）
+    if (this.renderer && this._boundCanvas === canvas) {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      this.renderer.setSize(w, h, true);
+      return;
+    }
+    if (this.renderer) {
+      try { this.renderer.dispose(); } catch (e) {}
+      this.renderer = null;
+    }
+    this._boundCanvas = canvas;
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       alpha: true,
       antialias: true,
+      powerPreference: 'high-performance',
       preserveDrawingBuffer: true
     });
-    this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(window.devicePixelRatio || 1);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    this.renderer.setSize(w, h, true);
     this.renderer.setClearColor(0x000000, 0);
   }
 
   _setupScene(width, height) {
-    this.scene = new THREE.Scene();
-    const w = Math.max(200, width || 380);
-    const h = Math.max(300, height || 570);
+    const w = Math.max(200, Math.round(width || 342));
+    const h = Math.max(300, Math.round(height || 513));
     const aspect = w / h;
+    if (this.scene && this.camera) {
+      this.camera.aspect = aspect;
+      this.camera.updateProjectionMatrix();
+      this.clock = new THREE.Clock();
+      this._nodAnim = null;
+      return;
+    }
+    this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(28, aspect, 0.1, 20);
     this.camera.position.set(0, 1.2, 2.5);
     this.camera.lookAt(0, 1, 0);
@@ -146,57 +237,35 @@ class VRMManager {
     this._nodAnim = null;
   }
 
-  // 加载 VRM 模型（带内存缓存：面板↔桌宠切换与二次切换实现秒级加载）
+  // 加载 VRM 模型（内存缓存 + 预热 Promise 复用 + 持久化 WebGLRenderer 实现毫秒级切换）
   async loadModel(modelPath) {
     if (!this.isInitialized || !this.scene) return false;
 
     const currentSeq = ++this._loadSeq;
 
     try {
-      // 从场景摘下旧模型（保留在缓存中不销毁，避免重复 4~5 秒解析）
+      // 从场景摘下旧模型（保留在缓存中不销毁）
       if (this.vrm) {
         if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
         this.vrm = null;
       }
 
-      // ★ 命中内存缓存：直接复用已解析的 VRM 实例（< 50ms 秒切）
-      if (this._vrmCache.has(modelPath)) {
-        this.vrm = this._vrmCache.get(modelPath);
-        if (this.vrm && this.scene) {
-          this.scene.add(this.vrm.scene);
-          this._applyNaturalIdlePose();
-          this._fitCameraToModel();
-          return true;
-        }
-      }
+      const vrm = await this._parseAndCacheVrm(modelPath);
 
-      const loader = new THREE.GLTFLoader();
-      // 注册 VRM 插件
-      loader.register((parser) => new THREE_VRM.VRMLoaderPlugin(parser));
-
-      const gltf = await new Promise((resolve, reject) => {
-        loader.load(modelPath, resolve, undefined, reject);
-      });
-
-      // 如果加载过程中已经被销毁或有新请求，安全放弃
+      // 如果加载过程中已经被切走或有新请求，安全放弃挂载（保留缓存供下次秒切）
       if (this._loadSeq !== currentSeq || !this.isInitialized || !this.scene) {
-        if (gltf.userData?.vrm) {
-          try { gltf.userData.vrm.dispose(); } catch (e) {}
-        }
         return false;
       }
 
-      this.vrm = gltf.userData.vrm;
-
+      this.vrm = vrm;
       if (this.vrm && this.scene) {
-        // VRM 0.0 模型默认背对 +Z，按规范旋转 180° 面向相机（仅首次加载旋转一次）
-        if (window.THREE_VRM?.VRMUtils?.rotateVRM0) {
-          THREE_VRM.VRMUtils.rotateVRM0(this.vrm);
-        }
-        this._vrmCache.set(modelPath, this.vrm);
         this.scene.add(this.vrm.scene);
         this._applyNaturalIdlePose();
         this._fitCameraToModel();
+        // 立即渲染一帧，避免首帧白闪或等待下一轮 rAF
+        if (this.renderer && this.camera) {
+          this.renderer.render(this.scene, this.camera);
+        }
         return true;
       }
 
@@ -517,21 +586,16 @@ class VRMManager {
       window.removeEventListener('resize', this._resizeHandler);
       this._resizeHandler = null;
     }
-    // ★ 仅从当前场景摘下 VRM，保留在 _vrmCache 中，避免模式切换时重复 4~5 秒重载
+    // ★ 仅摘下当前 VRM 并暂停循环，持久化保留 WebGLRenderer / Scene / _vrmCache，
+    //    让面板↔桌宠与多 VRM 角色切换保持 GPU 热态，免去重复上传贴图和重编着色器
     if (this.vrm) {
       if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
       this.vrm = null;
-    }
-    if (this.renderer) {
-      try { this.renderer.dispose(); } catch (e) {}
-      this.renderer = null;
     }
     const canvas = document.getElementById('vrm-canvas');
     if (canvas) canvas.style.display = 'none';
     const petCanvas = document.getElementById('pet-vrm-canvas');
     if (petCanvas) petCanvas.style.display = 'none';
-    this.scene = null;
-    this.camera = null;
     this.isInitialized = false;
   }
 }

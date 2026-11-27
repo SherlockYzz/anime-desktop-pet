@@ -110,6 +110,17 @@ class App {
     // ★ 预检所有角色的模型文件（完全不阻塞任何流程）
     setTimeout(() => window.characterManager.precheckModelFiles(), 3000);
 
+    // ★ 空闲期静默预热 VRM 角色（高木同学 / 雪之下雪乃 / 零二），避免首次切到桌宠模式等待解析
+    setTimeout(() => {
+      try {
+        const allChars = window.characterManager?.getAllCharacters?.() || [];
+        const vrmPaths = allChars.map(c => c?.vrm?.modelPath).filter(Boolean);
+        if (vrmPaths.length && window.vrmManager?.prewarm) {
+          window.vrmManager.prewarm(vrmPaths);
+        }
+      } catch (e) {}
+    }, 2200);
+
     // ★ 阶段4：在空闲时加载CDN高亮库（不影响首帧）
     this._initHighlighting();
   }

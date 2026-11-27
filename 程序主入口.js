@@ -29,12 +29,12 @@ function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
+    width: 360,
+    height: 540,
     minWidth: 200,
     minHeight: 300,
-    x: screenWidth - 420,
-    y: screenHeight - 620,
+    x: screenWidth - 380,
+    y: screenHeight - 560,
     transparent: true,
     frame: false,
     thickFrame: false,                  // ★ 彻底消灭 Windows 10/11 在透明无边框窗口周围添加的系统级阴影与重绘边框

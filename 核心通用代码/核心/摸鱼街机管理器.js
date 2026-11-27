@@ -95,18 +95,26 @@
       this.games = ARCADE_GAMES;
       this.currentGameId = '01-拉海洛方块01';
 
+      // 一次性默认偏好升级：街机模式下默认「角色说话静默开启」+「背景音乐默认打开」
+      if (localStorage.getItem('arcade_audio_defaults_v2') !== '1') {
+        localStorage.setItem('arcade_pet_voice_enabled', '0');
+        localStorage.setItem('arcade_bgm_enabled', '1');
+        localStorage.setItem('arcade_audio_defaults_v2', '1');
+      }
+
       // 游戏音效静音状态（持久化）
       this.isMuted = localStorage.getItem('arcade_game_muted') === '1';
-      // 桌宠说话/配音开关（默认开启，支持独立关闭/开启，持久化）
+      // 桌宠说话/配音开关（默认静默开启，支持独立切换，持久化）
       const savedPetVoice = localStorage.getItem('arcade_pet_voice_enabled');
-      this.petVoiceEnabled = savedPetVoice === null ? true : savedPetVoice === '1';
+      this.petVoiceEnabled = savedPetVoice === null ? false : savedPetVoice === '1';
 
       this.lastVoiceTime = 0;
       this.voiceCooldown = 5500; // 连击语音CD 5.5秒，防止高频刷屏
 
-      // 街机 BGM 背景音乐播放器状态
+      // 街机 BGM 背景音乐播放器状态（默认打开，从置顶的纸飞机开始）
       this.customBgmTracks = [];
-      this.bgmEnabled = localStorage.getItem('arcade_bgm_enabled') === '1';
+      const savedBgmOn = localStorage.getItem('arcade_bgm_enabled');
+      this.bgmEnabled = savedBgmOn === null ? true : savedBgmOn === '1';
       this.bgmTrackId = localStorage.getItem('arcade_bgm_track_id') || BUILTIN_BGM_TRACKS[0].id;
       const savedVol = parseFloat(localStorage.getItem('arcade_bgm_volume'));
       // 默认 22% 柔和音量，上限 60%，确保不遮挡清脆的游戏声效
