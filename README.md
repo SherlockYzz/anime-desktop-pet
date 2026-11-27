@@ -26,20 +26,20 @@
 
 ## 📥 Direct Downloads (Latest `v8.1.0`)
 
-No runtime setup required—download the installer wizard and start right away:
+No Node.js or Python setup required—download the installer wizard and start right away:
 
 | Edition | Platform | Direct Installer Link | Notes |
 | :--- | :--- | :--- | :--- |
 | **🌍 English Edition** | Windows 10/11 (x64) | [**AI-Desktop-Pet-v8.1.0-EN-Setup.exe**](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v8.1.0/AI-Desktop-Pet-v8.1.0-EN-Setup.exe) | Pure English NSIS 1033 wizard & UI |
 | **🇨🇳 Simplified Chinese** | Windows 10/11 (x64) | [**AI-DesktopPet-v8.1.0-Setup.exe**](https://github.com/SherlockYzz/anime-desktop-pet/releases/download/v8.1.0/AI-DesktopPet-v8.1.0-Setup.exe) | Full Simplified Chinese edition |
-| **📦 All Releases** | GitHub Releases | [**View Release Notes & History**](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v8.1.0) | Full changelog & assets |
+| **📦 Release Page** | GitHub Releases | [**View v8.1.0 Release Notes & History**](https://github.com/SherlockYzz/anime-desktop-pet/releases/tag/v8.1.0) | Changelogs & SHA-256 checksums |
 
 ---
 
 ## 🌟 About the Project
 
 **AI Desktop Pet** is an open-source desktop companion and lightweight AI workbench built with **Electron 28**.  
-It combines **tri-engine animated rendering (Live2D Cubism 2/4/5 + 3D VRM + 73-frame Sprite Atlas)**, **133 original CV voice lines**, **streaming chat across 12 cloud & local LLMs**, a **17-language code sandbox**, a **10-game built-in Arcade with BGM Jukebox**, a **10-tier Bond & Memory Diary**, and a **Desktop Focus Butler** into one sleek desktop app.
+Far more than a static desktop sticker, it brings together **tri-engine animated rendering (Live2D Cubism 2/4/5 + 3D VRM + 73-frame Sprite Atlas)**, **133 broadcast-grade original CV voice clips**, **streaming chat across 12 cloud & local LLMs**, a **17-language code editor & sandbox**, a **10-game built-in Arcade with BGM Jukebox**, a **10-tier Bond & Memory Diary**, and a **Desktop Focus Butler**.
 
 ---
 
@@ -108,37 +108,55 @@ It combines **tri-engine animated rendering (Live2D Cubism 2/4/5 + 3D VRM + 73-f
 </tr>
 </table>
 
-> Plus a built-in **Custom Character Creator** so you can import your own artwork, Live2D models, prompts, and canonical lines.
-
 ---
 
-## ⚙️ Feature Highlights
+## ⚙️ Deep Dive Into Core Features
 
-- **Tri-Engine Dynamic Rendering & Pixel-Accurate Click-Through**: Runs **Live2D (Cubism 2/4/5)**, **3D VRM (Three.js + `@pixiv/three-vrm`)**, and **73-frame Sprite Atlas** with true transparent desktop click-through (only solid character pixels or UI controls capture mouse events).
-- **Prewarmed Instant VRM Switching**: Reuses a persistent `WebGLRenderer` and compiled MToon shaders while prewarming all 3 VRM models during idle startup.
-- **Zero-Overhead Body-Part Interactions**: Tap feet to hop, tap hands to wave, pat head to tilt, poke body to nod, or rapid-tap 4 times for special reactions—paired with non-overlapping original CV voice playback.
-- **Clean Mode Separation & Flexible Speech Bubbles**: Pet mode launches at a sleek **90% (`360×540`)** scale with live models; Panel/Web mode displays crisp original high-res artwork. Speech bubbles support drag-to-move, X/Y & scale sliders, and a persisted **Hide/Show** toggle (`B`).
-- **10-Game Built-in Arcade + BGM Jukebox**: All 10 H5 mini-games stay permanently visible in a **6×2 grid** with 14 curated BGM tracks (pinning **Paper Plane** and **Falling Blossoms** at top), local music import, BGM enabled by default, and character voice muted by default while gaming.
-- **AI Chat, Code Sandbox, Bond Diary & Focus Butler**: Supports 12 LLM providers (OpenAI, Claude, Gemini, DeepSeek, Ollama, etc.), 17-language code execution sandbox, Lv.1–Lv.10 Bond & Memory Diary, 25-min Pomodoro timer, CPU/RAM monitor, and live weather.
+### 1. 🧊 Tri-Engine Live Rendering & Pixel-Accurate Click-Through
+- **Live2D Cubism 2/4/5**: Powers Megumi Kato, Rem, Hatsune Miku, Megumin, and Umaru with 2048 anti-aliased rendering, smooth Lerp eye/head tracking, automatic vertical bounding-box alignment, and active texture GC.
+- **3D VRM Fast Pipeline (Three.js + `@pixiv/three-vrm`)**: Powers Takagi-san, Yukino Yukinoshita, and Zero Two with cool-white balanced lighting, natural resting arms & curled fingers, persistent `WebGLRenderer` reuse, and idle background prewarming for instant character switching.
+- **73-Frame Sprite Atlas**: Dedicated 2D sprite engine for Ruoxi with 16-direction gaze tracking, 1X/2X HD switching, and rich state animations (work, sleep, jump, wave, wander).
+- **True Transparent Click-Through**: 30Hz pixel Alpha hit-testing lets clicks pass straight through transparent areas to underlying desktop windows.
+
+### 2. 📐 Dedicated Pet vs. Panel Separation & 90% Default Scale
+- **Pet Mode (default `90%` / `360×540`)**: Frameless, always-on-top live companion with smooth `75%–135%` scaling, drag-to-move, IME-safe `WASD`/Arrow walking, and Auto-Wander (`T`).
+- **Panel Workbench Mode**: Displays crisp original high-res artwork with zero redundant WebGL overhead for fast, lightweight chatting, coding, and arcade sessions.
+
+### 3. 🖐️ Zero-Overhead Body-Part Interactions & 133 Non-Overlapping CV Voices
+- Tap different body zones on VRM characters for natural real-time bone feedback: **tap feet to hop**, **tap hands to wave**, **pat head to tilt**, **poke body to nod**, or rapid-tap 4 times for special reactions.
+- 133 original CV voice lines with shuffle-bag deduplication and instant interruption (tapping a new line immediately stops the previous clip—zero overlapping audio).
+
+### 4. 💬 Fully Customizable Speech Bubbles & Action Toolbox
+- Smart head-top anchor detection positions bubbles neatly above each character without covering their forehead.
+- Drag bubbles freely by mouse, or fine-tune **Size (`80%–140%`)**, **Horizontal (`15%–85%`)**, **Vertical (`8px–420px`)**, **Reset Position**, and **Hide/Show Bubble** (persisted and synced with `B`) inside the scale menu.
+
+### 5. 🎮 10-Game Built-in Arcade + Independent BGM Jukebox
+- All **10 standalone H5 mini-games** stay visible at once in a clean **6×2 grid**: Lahairo Blocks (Place), Lahairo Blocks (Gravity), Hexa Clear, Resonance Pinball, Light Circuit, Ink Flood, Stack Tower, Mirror Laser, Neon Snake, and Rhythm Resonance (4-lane rhythm game).
+- Built-in **BGM Jukebox** with 14 curated tracks (pinning **Paper Plane** and **Falling Blossoms** at the top) plus local audio import. Entering Arcade defaults to **BGM ON** and **Pet Voice Muted**, with automatic ducking when playing the rhythm game.
+
+### 6. 🤖 12 LLM Providers, 17-Language Code Sandbox, Bond Diary & Focus Butler
+- Supports OpenAI, Claude, Gemini, DeepSeek, Kimi, Zhipu, Qwen, SiliconFlow, Groq, and local **Ollama** with streaming Markdown and one-click code copy.
+- Built-in code editor & local sandbox supporting **17 languages** + AI code generation.
+- **Lv.1–Lv.10 Bond & Memory Diary** per character, **Custom Character Creator**, **25-minute Pomodoro timer**, **CPU/RAM monitor**, **live weather**, **custom shortcut manager (`F1`)**, and `safeStorage` API key encryption.
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
-- **Desktop Shell**: Electron 28 + NSIS (frameless transparent dual-mode window, system tray, global shortcuts)
-- **Rendering Layer**: PIXI.js + Live2D Cubism 2/4/5 · Three.js + `@pixiv/three-vrm` · Canvas 2D Sprite Atlas (isolated canvases, active texture GC, persistent WebGL context)
-- **Security Layer**: `contextIsolation`, `contextBridge` IPC allowlist, OS-level `safeStorage` API key encryption, HTML sanitization, sandboxed code execution
-- **UI & Arcade**: 4-layer CSS architecture (base → layout → polish → responsive) with dynamic character theme colors; sandboxed Iframe games communicating via `postMessage` bus
+- **Desktop Shell**: Electron 28 + NSIS 1033 (frameless transparent dual-mode window, system tray, global shortcuts)
+- **Rendering Layer**: PIXI.js + Live2D Cubism 2/4/5 · Three.js + `@pixiv/three-vrm` · Canvas 2D Sprite Atlas
+- **Security Layer**: `contextIsolation`, `contextBridge` IPC allowlist, OS-level `safeStorage` encryption, HTML sanitization, sandboxed execution
+- **UI & Arcade**: 4-layer CSS system (base → layout → polish → responsive) with dynamic character themes; sandboxed Iframe games on a `postMessage` bus
 
 ```mermaid
 flowchart TB
     Main["Main Process (程序主入口.js)<br/>Window / Tray / Code Sandbox / Hardware Monitor / safeStorage"]
     Bridge["Preload Bridge (安全桥接.js)<br/>Strict contextBridge IPC Allowlist"]
     subgraph Renderer["Renderer Process (核心通用代码/核心/)"]
-        App["App Shell & Theme Enhancer"]
+        App["App Shell & 7-Card Settings"]
         Pet["Pet Mode<br/>30Hz Pixel Hit-Test / WASD / Bubbles / Scale"]
         Engines["Tri-Engine Layer<br/>Live2D · 3D VRM · Sprite Atlas"]
-        AI["AI Chat, Code Editor & Bond Memory"]
+        AI["AI Chat, Code Sandbox & Bond Memory"]
         Arcade["Arcade Manager<br/>10 H5 Mini-Games + BGM Jukebox"]
     end
     Assets["9 Character Packs (角色-*/)<br/>Config · Live2D/VRM/Sprite · Original CV · Art"]
@@ -162,16 +180,16 @@ npm run build:win  # Build Windows NSIS installer
 
 - `Ctrl + Shift + P` — Toggle window visibility globally
 - `Esc` / `F2` — Switch between Pet Mode & Panel Workbench
-- `W / A / S / D` or Arrow Keys — Walk around the desktop
-- `T` — Toggle Auto-Wander · `B` — Toggle Speech Bubbles · `F1` — Shortcut Manager
+- `W / A / S / D` or Arrow Keys — Move across the desktop
+- `T` — Auto-Wander · `B` — Toggle Speech Bubbles · `F1` — Shortcut Manager
 
 ---
 
 ## 📋 Recent Major Updates
 
 - **v8.1.0** (`2026-11-27`)
-  - Added full **3D VRM models** for Takagi-san, Yukino Yukinoshita, and Zero Two, plus persistent `WebGLRenderer` reuse and idle background prewarming for near-instant switching.
-  - Added zero-overhead body-part animations (foot hop, hand wave, head tilt, body nod), bubble X/Y sliders & Hide toggle, **90% default pet size**, and dedicated Pet vs. Panel artwork separation.
+  - Added full **3D VRM models** for Takagi-san, Yukino Yukinoshita, and Zero Two with persistent `WebGLRenderer` reuse and idle background prewarming.
+  - Added zero-overhead body-part animations (foot hop, hand wave, head tilt, body nod), bubble X/Y sliders & Hide toggle, **90% default pet size**, and dedicated Pet vs. Panel separation.
   - Restored 6×2 full-visibility grid for all 10 Arcade games, pinned Paper Plane & Falling Blossoms BGM, defaulted Arcade to BGM ON + Pet Voice Muted, and synced the full **English Edition v8.1.0**.
 - **v8.0.1** (`2026-11-26`)
   - Security hardening (HTML sanitization, `safeStorage` encryption, IPC allowlist, Worker sandbox), startup & idle power optimization, and redesigned 7-card Settings & polished UI.
@@ -184,11 +202,11 @@ npm run build:win  # Build Windows NSIS installer
 
 ## 💬 Join Us & Share Your Ideas!
 
-We warmly invite you to **download, try it out, and make it your own**!
+We warmly invite you to **download, try it out, and help shape what comes next**!
 
-- 🌟 If you enjoy the project, a **Star** on GitHub means a lot to us;
-- 💡 Got ideas for new characters, mini-games, animations, or quality-of-life features? Drop them anytime in [Issues](https://github.com/SherlockYzz/anime-desktop-pet/issues) or [Discussions](https://github.com/SherlockYzz/anime-desktop-pet/discussions);
-- 🐛 Found a bug or rough edge? Let us know and we'll keep refining it;
+- 🌟 If you enjoy the project, dropping a **Star** on GitHub means the world to us;
+- 💡 Have ideas for new characters, mini-games, animations, or quality-of-life improvements? Share them anytime in [Issues](https://github.com/SherlockYzz/anime-desktop-pet/issues) or [Discussions](https://github.com/SherlockYzz/anime-desktop-pet/discussions);
+- 🐛 Spotted a bug or rough edge? Let us know and we'll keep polishing;
 - 🤝 Pull Requests are always welcome!
 
 ---

@@ -1134,132 +1134,13 @@ body:not(.web-mode-active) .chat-panel * { transition: none !important; }
   body.web-mode-active .tab-bar::before { transition: none; }
 }
 
-/* ---------- 15. 聊天小组件与舞台名牌（节点由 界面增强.js 生成） ---------- */
+/* ---------- 15. 标签页切换动效与舞台名牌（名牌节点由 界面增强.js 生成，纯展示） ---------- */
 /* 15.1 标签页切换：内容轻轻浮入（街机页是整屏游戏，不参与） */
 body.web-mode-active #tab-chat.active,
 body.web-mode-active #tab-code.active { animation: ui-tab-in 0.3s var(--ui-ease); }
 @keyframes ui-tab-in { from { opacity: 0; transform: translateY(6px); } }
 
-/* 15.2 日期问候条 */
-body.web-mode-active .ui-day-chip {
-  flex: 0 0 auto;
-  align-self: center;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: -2px 0;
-  color: var(--ui-ink-3);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.7px;
-  white-space: nowrap;
-}
-body.web-mode-active .ui-day-chip::before,
-body.web-mode-active .ui-day-chip::after { content: ''; width: 26px; height: 1px; background: linear-gradient(90deg, transparent, var(--ui-line-strong)); }
-body.web-mode-active .ui-day-chip::after { transform: scaleX(-1); }
-
-/* 15.3 建议话题：鼠标环境下自动换行全部露出；触屏下改为单行横滑（见 界面自适应.css） */
-body.web-mode-active .ui-suggest {
-  flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 12px 4px;
-  padding: 2px 2px 6px;
-}
-body.web-mode-active .ui-suggest[hidden] { display: none; }
-body.web-mode-active .ui-suggest-lead { flex: 0 0 auto; display: grid; place-items: center; width: 20px; height: 26px; color: var(--ui-accent); }
-body.web-mode-active .ui-suggest-lead svg { width: 15px; height: 15px; animation: ui-twinkle 3.2s ease-in-out 3; }
-@keyframes ui-twinkle { 50% { transform: scale(0.82) rotate(-12deg); opacity: 0.6; } }
-body.web-mode-active .ui-chip {
-  flex: 0 0 auto;
-  height: 27px;
-  padding: 0 11px;
-  border: 0;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0 0 1px var(--ui-line-strong), var(--ui-shadow-1);
-  color: var(--ui-ink-2);
-  font: 500 12px/1 var(--ui-font);
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.18s, color 0.18s, box-shadow 0.2s, transform 0.3s var(--ui-spring);
-  animation: ui-chip-in 0.55s var(--ui-spring) both;
-}
-body.web-mode-active .ui-chip:nth-child(3) { animation-delay: 0.05s; }
-body.web-mode-active .ui-chip:nth-child(4) { animation-delay: 0.1s; }
-body.web-mode-active .ui-chip:nth-child(5) { animation-delay: 0.15s; }
-@keyframes ui-chip-in { from { opacity: 0; transform: translateY(8px) scale(0.94); } }
-body.web-mode-active .ui-chip:hover {
-  background: var(--ui-accent-wash);
-  box-shadow: 0 0 0 1px oklch(from var(--p) 0.62 0.1 h / 0.5), 0 7px 14px -8px var(--ui-glow);
-  color: var(--ui-accent-deep);
-  transform: translateY(-1px);
-}
-body.web-mode-active .ui-chip:active { transform: scale(0.95); }
-
-/* 15.4 回到最新消息 */
-body.web-mode-active .ui-fab-anchor { position: relative; flex: 0 0 0; height: 0; z-index: 3; }
-body.web-mode-active .ui-scroll-fab {
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-left: -16px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 0 1px var(--ui-line-strong), 0 2px 4px oklch(from var(--p) 0.35 0.05 h / 0.08), 0 10px 20px -8px oklch(from var(--p) 0.35 0.09 h / 0.5);
-  color: var(--ui-accent-deep);
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(8px) scale(0.8);
-  transition: opacity 0.2s, transform 0.4s var(--ui-spring), background 0.18s, color 0.18s;
-}
-body.web-mode-active .ui-scroll-fab.show { opacity: 1; pointer-events: auto; transform: none; }
-body.web-mode-active .ui-scroll-fab svg { width: 16px; height: 16px; }
-body.web-mode-active .ui-scroll-fab:hover { background: var(--ui-grad); color: #fff; }
-body.web-mode-active .ui-scroll-fab.show:active { transform: scale(0.9); }
-
-/* 15.5 整条回复复制：停在气泡右侧的留白里，不占气泡内的位置 */
-body.web-mode-active .message.ai > .message-content { position: relative; }
-body.web-mode-active .ui-msg-copy {
-  position: absolute;
-  left: calc(100% + 4px);
-  bottom: 1px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ui-ink-3);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.3s var(--ui-spring);
-}
-body.web-mode-active .ui-msg-copy svg { width: 14px; height: 14px; }
-body.web-mode-active .message.ai:hover .ui-msg-copy,
-body.web-mode-active .ui-msg-copy:focus-visible,
-body.web-mode-active .ui-msg-copy.is-done { opacity: 1; }
-body.web-mode-active .ui-msg-copy:hover { background: #fff; box-shadow: 0 0 0 1px var(--ui-line), var(--ui-shadow-1); color: var(--ui-accent-deep); }
-body.web-mode-active .ui-msg-copy:active { transform: scale(0.88); }
-body.web-mode-active .ui-msg-copy.is-done { color: #1f8a5b; }
-body.web-mode-active .ui-msg-copy.is-fail { color: #d1343b; opacity: 1; }
-body.web-mode-active .message.ai:has(.streaming-cursor) .ui-msg-copy,
-body.web-mode-active .message.ai:has(.thinking-block.streaming) .ui-msg-copy { display: none; }
-body.web-mode-active .message-text.ui-copying .ui-code-copy { display: none !important; }
-
-/* 15.6 舞台名牌：竖版只露"出处"小签；宽屏分栏时在 界面自适应.css 里展开为完整名牌 */
+/* 15.2 舞台名牌：竖版只露"出处"小签；宽屏分栏时在 界面自适应.css 里展开为完整名牌 */
 body.web-mode-active .ui-nameplate {
   position: absolute;
   left: 12px;
@@ -1293,7 +1174,5 @@ body.web-mode-active .ui-np-series:empty { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   body.web-mode-active #tab-chat.active,
-  body.web-mode-active #tab-code.active,
-  body.web-mode-active .ui-chip,
-  body.web-mode-active .ui-suggest-lead svg { animation: none !important; }
+  body.web-mode-active #tab-code.active { animation: none !important; }
 }
