@@ -140,16 +140,23 @@ class SettingsManager {
 
     // 非当前角色需要手动保存
     if (!isCurrentChar) {
-      const char = window.characterManager.registry[characterId];
-      if (char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f) window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-      }
+      this._saveNonCurrentCanonical(characterId);
     }
 
     input.value = '';
     this._refreshCanonicalList();
     this.app.showToast(`已添加 ${lines.length} 句台词`);
+  }
+
+  /** 保存非当前角色的原作台词（兼容内置角色与自定义角色，并同步清除当日缓存） */
+  _saveNonCurrentCanonical(characterId) {
+    const char = window.characterManager.registry[characterId];
+    if (!char?.lines?._canonical || !window.electronAPI?.saveCanonicalLines) return;
+    const target = char.isCustom ? characterId : CHARACTER_FOLDER_MAP[characterId];
+    if (target) {
+      window.electronAPI.saveCanonicalLines(target, char.lines._canonical);
+      localStorage.removeItem(`dialogue_cache_${characterId}`);
+    }
   }
 
   /** 删除单条原作台词 */
@@ -164,11 +171,7 @@ class SettingsManager {
       const char = window.characterManager.registry[characterId];
       if (char?.lines?._canonical) {
         char.lines._canonical.splice(index, 1);
-        // 保存
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
     }
 
@@ -211,11 +214,7 @@ class SettingsManager {
       const char = window.characterManager.registry[characterId];
       if (char?.lines?._canonical) {
         char.lines._canonical[index] = trimmedLine;
-        // 保存
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
     }
 
@@ -254,11 +253,7 @@ class SettingsManager {
       });
 
       if (!isCurrentChar) {
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        const char = window.characterManager.registry[characterId];
-        if (f && char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
 
       this._refreshCanonicalList();
