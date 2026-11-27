@@ -4,140 +4,132 @@ class SettingsManager {
   constructor(app) {
     this.app = app;
     this.settings = this.load();
-    this._bindPromptEvents();
-    this._bindApiControls();
+    this._bindPanelEvents();
+    this._loadSecureApiKey();
   }
 
-  _bindApiControls() {
-    // 恢复默认地址
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-reset-url') {
-        this.resetBaseUrl();
+  /** 将设置面板内的全部交互合并为单一事件委托，避免向 document 注册十余个全局监听器 */
+  _bindPanelEvents() {
+    const root = document.getElementById('settings-panel') || document;
+
+    root.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!target) return;
+
+      switch (target.id) {
+        case 'btn-reset-url':
+          this.resetBaseUrl();
+          return;
+        case 'btn-refresh-models':
+          this.refreshModels();
+          return;
+        case 'btn-start-local':
+          this.startLocalService();
+          return;
+        case 'btn-prompt-save':
+          this._savePrompt();
+          return;
+        case 'btn-prompt-reset':
+          this._resetPrompt();
+          return;
+        case 'btn-delete-character':
+          this._deleteCharacter();
+          return;
+        case 'btn-export-character': {
+          const charSelect = document.getElementById('prompt-character-select');
+          if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
+          return;
+        }
+        case 'btn-canonical-add':
+          this._addCanonicalLine();
+          return;
+        case 'btn-canonical-import':
+          document.getElementById('canonical-file-input')?.click();
+          return;
+        case 'btn-canonical-reset':
+          this._resetCanonical();
+          return;
       }
-    });
 
-    // 动态拉取模型
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-refresh-models') {
-        this.refreshModels();
-      }
-    });
-
-    // 一键启动本地 Ollama 服务
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-start-local') {
-        this.startLocalService();
-      }
-    });
-  }
-
-
-  _bindPromptEvents() {
-    // 角色选择切换 → 加载对应提示词
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'prompt-character-select') {
-        this._updatePromptEditor();
-      }
-    });
-
-    // 保存提示词
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-prompt-save') {
-        this._savePrompt();
-      }
-    });
-
-    // 恢复默认
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-prompt-reset') {
-        this._resetPrompt();
-      }
-    });
-
-    // 删除自定义角色
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-delete-character') {
-        this._deleteCharacter();
-      }
-    });
-
-    // 导出角色
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-export-character') {
-        const charSelect = document.getElementById('prompt-character-select');
-        if (charSelect) window.customCharManager?.exportCharacter(charSelect.value);
-      }
-    });
-
-    // ★ 原作台词集管理事件
-    this._bindCanonicalEvents();
-  }
-
-  /** 绑定原作台词集管理的所有事件 */
-  _bindCanonicalEvents() {
-    // 添加台词
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-add') {
-        this._addCanonicalLine();
-      }
-    });
-
-    // 输入框回车添加
-    document.addEventListener('keydown', (e) => {
-      if (e.target.id === 'canonical-input' && e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this._addCanonicalLine();
-      }
-    });
-
-    // 删除单条台词（事件委托）
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('canonical-item-delete')) {
-        const index = parseInt(e.target.dataset.index, 10);
+      if (target.classList?.contains('canonical-item-delete')) {
+        const index = parseInt(target.dataset.index, 10);
         if (!isNaN(index)) this._removeCanonicalLine(index);
-      }
-    });
-
-    // 编辑单条台词（事件委托）
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('canonical-item-edit')) {
-        const index = parseInt(e.target.dataset.index, 10);
+      } else if (target.classList?.contains('canonical-item-edit')) {
+        const index = parseInt(target.dataset.index, 10);
         if (!isNaN(index)) this._editCanonicalLine(index);
       }
     });
 
-    // 批量导入按钮
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-import') {
-        document.getElementById('canonical-file-input')?.click();
-      }
-    });
-
-    // 恢复默认原作台词集
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'btn-canonical-reset') {
-        this._resetCanonical();
-      }
-    });
-
-    // 文件选择
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'canonical-file-input') {
-        this._importCanonicalFile(e.target.files);
-        e.target.value = '';
-      }
-    });
-
-    // 角色切换时刷新台词列表
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'prompt-character-select') {
+    root.addEventListener('change', (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.id === 'prompt-character-select') {
+        this._updatePromptEditor();
         this._refreshCanonicalList();
+      } else if (target.id === 'canonical-file-input') {
+        this._importCanonicalFile(target.files);
+        target.value = '';
+      }
+    });
+
+    root.addEventListener('keydown', (e) => {
+      if (e.target?.id === 'canonical-input' && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this._addCanonicalLine();
       }
     });
   }
 
+  /** 启动时从主进程 safeStorage 读取加密 API Key（兼容迁移旧 localStorage 明文） */
+  async _loadSecureApiKey() {
+    if (!window.electronAPI?.getSecureApiKey) return;
+    try {
+      const res = await window.electronAPI.getSecureApiKey();
+      if (res?.success && res.apiKey) {
+        this.settings.apiKey = res.apiKey;
+        window.mimoAPI?.setApiKey?.(res.apiKey);
+        const keyInput = document.getElementById('api-key');
+        if (keyInput && !keyInput.value) keyInput.value = res.apiKey;
+      } else if (this.settings.apiKey) {
+        // 首次迁移：把旧 localStorage 明文 Key 加密写入主进程并抹除明文
+        await window.electronAPI.setSecureApiKey?.(this.settings.apiKey);
+        this._persistSettingsWithoutPlainKey();
+      }
+    } catch (e) {
+      console.warn('[Settings] 读取安全 API Key 失败:', e);
+    }
+  }
+
+  _persistSettingsWithoutPlainKey() {
+    const toStore = { ...this.settings };
+    if (window.electronAPI?.setSecureApiKey) {
+      toStore.apiKey = '';
+    }
+    localStorage.setItem('megumi-pet-settings', JSON.stringify(toStore));
+  }
+
+  /** 确保指定角色的原作台词已加载到内存，防止未加载过台词时新增一句直接覆盖原文件 */
+  async _ensureCanonicalLoaded(characterId) {
+    const char = window.characterManager?.registry?.[characterId];
+    if (!char) return [];
+    if (!char.lines) char.lines = {};
+    if (Array.isArray(char.lines._canonical)) return char.lines._canonical;
+    const target = char.isCustom ? characterId : CHARACTER_FOLDER_MAP[characterId];
+    if (target && window.electronAPI?.loadCanonicalLines) {
+      try {
+        const loaded = await window.electronAPI.loadCanonicalLines(target);
+        if (Array.isArray(loaded)) {
+          char.lines._canonical = loaded;
+          return loaded;
+        }
+      } catch (e) {}
+    }
+    char.lines._canonical = [];
+    return char.lines._canonical;
+  }
+
   /** 添加一句原作台词 */
-  _addCanonicalLine() {
+  async _addCanonicalLine() {
     const input = document.getElementById('canonical-input');
     if (!input) return;
     const text = input.value.trim();
@@ -149,9 +141,12 @@ class SettingsManager {
     const characterId = charSelect?.value || window.characterManager.currentCharacterId;
     if (!characterId) return;
 
-    // 确保操作的是正确的角色
+    // 确保操作的是正确的角色，且非当前角色先加载已有台词再追加
     const prevId = window.characterManager.currentCharacterId;
     const isCurrentChar = characterId === prevId;
+    if (!isCurrentChar) {
+      await this._ensureCanonicalLoaded(characterId);
+    }
 
     lines.forEach(line => {
       if (isCurrentChar) {
@@ -168,16 +163,23 @@ class SettingsManager {
 
     // 非当前角色需要手动保存
     if (!isCurrentChar) {
-      const char = window.characterManager.registry[characterId];
-      if (char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f) window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-      }
+      this._saveNonCurrentCanonical(characterId);
     }
 
     input.value = '';
     this._refreshCanonicalList();
-    this.app.showToast(`Added ${lines.length} quote(s)`);
+    this.app.showToast(`已添加 ${lines.length} 句台词`);
+  }
+
+  /** 保存非当前角色的原作台词（兼容内置角色与自定义角色，并同步清除当日缓存） */
+  _saveNonCurrentCanonical(characterId) {
+    const char = window.characterManager.registry[characterId];
+    if (!char?.lines?._canonical || !window.electronAPI?.saveCanonicalLines) return;
+    const target = char.isCustom ? characterId : CHARACTER_FOLDER_MAP[characterId];
+    if (target) {
+      window.electronAPI.saveCanonicalLines(target, char.lines._canonical);
+      localStorage.removeItem(`dialogue_cache_${characterId}`);
+    }
   }
 
   /** 删除单条原作台词 */
@@ -192,11 +194,7 @@ class SettingsManager {
       const char = window.characterManager.registry[characterId];
       if (char?.lines?._canonical) {
         char.lines._canonical.splice(index, 1);
-        // 保存
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
     }
 
@@ -221,14 +219,14 @@ class SettingsManager {
     if (index < 0 || index >= lines.length) return;
 
     const currentLine = lines[index];
-    const newLine = prompt('Edit quote:', currentLine);
+    const newLine = prompt('编辑台词：', currentLine);
 
     // 用户点击取消或内容未变化
     if (newLine === null || newLine === currentLine) return;
 
     const trimmedLine = newLine.trim();
     if (!trimmedLine) {
-      this.app.showToast('Quote text cannot be empty');
+      this.app.showToast('台词内容不能为空');
       return;
     }
 
@@ -239,16 +237,12 @@ class SettingsManager {
       const char = window.characterManager.registry[characterId];
       if (char?.lines?._canonical) {
         char.lines._canonical[index] = trimmedLine;
-        // 保存
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        if (f && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
     }
 
     this._refreshCanonicalList();
-    this.app.showToast('Quote updated');
+    this.app.showToast('台词已更新');
   }
 
   /** 从文件批量导入原作台词 */
@@ -256,9 +250,9 @@ class SettingsManager {
     if (!files || files.length === 0) return;
     const file = files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const text = e.target.result;
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !/^\[.+\]$/.test(l));
       if (lines.length === 0) {
         this.app.showToast('文件为空或无有效台词');
         return;
@@ -269,6 +263,9 @@ class SettingsManager {
       if (!characterId) return;
 
       const isCurrentChar = characterId === window.characterManager.currentCharacterId;
+      if (!isCurrentChar) {
+        await this._ensureCanonicalLoaded(characterId);
+      }
       lines.forEach(line => {
         if (isCurrentChar) {
           window.characterManager.addCanonicalLine(line);
@@ -282,11 +279,7 @@ class SettingsManager {
       });
 
       if (!isCurrentChar) {
-        const f = CHARACTER_FOLDER_MAP[characterId];
-        const char = window.characterManager.registry[characterId];
-        if (f && char?.lines?._canonical && window.electronAPI?.saveCanonicalLines) {
-          window.electronAPI.saveCanonicalLines(f, char.lines._canonical);
-        }
+        this._saveNonCurrentCanonical(characterId);
       }
 
       this._refreshCanonicalList();
@@ -307,14 +300,11 @@ class SettingsManager {
     const charName = character.name || characterId;
 
     if (character.isCustom) {
-      // 自定义角色：从自定义角色文件夹重新加载
+      // 自定义角色：通过主进程 IPC 从 userData 重新加载原作台词集
       try {
-        const canonPath = `../../自定义角色/${characterId}/原作台词集.txt`;
-        const resp = await fetch(canonPath);
-        if (resp.ok) {
-          const text = await resp.text();
-          const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-          character.lines._canonical = lines;
+        if (window.electronAPI?.loadCanonicalLines) {
+          const lines = await window.electronAPI.loadCanonicalLines(characterId);
+          character.lines._canonical = Array.isArray(lines) ? lines : [];
         } else {
           character.lines._canonical = [];
         }
@@ -322,7 +312,7 @@ class SettingsManager {
         character.lines._canonical = [];
       }
     } else {
-      // 内建角色：从角色文件夹重新加载
+      // 内建角色：从内置原始文件重新加载，并同步写回覆盖 userData 覆写文件
       const folder = CHARACTER_FOLDER_MAP[characterId];
       if (!folder) return;
       try {
@@ -332,6 +322,7 @@ class SettingsManager {
           const text = await resp.text();
           const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
           character.lines._canonical = lines;
+          window.electronAPI?.saveCanonicalLines?.(folder, lines);
         } else {
           character.lines._canonical = [];
         }
@@ -343,11 +334,11 @@ class SettingsManager {
     }
 
     this._refreshCanonicalList();
-    this.app.showToast(`Quotes for "${charName}" restored to default`);
+    this.app.showToast(`「${charName}」原作台词集已恢复默认`);
   }
 
   /** 刷新原作台词列表显示 */
-  _refreshCanonicalList() {
+  async _refreshCanonicalList() {
     const listEl = document.getElementById('canonical-list');
     const countEl = document.getElementById('canonical-count');
     if (!listEl) return;
@@ -355,7 +346,7 @@ class SettingsManager {
     const charSelect = document.getElementById('prompt-character-select');
     const characterId = charSelect?.value || window.characterManager.currentCharacterId;
     if (!characterId) {
-      listEl.innerHTML = '<div class="canonical-empty">Please select a companion first</div>';
+      listEl.innerHTML = '<div class="canonical-empty">请先选择角色</div>';
       if (countEl) countEl.textContent = '0';
       return;
     }
@@ -364,22 +355,21 @@ class SettingsManager {
     if (characterId === window.characterManager.currentCharacterId) {
       lines = window.characterManager.getCanonicalLines();
     } else {
-      const char = window.characterManager.registry[characterId];
-      lines = char?.lines?._canonical || [];
+      lines = await this._ensureCanonicalLoaded(characterId);
     }
 
     if (countEl) countEl.textContent = lines.length;
 
     if (lines.length === 0) {
-      listEl.innerHTML = '<div class="canonical-empty">No quotes yet. Add above.</div>';
+      listEl.innerHTML = '<div class="canonical-empty">暂无原作台词，点击上方添加</div>';
       return;
     }
 
     listEl.innerHTML = lines.map((line, i) =>
       `<div class="canonical-item">
         <span class="canonical-item-text">${escapeHtml(line)}</span>
-        <button class="canonical-item-edit" data-index="${i}" title="Edit">&#9998;</button>
-        <button class="canonical-item-delete" data-index="${i}" title="Delete">&times;</button>
+        <button class="canonical-item-edit" data-index="${i}" title="编辑此句">&#9998;</button>
+        <button class="canonical-item-delete" data-index="${i}" title="删除此句">&times;</button>
       </div>`
     ).join('');
   }
@@ -395,7 +385,7 @@ class SettingsManager {
     const character = window.characterManager.registry[characterId];
     if (!character || !character.isCustom) return;
 
-    if (!confirm(`Are you sure you want to delete "${character.name}"?\nThis action cannot be undone.`)) return;
+    if (!confirm(`确定要删除角色「${character.name}」吗？\n此操作不可撤销。`)) return;
 
     try {
       await window.electronAPI.deleteCustomCharacter(characterId);
@@ -425,9 +415,9 @@ class SettingsManager {
       const actions = document.getElementById('setting-custom-char-actions');
       if (actions) actions.style.display = 'none';
 
-      this.app.showToast(`Companion "${character.name}" deleted`);
+      this.app.showToast(`角色「${character.name}」已删除`);
     } catch (e) {
-      this.app.showToast(`Delete failed: ${e.message}`);
+      this.app.showToast(`删除失败: ${e.message}`);
     }
   }
 
@@ -449,10 +439,10 @@ class SettingsManager {
     }
 
     if (status) {
-      status.textContent = promptText.trim() ? '✓ Saved and active immediately' : '✓ Restored to default persona';
+      status.textContent = promptText.trim() ? '✓ 已保存并立即生效' : '✓ 已恢复为默认设定';
       status.className = 'prompt-status success';
     }
-    this.app.showToast(`Persona prompt for "${window.characterManager.registry[characterId]?.name || characterId}" updated`);
+    this.app.showToast(`「${window.characterManager.registry[characterId]?.name || characterId}」提示词已更新`);
   }
 
   async _resetPrompt() {
@@ -472,16 +462,16 @@ class SettingsManager {
     editor.value = character.systemPrompt || '';
 
     if (status) {
-      status.textContent = '✓ Default persona restored';
+      status.textContent = '✓ 已恢复默认设定';
       status.className = 'prompt-status success';
     }
-    this.app.showToast('Default persona prompt restored');
+    this.app.showToast('已恢复默认提示词');
   }
 
   // === 默认设置 ===
   static DEFAULTS = {
     provider: 'local',
-    baseUrl: 'http://localhost:11434/v1',
+    baseUrl: 'http://127.0.0.1:11434/v1',
     apiKey: '',
     model: 'qwen3:8b',
     customModel: '',
@@ -587,7 +577,7 @@ class SettingsManager {
       keyDiv.style.display = 'block';
       const keyInput = document.getElementById('api-key');
       if (keyInput) {
-        keyInput.placeholder = p.needsKey ? 'Enter your API Key' : 'Local models do not require an API Key';
+        keyInput.placeholder = p.needsKey ? '输入你的 API Key' : '本地模型无需 API Key';
         keyInput.disabled = !p.needsKey;
         if (skipRestore) keyInput.value = this.settings.apiKey || '';
       }
@@ -596,8 +586,8 @@ class SettingsManager {
     // 适配刷新模型按钮的文案与提示
     const refreshBtn = document.getElementById('btn-refresh-models');
     if (refreshBtn) {
-      refreshBtn.textContent = '🔄 Refresh Models';
-      refreshBtn.title = p.isLocal ? 'Scan downloaded local models' : 'Fetch available remote models';
+      refreshBtn.textContent = p.isLocal ? '🔄 刷新已装模型' : '🔄 刷新模型';
+      refreshBtn.title = p.isLocal ? '动态同步本地真实已下载的模型' : '动态拉取可用模型列表';
     }
 
     // 本地服务状态栏显示与检测
@@ -622,11 +612,11 @@ class SettingsManager {
       this.settings.baseUrl = p.baseUrl || '';
       this.saveSilently();
       const pureName = p.name.replace(/^[^\w\u4e00-\u9fa5]+/, '');
-      this.app.showToast(`Restored ${pureName} default endpoint`);
+      this.app.showToast(`已恢复 ${pureName} 推荐默认地址`);
     }
   }
 
-  /** 动态拉取当前提供商的可用模型列表 */
+  /** 动态拉取当前提供商的可用模型列表（本地 Ollama 未启动时自动拉起，失败则离线扫描 manifests 兜底） */
   async refreshModels() {
     const btn = document.getElementById('btn-refresh-models');
     const providerId = document.getElementById('api-provider')?.value || 'local';
@@ -635,10 +625,37 @@ class SettingsManager {
     const modelSel = document.getElementById('model-select');
     if (!modelSel) return;
 
-    if (btn) { btn.disabled = true; btn.textContent = '🔄 Fetching...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 拉取中...'; }
 
     try {
-      const models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+      let models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+      let usedOfflineFallback = false;
+
+      // ★ 本地 Ollama 增强拾取：未连上时自动尝试拉起服务，仍未连上则离线扫描本机 manifests 目录
+      if ((!models || models.length === 0) && providerId === 'local' && window.electronAPI) {
+        try {
+          const status = await window.electronAPI.detectLocalOllama?.();
+          if (status && !status.running && status.installed && window.electronAPI.startLocalOllama) {
+            if (btn) btn.textContent = '🚀 启动服务...';
+            const startRes = await window.electronAPI.startLocalOllama();
+            await this._checkOllamaStatus();
+            if (startRes?.success) {
+              models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+            }
+          }
+        } catch (e) {
+          console.warn('[Settings] 自动拉起本地 Ollama 失败:', e);
+        }
+
+        if ((!models || models.length === 0) && window.electronAPI.listLocalOllamaModels) {
+          const offlineModels = await window.electronAPI.listLocalOllamaModels();
+          if (Array.isArray(offlineModels) && offlineModels.length > 0) {
+            models = offlineModels;
+            usedOfflineFallback = true;
+          }
+        }
+      }
+
       if (models && models.length > 0) {
         const currentVal = modelSel.value;
         modelSel.innerHTML = '';
@@ -653,20 +670,25 @@ class SettingsManager {
         modelSel.value = matched ? currentVal : models[0].id;
         this.settings.model = modelSel.value;
         this.saveSilently();
-        this.app.showToast(`✓ Successfully loaded ${models.length} models!`);
+        if (usedOfflineFallback) {
+          this.app.showToast(`✓ 已离线识别 ${models.length} 个本机模型（请启动 Ollama 后对话）`);
+        } else {
+          this.app.showToast(`✓ 已成功获取 ${models.length} 个模型！`);
+        }
       } else {
         if (providerId === 'local') {
-          this.app.showToast('No local models detected. Please verify Ollama is running and has models.');
+          this.app.showToast('未能检测到本地模型，请确认 Ollama 已安装且已下载模型');
         } else {
-          this.app.showToast('Failed to fetch models. Please verify API endpoint and key.');
+          this.app.showToast('未能获取到远程模型列表，请检查 API 地址或密钥');
         }
       }
     } catch (err) {
-      this.app.showToast(`Failed to fetch models: ${err.message}`);
+      this.app.showToast(`获取模型失败: ${err.message}`);
     } finally {
       if (btn) {
+        const isLocal = providerId === 'local' || providerId === 'lmstudio';
         btn.disabled = false;
-        btn.textContent = '🔄 Refresh Models';
+        btn.textContent = isLocal ? '🔄 刷新已装模型' : '🔄 刷新模型';
       }
     }
   }
@@ -680,7 +702,7 @@ class SettingsManager {
     if (!bar || !dot || !txt) return;
 
     bar.style.display = 'block';
-    txt.textContent = 'Checking local service...';
+    txt.textContent = '检测本地服务中...';
     dot.className = 'local-status-dot';
     if (btn) btn.style.display = 'none';
 
@@ -699,20 +721,20 @@ class SettingsManager {
 
       if (running) {
         dot.className = 'local-status-dot online';
-        txt.textContent = '🟢 Local Ollama running (127.0.0.1:11434)';
+        txt.textContent = '🟢 本地 Ollama 服务运行中 (127.0.0.1:11434)';
         if (btn) btn.style.display = 'none';
       } else {
         dot.className = 'local-status-dot offline';
-        txt.textContent = installed ? '🔴 Local Ollama not running' : '⚠️ Ollama installation not detected';
+        txt.textContent = installed ? '🔴 本地 Ollama 未启动' : '⚠️ 本机未检测到 Ollama 安装';
         if (btn) {
           btn.style.display = installed ? 'inline-block' : 'none';
-          btn.textContent = '🚀 Start Service';
+          btn.textContent = '🚀 一键启动服务';
           btn.disabled = false;
         }
       }
     } catch (e) {
       dot.className = 'local-status-dot offline';
-      txt.textContent = '🔴 Local service not running';
+      txt.textContent = '🔴 本地服务未运行';
       if (btn) btn.style.display = 'inline-block';
     }
   }
@@ -720,27 +742,27 @@ class SettingsManager {
   /** 一键在后台启动本地 Ollama 服务 */
   async startLocalService() {
     const btn = document.getElementById('btn-start-local');
-    if (btn) { btn.disabled = true; btn.textContent = '🚀 Starting...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '🚀 启动中...'; }
 
     try {
       if (window.electronAPI?.startLocalOllama) {
         const res = await window.electronAPI.startLocalOllama();
         if (res.success) {
-          this.app.showToast('Ollama service started in background!');
+          this.app.showToast('Ollama 服务已成功在后台启动！');
           await this._checkOllamaStatus();
           await this.refreshModels();
         } else {
-          this.app.showToast(res.message || 'Failed to start');
+          this.app.showToast(res.message || '启动失败');
           await this._checkOllamaStatus();
         }
       } else {
-        this.app.showToast("Please run 'ollama serve' in terminal");
+        this.app.showToast('请在终端运行 ollama serve 启动服务');
       }
     } catch (e) {
-      this.app.showToast(`Failed to start: ${e.message}`);
+      this.app.showToast(`启动出错: ${e.message}`);
       await this._checkOllamaStatus();
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '🚀 Start Service'; }
+      if (btn) { btn.disabled = false; btn.textContent = '🚀 一键启动服务'; }
     }
   }
 
@@ -758,7 +780,8 @@ class SettingsManager {
       provider, baseUrl, apiKey, model,
       customModel: provider === 'custom' ? model : (this.settings.customModel || ''),
     };
-    localStorage.setItem('megumi-pet-settings', JSON.stringify(this.settings));
+    window.electronAPI?.setSecureApiKey?.(apiKey)?.catch?.(() => {});
+    this._persistSettingsWithoutPlainKey();
     this.apply();
   }
 
@@ -831,7 +854,7 @@ class SettingsManager {
 
     if (status) {
       const hasCustom = !!window.characterManager.getCustomPrompt(characterId);
-      status.textContent = hasCustom ? '✓ Custom persona active' : '';
+      status.textContent = hasCustom ? '✓ 已使用自定义设定' : '';
       status.className = 'prompt-status' + (hasCustom ? ' success' : '');
     }
 
@@ -863,10 +886,11 @@ class SettingsManager {
       opacity: parseInt(document.getElementById('opacity-slider')?.value || '95'),
     };
 
-    localStorage.setItem('megumi-pet-settings', JSON.stringify(this.settings));
+    window.electronAPI?.setSecureApiKey?.(apiKey)?.catch?.(() => {});
+    this._persistSettingsWithoutPlainKey();
     this.apply();
     this.hide();
-    this.app.showToast('Settings saved');
+    this.app.showToast('设置已保存');
   }
 
   load() {
@@ -885,16 +909,20 @@ class SettingsManager {
     window.mimoAPI.setModel(this.settings.model);
     // ★ 关键修复：把响应模式真正注入 AI 接口！
     window.mimoAPI.setResponseMode(this.settings.responseMode || 'instant');
-    window.mimoAPI.setPromptMode(this.settings.promptMode || 'auto');
-    window.electronAPI?.setAlwaysOnTop(this.settings.alwaysOnTop);
-    document.body.style.opacity = this.settings.opacity / 100;
+    // ★ 严禁将透明度赋给 document.body！否则 Windows DWM 会将整块 400x600 做半透明合成，产生 1px 系统灰色边框与背景脏色
+    document.body.style.opacity = '1';
+    const op = (this.settings.opacity ?? 95) / 100;
+    const petArea = document.getElementById('pet-character-area');
+    if (petArea) petArea.style.opacity = String(op);
+    const chatPanel = document.querySelector('.chat-panel');
+    if (chatPanel) chatPanel.style.opacity = String(op);
   }
 
   async testConnection() {
     const btn = document.getElementById('btn-test-connection');
     const result = document.getElementById('test-result');
     if (!btn || !result) return;
-    btn.disabled = true; btn.textContent = 'Testing...';
+    btn.disabled = true; btn.textContent = '测试中...';
     result.className = 'test-result'; result.textContent = '';
 
     const provider = document.getElementById('api-provider')?.value;
@@ -910,13 +938,13 @@ class SettingsManager {
     try {
       const res = await window.mimoAPI.testConnection();
       result.className = 'test-result ' + (res.success ? 'success' : 'error');
-      result.textContent = res.success ? 'Connected successfully!' : `Connection failed: ${res.message}`;
+      result.textContent = res.success ? '连接成功' : `连接失败: ${res.message}`;
     } catch (e) {
       result.className = 'test-result error';
-      result.textContent = `Error: ${e.message}`;
+      result.textContent = `错误: ${e.message}`;
     } finally {
       window.mimoAPI.setBaseUrl(orig.url); window.mimoAPI.setApiKey(orig.key); window.mimoAPI.setModel(orig.model);
-      btn.disabled = false; btn.textContent = 'Test Connection';
+      btn.disabled = false; btn.textContent = '测试连接';
     }
   }
 }

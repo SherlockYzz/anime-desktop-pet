@@ -844,9 +844,26 @@ class EmotionMemory {
     });
   }
 
-  /** 在线挂机计时器（每 10 分钟自动 +2 EXP，挂机放置无每日上限） */
+  /** 立即将挂机脏数据落盘（用于窗口关闭 destroy 前防丢陪伴时长） */
+  flushSave() {
+    if (this._dirtyOnlineSave) {
+      this._saveAffinityData();
+      this._saveMemoryData();
+      this._dirtyOnlineSave = false;
+    }
+  }
+
+  /** 在线挂机计时器（每 10 分钟自动 +2 EXP；每 5 分钟及页面关闭前批量落盘，降低同步写 localStorage 卡顿） */
   _startOnlineTicker() {
     if (this._onlineTickerTimer) clearInterval(this._onlineTickerTimer);
+    if (!this._unloadSaveBound) {
+      this._unloadSaveBound = true;
+      const flush = () => this.flushSave();
+      window.addEventListener('beforeunload', flush);
+      window.addEventListener('pagehide', flush);
+    }
+
+    let tickCount = 0;
     this._onlineTickerTimer = setInterval(() => {
       const charId = window.characterManager?.getCurrentCharacter()?.id || 'ruoxi';
       if (!this.affinityData[charId]) {
@@ -854,12 +871,18 @@ class EmotionMemory {
       }
       this.affinityData[charId].companionMinutes = (this.affinityData[charId].companionMinutes || 0) + 1;
       this.memoryData.stats.totalCompanionMinutes = (this.memoryData.stats.totalCompanionMinutes || 0) + 1;
+      this._dirtyOnlineSave = true;
+      tickCount++;
 
       if (this.affinityData[charId].companionMinutes % 10 === 0) {
         this.addExp(charId, 2, '挂机陪伴');
       }
-      this._saveAffinityData();
-      this._saveMemoryData();
+      // 每 5 分钟落盘一次，避免每分钟全量 JSON.stringify 阻塞主线程
+      if (tickCount % 5 === 0) {
+        this._saveAffinityData();
+        this._saveMemoryData();
+        this._dirtyOnlineSave = false;
+      }
     }, 60000);
   }
 
@@ -1311,7 +1334,7 @@ class EmotionMemory {
               </span>
             </div>
             <div style="font-size:10px;color:#8f4a56;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${this._escapeHtml(lore.workTitle)} · Addressing: "<b>${this._escapeHtml(callName)}</b>" · Today: ${aff.dailyInteractionExp}/${aff.dailyInteractionLimit} EXP
+              ${this._escapeHtml(lore.workTitle)} · 专属称呼：「<b>${this._escapeHtml(callName)}</b>」 · 今日互动 ${aff.dailyInteractionExp}/${aff.dailyInteractionLimit} EXP
             </div>
           </div>
         </div>
@@ -1355,22 +1378,22 @@ class EmotionMemory {
     const renderNavBar = (activeTabKey) => {
       const adminTabHtml = this._adminUnlocked ? `
         <button class="diary-tab-btn ${activeTabKey === 'admin' ? 'active' : ''}" data-tab="admin" style="flex:1;padding:9px 2px;border:none;background:transparent;font-size:${tabFont};font-weight:${activeTabKey === 'admin' ? 'bold' : 'normal'};color:${activeTabKey === 'admin' ? '#8e44ad' : '#636e72'};cursor:pointer;border-bottom:2px solid ${activeTabKey === 'admin' ? '#8e44ad' : 'transparent'};white-space:nowrap;">
-          👑 ${isCompact ? 'Admin' : 'Easter Egg Admin'}
+          👑 ${isCompact ? '神权' : '彩蛋管理'}
         </button>
       ` : '';
 
       navBar.innerHTML = `
         <button class="diary-tab-btn ${activeTabKey === 'profile' ? 'active' : ''}" data-tab="profile" style="flex:1;padding:9px 2px;border:none;background:transparent;font-size:${tabFont};font-weight:${activeTabKey === 'profile' ? 'bold' : 'normal'};color:${activeTabKey === 'profile' ? '#ff4757' : '#636e72'};cursor:pointer;border-bottom:2px solid ${activeTabKey === 'profile' ? '#ff4757' : 'transparent'};white-space:nowrap;">
-          👤 ${isCompact ? 'Profile' : 'Profile & Nickname'}
+          👤 ${isCompact ? '档案卡' : '专属称呼与档案'}
         </button>
         <button class="diary-tab-btn ${activeTabKey === 'facts' ? 'active' : ''}" data-tab="facts" style="flex:1;padding:9px 2px;border:none;background:transparent;font-size:${tabFont};font-weight:${activeTabKey === 'facts' ? 'bold' : 'normal'};color:${activeTabKey === 'facts' ? '#ff4757' : '#636e72'};cursor:pointer;border-bottom:2px solid ${activeTabKey === 'facts' ? '#ff4757' : 'transparent'};white-space:nowrap;">
-          📝 ${isCompact ? 'Memories' : 'Memory Wall'}
+          📝 ${isCompact ? '便签墙' : '回忆便签墙'}
         </button>
         <button class="diary-tab-btn ${activeTabKey === 'lore' ? 'active' : ''}" data-tab="lore" style="flex:1;padding:9px 2px;border:none;background:transparent;font-size:${tabFont};font-weight:${activeTabKey === 'lore' ? 'bold' : 'normal'};color:${activeTabKey === 'lore' ? '#ff4757' : '#636e72'};cursor:pointer;border-bottom:2px solid ${activeTabKey === 'lore' ? '#ff4757' : 'transparent'};white-space:nowrap;">
-          📘 ${isCompact ? 'Lore' : 'Official Lore'}
+          📘 ${isCompact ? '设定集' : '官方正统设定'}
         </button>
         <button class="diary-tab-btn ${activeTabKey === 'levels' ? 'active' : ''}" data-tab="levels" style="flex:1;padding:9px 2px;border:none;background:transparent;font-size:${tabFont};font-weight:${activeTabKey === 'levels' ? 'bold' : 'normal'};color:${activeTabKey === 'levels' ? '#ff4757' : '#636e72'};cursor:pointer;border-bottom:2px solid ${activeTabKey === 'levels' ? '#ff4757' : 'transparent'};white-space:nowrap;">
-          🏆 ${isCompact ? 'Chapters' : 'Bond Chapters'}
+          🏆 ${isCompact ? '十阶篇' : '原作十阶篇章'}
         </button>
         ${adminTabHtml}
       `;
@@ -1404,40 +1427,40 @@ class EmotionMemory {
         body.innerHTML = `
           <div style="font-size:12px;color:#2f3542;">
             <div style="background:rgba(255,240,245,0.7);border:1px dashed #ffb8b8;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#b33939;line-height:1.5;">
-              💡 <b>${this._escapeHtml(charName)} Tip</b>: ${this._escapeHtml(lore.diaryTip)}
+              💡 <b>${this._escapeHtml(charName)}专属贴士</b>：${this._escapeHtml(lore.diaryTip)}
             </div>
             
             <div style="margin-bottom:10px;">
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
-                <label style="font-weight:bold;color:#a82c40;">How ${this._escapeHtml(charName)} addresses you (Default: ${this._escapeHtml(lore.defaultCallName)}):</label>
-                <button id="btn-reset-default-call" type="button" style="background:transparent;border:1px solid #ff7675;color:#d63031;border-radius:4px;font-size:10px;padding:1px 6px;cursor:pointer;">Reset to "${this._escapeHtml(lore.defaultCallName)}"</button>
+                <label style="font-weight:bold;color:#a82c40;">${this._escapeHtml(charName)} 对你的专属称呼（默认：${this._escapeHtml(lore.defaultCallName)}）：</label>
+                <button id="btn-reset-default-call" type="button" style="background:transparent;border:1px solid #ff7675;color:#d63031;border-radius:4px;font-size:10px;padding:1px 6px;cursor:pointer;">恢复默认「${this._escapeHtml(lore.defaultCallName)}」</button>
               </div>
-              <input id="input-master-name" type="text" value="${this._escapeHtml(curCall)}" placeholder="Default: ${this._escapeHtml(lore.defaultCallName)}" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
+              <input id="input-master-name" type="text" value="${this._escapeHtml(curCall)}" placeholder="官方默认：${this._escapeHtml(lore.defaultCallName)}" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
             </div>
 
             <div style="margin-bottom:10px;">
-              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">Your Identity / Occupation:</label>
-              <input id="input-master-identity" type="text" value="${this._escapeHtml(p.identity || '')}" placeholder="e.g. Full-stack Developer / Student / Creator" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
+              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">你的现实身份 / 职业：</label>
+              <input id="input-master-identity" type="text" value="${this._escapeHtml(p.identity || '')}" placeholder="例如：全栈开发者 / 学生 / 创作者" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
             </div>
 
             <div style="margin-bottom:10px;">
-              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">Habits & Preferences (separated by commas):</label>
-              <input id="input-master-habits" type="text" value="${this._escapeHtml((p.habits || []).join(', '))}" placeholder="e.g. Loves iced americano, codes late at night" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
+              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">你的生活偏好与习惯（多个用逗号或顿号隔开）：</label>
+              <input id="input-master-habits" type="text" value="${this._escapeHtml((p.habits || []).join('、'))}" placeholder="例如：爱喝冰美式、习惯深夜写代码" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;" />
             </div>
 
             <div style="margin-bottom:10px;">
-              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">Recent Mood / Goals:</label>
-              <textarea id="input-master-mood" rows="2" placeholder="e.g. Working on a big project, could use some encouragement" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;resize:none;">${this._escapeHtml(p.recentMood || '')}</textarea>
+              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">近期心境 / 当前小目标：</label>
+              <textarea id="input-master-mood" rows="2" placeholder="例如：正在推进重要项目，希望得到鼓励" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;resize:none;">${this._escapeHtml(p.recentMood || '')}</textarea>
             </div>
 
             <div style="margin-bottom:14px;">
-              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">Important Memos (one per line):</label>
-              <textarea id="input-master-memos" rows="2" placeholder="e.g. Sleep before 11 PM" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;resize:none;">${this._escapeHtml((p.memos || []).join('\n'))}</textarea>
+              <label style="display:block;font-weight:bold;margin-bottom:4px;color:#a82c40;">重要备忘事项（每行一条）：</label>
+              <textarea id="input-master-memos" rows="2" placeholder="例如：每晚11点前休息" style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #ffd1d8;border-radius:8px;font-size:12px;outline:none;resize:none;">${this._escapeHtml((p.memos || []).join('\n'))}</textarea>
             </div>
 
             <div style="display:flex;justify-content:flex-end;">
               <button id="btn-save-master-profile" style="background:linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 3px 8px rgba(255,117,140,0.3);">
-                💾 Save Profile & Sync to ${this._escapeHtml(charName)}
+                💾 保存手账档案并同步给 ${this._escapeHtml(charName)}
               </button>
             </div>
           </div>
@@ -1463,11 +1486,11 @@ class EmotionMemory {
             this.updateMasterProfile({ charId: activeCharId, name, identity, habits, recentMood, memos });
             updateHeaderUI();
             this.updateBondBadge();
-            saveBtn.textContent = '✨ Synced to character memory!';
+            saveBtn.textContent = '✨ 已同步至角色记忆！';
             saveBtn.style.background = '#2ed573';
             setTimeout(() => {
               if (saveBtn) {
-                saveBtn.textContent = `💾 Save Profile & Sync to ${charName}`;
+                saveBtn.textContent = `💾 保存手账档案并同步给 ${charName}`;
                 saveBtn.style.background = 'linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)';
               }
             }, 1200);
@@ -1479,7 +1502,7 @@ class EmotionMemory {
         const factsHtml = facts.map(f => {
           const isUser = f.source === 'user';
           const badgeBg = isUser ? '#ff6b81' : '#70a1ff';
-          const badgeText = isUser ? '✏️ User Note' : '🤖 AI Memory';
+          const badgeText = isUser ? '✏️ 手账录入' : '🤖 灵犀捕捉';
           return `
             <div style="background:rgba(255,255,255,0.9);border:1px solid #ffeaa7;border-left:4px solid ${isUser ? '#ff7675' : '#74b9ff'};border-radius:8px;padding:8px 10px;margin-bottom:8px;box-shadow:0 2px 5px rgba(0,0,0,0.03);display:flex;justify-content:space-between;align-items:flex-start;">
               <div style="flex:1;margin-right:10px;min-width:0;word-break:break-word;">
@@ -1489,7 +1512,7 @@ class EmotionMemory {
                 </div>
                 <div style="font-size:12px;color:#2f3542;line-height:1.4;">${this._escapeHtml(f.text)}</div>
               </div>
-              <button class="btn-del-fact" data-id="${this._escapeHtml(f.id)}" title="Delete this memory" style="background:transparent;border:none;cursor:pointer;color:#e74c3c;font-size:13px;padding:2px 4px;flex-shrink:0;">🗑️</button>
+              <button class="btn-del-fact" data-id="${this._escapeHtml(f.id)}" title="删除此条记忆" style="background:transparent;border:none;cursor:pointer;color:#e74c3c;font-size:13px;padding:2px 4px;flex-shrink:0;">🗑️</button>
             </div>
           `;
         }).join('');
@@ -1497,27 +1520,27 @@ class EmotionMemory {
         body.innerHTML = `
           <div>
             <div style="background:linear-gradient(135deg, #fff5f5 0%, #fff8e7 100%);border:1px solid #ffd1d8;border-radius:10px;padding:10px;margin-bottom:12px;">
-              <div style="font-size:11px;font-weight:bold;color:#d63031;margin-bottom:6px;">➕ Pin a new memory note with ${this._escapeHtml(charName)} (+5 EXP):</div>
+              <div style="font-size:11px;font-weight:bold;color:#d63031;margin-bottom:6px;">➕ 贴一张与 ${this._escapeHtml(charName)} 的新回忆便签（手动记录每次奖励 +5 EXP）：</div>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
                 <select id="select-fact-category" style="padding:5px 8px;border:1px solid #ffccd2;border-radius:6px;font-size:11px;outline:none;background:#fff;color:#555;">
-                  <option value="promise">🌸 Special Promise</option>
-                  <option value="preference">☕ Preference</option>
-                  <option value="memo">📌 Important Memo</option>
-                  <option value="mood">💫 Shared Mood</option>
-                  <option value="custom">🌟 Cherished Memory</option>
+                  <option value="promise">🌸 专属约定</option>
+                  <option value="preference">☕ 个人喜好</option>
+                  <option value="memo">📌 重要备忘</option>
+                  <option value="mood">💫 共同心境</option>
+                  <option value="custom">🌟 珍贵回忆</option>
                 </select>
-                <input id="input-new-fact" type="text" placeholder="Write down what you want ${this._escapeHtml(charName)} to remember..." style="flex:1;min-width:140px;padding:5px 8px;border:1px solid #ffccd2;border-radius:6px;font-size:11px;outline:none;" />
-                <button id="btn-add-fact" style="background:#ff7675;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;">Pin Note</button>
+                <input id="input-new-fact" type="text" placeholder="写下你想让 ${this._escapeHtml(charName)} 记住的事..." style="flex:1;min-width:140px;padding:5px 8px;border:1px solid #ffccd2;border-radius:6px;font-size:11px;outline:none;" />
+                <button id="btn-add-fact" style="background:#ff7675;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;">记入手账</button>
               </div>
             </div>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:#888;">
-              <span>${facts.length} cherished memory notes</span>
-              ${facts.length > 0 ? '<button id="btn-clear-facts" type="button" style="background:transparent;border:none;color:#999;cursor:pointer;text-decoration:underline;font-size:10px;">Clear all notes</button>' : ''}
+              <span>共沉淀 ${facts.length} 条珍贵回忆便签</span>
+              ${facts.length > 0 ? '<button id="btn-clear-facts" type="button" style="background:transparent;border:none;color:#999;cursor:pointer;text-decoration:underline;font-size:10px;">清空全部便签</button>' : ''}
             </div>
 
             <div id="facts-list-container">
-              ${facts.length > 0 ? factsHtml : '<div style="text-align:center;color:#b2bec3;font-size:12px;padding:30px 0;">No notes in the journal yet. Write down your first memory above! 🌱</div>'}
+              ${facts.length > 0 ? factsHtml : '<div style="text-align:center;color:#b2bec3;font-size:12px;padding:30px 0;">手账里还没有便签哦，快在上方记录第一条回忆吧～🌱</div>'}
             </div>
           </div>
         `;
@@ -1554,13 +1577,13 @@ class EmotionMemory {
           clearBtn.onclick = () => {
             if (!confirmPending) {
               confirmPending = true;
-              clearBtn.textContent = '⚠️ Confirm clear? Click again';
+              clearBtn.textContent = '⚠️ 确认清空？再点一次';
               clearBtn.style.color = '#ff4757';
               clearBtn.style.fontWeight = 'bold';
               confirmTimer = setTimeout(() => {
                 confirmPending = false;
                 if (clearBtn) {
-                  clearBtn.textContent = 'Clear all notes';
+                  clearBtn.textContent = '清空全部便签';
                   clearBtn.style.color = '#999';
                   clearBtn.style.fontWeight = 'normal';
                 }
@@ -1583,7 +1606,7 @@ class EmotionMemory {
             <div class="persona-option-card" data-key="${pItem.id}" style="border:1.5px solid ${isSelected ? '#ff4757' : '#ffd1d8'};background:${isSelected ? 'rgba(255,240,243,0.95)' : 'rgba(255,255,255,0.85)'};border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-weight:bold;font-size:12px;color:#2f3542;">${pItem.name}</span>
-                ${isSelected ? '<span style="color:#ff4757;font-weight:bold;font-size:11px;">✓ Currently Active</span>' : '<span style="color:#999;font-size:10px;">Click to switch</span>'}
+                ${isSelected ? '<span style="color:#ff4757;font-weight:bold;font-size:11px;">✓ 当前启用</span>' : '<span style="color:#999;font-size:10px;">点击切换</span>'}
               </div>
               <div style="font-size:11px;color:#57606f;margin-top:2px;">${pItem.desc}</div>
             </div>
@@ -1593,18 +1616,18 @@ class EmotionMemory {
         body.innerHTML = `
           <div style="font-size:12px;color:#2f3542;">
             <div style="background:#fff5f7;border:1px solid #ffd1d8;border-radius:10px;padding:12px;margin-bottom:12px;">
-              <div style="font-weight:bold;color:#a82c40;font-size:13px;margin-bottom:8px;">📘 ${lore.name} · Official Lore & Canon Background</div>
-              <div style="margin-bottom:5px;"><b>🎬 Origin Work</b>: ${lore.workTitle}</div>
-              <div style="margin-bottom:5px;"><b>🎂 Birthday / Profile</b>: ${lore.officialBirthday}</div>
-              <div style="margin-bottom:5px;"><b>💞 Relationship</b>: ${lore.relationName} (Default Call: "<b>${lore.defaultCallName}</b>")</div>
-              <div style="margin-bottom:5px;"><b>💖 Official Likes</b>: ${lore.officialLikes}</div>
-              <div style="margin-bottom:5px;"><b>🚫 Official Dislikes</b>: ${lore.officialDislikes}</div>
+              <div style="font-weight:bold;color:#a82c40;font-size:13px;margin-bottom:8px;">📘 ${lore.name} · 官方正统考据设定集</div>
+              <div style="margin-bottom:5px;"><b>🎬 原作出处</b>：${lore.workTitle}</div>
+              <div style="margin-bottom:5px;"><b>🎂 官方生日/档案</b>：${lore.officialBirthday}</div>
+              <div style="margin-bottom:5px;"><b>💞 关系定位</b>：${lore.relationName}（官方称呼：「<b>${lore.defaultCallName}</b>」）</div>
+              <div style="margin-bottom:5px;"><b>💖 官方喜好</b>：${lore.officialLikes}</div>
+              <div style="margin-bottom:5px;"><b>🚫 官方讨厌/弱点</b>：${lore.officialDislikes}</div>
               <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #ffb8b8;font-size:11px;color:#c0392b;">
-                🛡️ <b>Anti-OOC Protection Active</b>: ${lore.antiOocRule}
+                🛡️ <b>防崩坏保护已开启</b>：${lore.antiOocRule}
               </div>
             </div>
 
-            <div style="font-weight:bold;color:#a82c40;font-size:12px;margin-bottom:6px;">🌸 Nuanced Dynamic Tendency (strictly within canon):</div>
+            <div style="font-weight:bold;color:#a82c40;font-size:12px;margin-bottom:6px;">🌸 互动微妙倾向调节（严格在原作设定内演绎）：</div>
             ${personasHtml}
           </div>
         `;
@@ -1630,7 +1653,7 @@ class EmotionMemory {
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span style="font-weight:bold;font-size:12px;color:${isReached ? '#a82c40' : '#888'};">
                     Lv.${stg.level} · 《${stg.stageName}》
-                    ${isCurrent ? '<span style="font-size:10px;background:#ff4757;color:#fff;padding:1px 5px;border-radius:4px;margin-left:6px;">Current Chapter</span>' : ''}
+                    ${isCurrent ? '<span style="font-size:10px;background:#ff4757;color:#fff;padding:1px 5px;border-radius:4px;margin-left:6px;">当前篇章</span>' : ''}
                   </span>
                   <span style="font-size:10px;color:${isReached ? '#ff6b81' : '#aaa'};">${expCfg.minExp} EXP</span>
                 </div>
@@ -1643,9 +1666,9 @@ class EmotionMemory {
         body.innerHTML = `
           <div>
             <div style="background:#fff8f0;border:1px solid #ffd8a8;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:#b35c1e;line-height:1.5;">
-              🌱 <b>EXP Gain & Daily Interaction Rules</b>:<br/>
-              • <b>Desktop Interaction (Daily Cap: ${this.DAILY_INTERACTION_EXP_LIMIT} EXP)</b>: Poke/touch <b>+2 EXP</b>, action menu <b>+5 EXP</b> (Today: <b>${aff.dailyInteractionExp}/${aff.dailyInteractionLimit} EXP</b>).<br/>
-              • <b>Unlimited Natural Companionship</b>: Normal chat <b>+3 EXP/msg</b> (First chat of the day <b>+15 EXP</b>), desktop idle companion <b>+2 EXP/10min</b>, journal notes <b>+5 EXP</b> have no daily cap!
+              🌱 <b>经验获取与每日互动保护规则</b>：<br/>
+              • <b>桌宠互动（每日上限 ${this.DAILY_INTERACTION_EXP_LIMIT} EXP）</b>：戳一戳触碰 <b>+2 EXP</b>，点选任意百宝箱动作/姿态 <b>+5 EXP</b>（今日已获：<b>${aff.dailyInteractionExp}/${aff.dailyInteractionLimit} EXP</b>，防无限连点刷级）。<br/>
+              • <b>无上限自然陪伴</b>：正常 AI 聊天 <b>+3 EXP/次</b>（每日首聊 <b>+15 EXP</b>）、桌面挂机陪伴 <b>+2 EXP/10分钟</b>、手账记录 <b>+5 EXP</b> 均无每日上限！
             </div>
             ${ladderHtml}
           </div>
@@ -1673,16 +1696,16 @@ class EmotionMemory {
           <div style="font-size:12px;color:#2f3542;">
             <div style="background:linear-gradient(135deg, #2c1654 0%, #4a1c6d 100%);color:#fff;border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 4px 12px rgba(74,28,109,0.25);">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-weight:bold;font-size:13px;color:#f1c40f;">👑 Creator · Secret Admin Console</span>
+                <span style="font-weight:bold;font-size:13px;color:#f1c40f;">👑 创世神 · 隐藏管理员彩蛋控制台</span>
                 <span style="font-size:10px;background:rgba(241,196,15,0.2);color:#f1c40f;padding:2px 6px;border-radius:6px;">Easter Egg Unlocked</span>
               </div>
               <div style="font-size:11px;color:#dcdde1;line-height:1.4;">
-                Freely reset character EXP to 0, max out to Lv.10 (3600 EXP), or customize numerical affinity values.
+                可随时将任意角色的经验值初始化归零（0 EXP）、一键拉满（3600 EXP）或修改为任意指定数值。
               </div>
             </div>
 
             <div style="margin-bottom:12px;">
-              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:4px;">🎭 Select Target Character:</label>
+              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:4px;">🎭 选择要调改的目标角色：</label>
               <select id="admin-char-select" style="width:100%;padding:7px 10px;border:1px solid #d2b4de;border-radius:8px;font-size:12px;font-weight:bold;color:#2c3e50;background:#fff;outline:none;">
                 ${charOptionsHtml}
               </select>
@@ -1690,49 +1713,49 @@ class EmotionMemory {
 
             <div style="background:#f8f4fc;border:1px solid #e8daef;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span>Current Status: <b>${this._escapeHtml(charName)} · Lv.${aff.level}《${this._escapeHtml(aff.stageName)}》</b></span>
-                <span style="color:#8e44ad;font-weight:bold;">Current EXP: ${aff.exp} EXP</span>
+                <span>当前状态：<b>${this._escapeHtml(charName)} · Lv.${aff.level}《${this._escapeHtml(aff.stageName)}》</b></span>
+                <span style="color:#8e44ad;font-weight:bold;">当前经验：${aff.exp} EXP</span>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#636e72;">
-                <span>Today's Interaction EXP: <b>${aff.dailyInteractionExp} / ${aff.dailyInteractionLimit} EXP</b></span>
-                <button id="btn-admin-reset-cap" type="button" style="background:#fff;border:1px solid #9b59b6;color:#8e44ad;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;">🔓 Reset Daily Cap (0/50)</button>
+                <span>今日互动经验额度：<b>${aff.dailyInteractionExp} / ${aff.dailyInteractionLimit} EXP</b></span>
+                <button id="btn-admin-reset-cap" type="button" style="background:#fff;border:1px solid #9b59b6;color:#8e44ad;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;">🔓 清零今日上限 (0/50)</button>
               </div>
             </div>
 
             <div style="margin-bottom:12px;">
-              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">⚡ Quick Actions:</label>
+              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">⚡ 快捷初始化 / 满级神权操作：</label>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button id="btn-admin-reset-zero" type="button" style="flex:1;background:#fff;border:1.5px solid #e74c3c;color:#c0392b;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:bold;cursor:pointer;">
-                  🔄 Reset to 0 (Lv.1)
+                  🔄 初始化为 0 (Lv.1 归零)
                 </button>
                 <button id="btn-admin-max-out" type="button" style="flex:1;background:linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);border:none;color:#fff;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 3px 8px rgba(142,68,173,0.3);">
-                  🌕 Max Out (3600 EXP · Lv.10)
+                  🌕 直接调满级 (3600 EXP · Lv.10)
                 </button>
               </div>
             </div>
 
             <div style="margin-bottom:12px;">
-              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">🎯 Custom Exact EXP Value:</label>
+              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">🎯 自定义精确修改经验数值 (EXP)：</label>
               <div style="display:flex;gap:8px;">
-                <input id="admin-exp-input" type="number" min="0" max="999999" value="${aff.exp}" placeholder="Enter EXP (e.g. 0, 500, 3600)" style="flex:1;padding:7px 10px;border:1px solid #d2b4de;border-radius:8px;font-size:12px;outline:none;" />
+                <input id="admin-exp-input" type="number" min="0" max="999999" value="${aff.exp}" placeholder="输入任意经验数值 (如 0, 500, 3600)" style="flex:1;padding:7px 10px;border:1px solid #d2b4de;border-radius:8px;font-size:12px;outline:none;" />
                 <button id="btn-admin-set-exp" type="button" style="background:#6c3483;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">
-                  ⚡ Apply EXP
+                  ⚡ 立即写入 EXP
                 </button>
               </div>
             </div>
 
             <div style="margin-bottom:12px;">
-              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">🪜 Jump Directly to Level (Lv.1 ~ Lv.10):</label>
+              <label style="display:block;font-weight:bold;color:#6c3483;margin-bottom:5px;">🪜 指定等级一键直达 (Lv.1 ~ Lv.10)：</label>
               <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:5px;">
                 ${levelButtonsHtml}
               </div>
             </div>
 
             <div style="padding-top:10px;border-top:1px dashed #d2b4de;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span style="font-size:11px;color:#7f8c8d;">🌐 Batch Actions (All 9 Characters):</span>
+              <span style="font-size:11px;color:#7f8c8d;">🌐 全阵容 9 角色批量彩蛋：</span>
               <div style="display:flex;gap:6px;">
-                <button id="btn-admin-all-zero" type="button" style="background:#f5f6fa;border:1px solid #dcdde1;color:#7f8c8d;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🧹 Reset All to 0 (0 EXP)</button>
-                <button id="btn-admin-all-max" type="button" style="background:#fff8e1;border:1px solid #f1c40f;color:#b7950b;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:bold;cursor:pointer;">🌟 Max Out All (Lv.10)</button>
+                <button id="btn-admin-all-zero" type="button" style="background:#f5f6fa;border:1px solid #dcdde1;color:#7f8c8d;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🧹 全员归零 (0 EXP)</button>
+                <button id="btn-admin-all-max" type="button" style="background:#fff8e1;border:1px solid #f1c40f;color:#b7950b;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:bold;cursor:pointer;">🌟 全员满级 (Lv.10)</button>
               </div>
             </div>
             <div id="admin-status-toast" style="margin-top:8px;font-size:11px;font-weight:bold;color:#27ae60;text-align:center;min-height:16px;"></div>
@@ -1757,21 +1780,21 @@ class EmotionMemory {
           this.adminResetDailyCap(activeCharId);
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast(`✅ Reset ${charName}'s daily interaction EXP cap to 0/${this.DAILY_INTERACTION_EXP_LIMIT}!`);
+          showAdminToast(`✅ 已将 ${charName} 今日互动经验上限重置为 0/${this.DAILY_INTERACTION_EXP_LIMIT}！`);
         });
 
         body.querySelector('#btn-admin-reset-zero')?.addEventListener('click', () => {
           this.adminResetCharacter(activeCharId);
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast(`🔄 Reset ${charName} to 0 EXP (Lv.1)!`);
+          showAdminToast(`🔄 已将 ${charName} 初始化归零为 0 EXP (Lv.1)！`);
         });
 
         body.querySelector('#btn-admin-max-out')?.addEventListener('click', () => {
           this.adminMaxOutCharacter(activeCharId, true);
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast(`🌕 Maxed out ${charName} to 3600 EXP (Lv.10)!`);
+          showAdminToast(`🌕 已将 ${charName} 直接调至满级 3600 EXP (Lv.10)！`);
         });
 
         const expInput = body.querySelector('#admin-exp-input');
@@ -1780,7 +1803,7 @@ class EmotionMemory {
           const updated = this.adminSetExp(activeCharId, val, { triggerCelebration: true });
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast(`⚡ Updated ${charName}'s EXP to ${updated.exp} EXP → Lv.${updated.level}《${updated.stageName}》!`);
+          showAdminToast(`⚡ 已将 ${charName} 经验修改为 ${updated.exp} EXP → Lv.${updated.level}《${updated.stageName}》！`);
         };
         body.querySelector('#btn-admin-set-exp')?.addEventListener('click', applyCustomExp);
         if (expInput) {
@@ -1793,7 +1816,7 @@ class EmotionMemory {
             const updated = this.adminSetExp(activeCharId, targetExp, { triggerCelebration: true });
             updateHeaderUI();
             renderContent('admin');
-            showAdminToast(`🪜 Jumped to Lv.${updated.level}《${updated.stageName}》 (${updated.exp} EXP)!`);
+            showAdminToast(`🪜 已跳级至 Lv.${updated.level}《${updated.stageName}》 (${updated.exp} EXP)！`);
           };
         });
 
@@ -1801,14 +1824,14 @@ class EmotionMemory {
           this.adminResetAllCharacters();
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast('🧹 Reset all 9 characters to 0 EXP (Lv.1)!');
+          showAdminToast('🧹 已将全阵容 9 位角色全部初始化为 0 EXP (Lv.1)！');
         });
 
         body.querySelector('#btn-admin-all-max')?.addEventListener('click', () => {
           this.adminMaxOutAllCharacters();
           updateHeaderUI();
           renderContent('admin');
-          showAdminToast('🌟 Maxed out all 9 characters to Lv.10 (3600 EXP)!');
+          showAdminToast('🌟 已将全阵容 9 位角色全部拉满至 Lv.10 (3600 EXP)！');
         });
       }
     };

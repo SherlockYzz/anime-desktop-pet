@@ -354,6 +354,16 @@ class SpriteAtlasManager {
     if (this.S.anim === 'sleep') this.goIdle();
   }
 
+  /** 窗口隐藏/显示时暂停或恢复精灵表 rAF 循环 */
+  setPaused(paused) {
+    if (!this.ready) return;
+    if (paused) {
+      this.stopLoop();
+    } else if (!this._raf) {
+      this.startLoop();
+    }
+  }
+
   startLoop() {
     this.stopLoop();
     this._last = performance.now();

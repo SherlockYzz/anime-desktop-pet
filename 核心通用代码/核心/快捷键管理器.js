@@ -44,23 +44,23 @@ class ShortcutManager {
 
     // 动作元数据（展示标签与分组）
     this.ACTION_META = {
-      moveUp:    { label: 'Move Up / Run', group: 'move', icon: '⬆️' },
-      moveDown:  { label: 'Move Down / Run', group: 'move', icon: '⬇️' },
-      moveLeft:  { label: 'Move Left / Run', group: 'move', icon: '⬅️' },
-      moveRight: { label: 'Move Right / Run', group: 'move', icon: '➡️' },
-      jump:      { label: 'Charged Jump', group: 'action', icon: '⚡' },
-      work:      { label: 'Focus Work / Typing', group: 'action', icon: '💼' },
-      sleep:     { label: 'Sleep / Rest', group: 'action', icon: '🌙' },
-      wander:    { label: 'Free Desktop Wander', group: 'action', icon: '🐾' },
-      bubble:    { label: 'Toggle Speech Bubble', group: 'action', icon: '💬' },
-      anim1:     { label: 'Pose 1: Idle Breath', group: 'pose', icon: '🌸' },
-      anim2:     { label: 'Pose 2: Wave Hello', group: 'pose', icon: '👋' },
-      anim3:     { label: 'Pose 3: Charged Jump', group: 'pose', icon: '⚡' },
-      anim4:     { label: 'Pose 4: Free Wander', group: 'pose', icon: '🐾' },
-      anim5:     { label: 'Pose 5: Waiting', group: 'pose', icon: '💭' },
-      anim6:     { label: 'Pose 6: Work Hard', group: 'pose', icon: '💼' },
-      anim7:     { label: 'Pose 7: Show Result', group: 'pose', icon: '📜' },
-      anim8:     { label: 'Pose 8: Sleep', group: 'pose', icon: '🌙' }
+      moveUp:    { label: '向上移动 / 跑动', group: 'move', icon: '⬆️' },
+      moveDown:  { label: '向下移动 / 跑动', group: 'move', icon: '⬇️' },
+      moveLeft:  { label: '向左移动 / 跑动', group: 'move', icon: '⬅️' },
+      moveRight: { label: '向右移动 / 跑动', group: 'move', icon: '➡️' },
+      jump:      { label: '蓄力跳跃', group: 'action', icon: '⚡' },
+      work:      { label: '专注工作 / 敲键盘', group: 'action', icon: '💼' },
+      sleep:     { label: '抱尾睡觉 / 休息', group: 'action', icon: '🌙' },
+      wander:    { label: '桌面自由漫步', group: 'action', icon: '🐾' },
+      bubble:    { label: '气泡台词开关', group: 'action', icon: '💬' },
+      anim1:     { label: '姿态1: 待机呼吸', group: 'pose', icon: '🌸' },
+      anim2:     { label: '姿态2: 挥手问候', group: 'pose', icon: '👋' },
+      anim3:     { label: '姿态3: 蓄力跳跃', group: 'pose', icon: '⚡' },
+      anim4:     { label: '姿态4: 自由漫步', group: 'pose', icon: '🐾' },
+      anim5:     { label: '姿态5: 等待确认', group: 'pose', icon: '💭' },
+      anim6:     { label: '姿态6: 专注打工', group: 'pose', icon: '💼' },
+      anim7:     { label: '姿态7: 呈递成果', group: 'pose', icon: '📜' },
+      anim8:     { label: '姿态8: 抱尾睡觉', group: 'pose', icon: '🌙' }
     };
 
     this.config = this.loadConfig();
@@ -334,30 +334,30 @@ class ShortcutManager {
     const isArrowOnly = this.config.arrowOnlyMode;
 
     const groups = [
-      { id: 'move', title: '🏃 Desktop Movement (Anti-typing Core)' },
-      { id: 'action', title: '⚡ Common Actions & Interactivity' },
-      { id: 'pose', title: '🌸 Number Keys 1~8 Poses' }
+      { id: 'move', title: '🏃 桌面移动控制 (防打字核心)' },
+      { id: 'action', title: '⚡ 常用交互与动作' },
+      { id: 'pose', title: '🌸 数字键 1~8 姿态直达' }
     ];
 
     container.innerHTML = `
       <div class="pet-shortcuts-header">
-        <span class="pet-shortcuts-title">⌨️ Shortcuts Guide & Custom Key Bindings</span>
-        <button class="btn-close-shortcuts" id="btn-close-shortcuts" title="Close">&#x2715;</button>
+        <span class="pet-shortcuts-title">⌨️ 桌宠快捷键一览与自定义</span>
+        <button class="btn-close-shortcuts" id="btn-close-shortcuts" title="关闭">&#x2715;</button>
       </div>
 
       <div class="pet-shortcuts-toolbar">
         <div class="shortcuts-status-pill ${isEnabled ? 'enabled' : 'disabled'}">
-          ${isEnabled ? (isArrowOnly ? '🛡️ Arrow Keys Only (Anti-typing)' : '🟢 Shortcuts Enabled') : '🔴 Shortcuts Disabled (Free Typing)'}
+          ${isEnabled ? (isArrowOnly ? '🛡️ 仅方向键 (防打字)' : '🟢 快捷键已开启') : '🔴 快捷键已全部解除 (已停用)'}
         </div>
         <div class="shortcuts-actions-row">
           <button class="shortcut-btn-tool ${isEnabled ? 'btn-warn' : 'btn-success'}" id="btn-toggle-shortcut-enabled">
-            ${isEnabled ? '🚫 Disable Shortcuts' : '✅ Enable Shortcuts'}
+            ${isEnabled ? '🚫 解除/停用快捷键' : '✅ 开启快捷键'}
           </button>
-          <button class="shortcut-btn-tool ${isArrowOnly ? 'btn-active-tool' : ''}" id="btn-toggle-arrow-only" title="Arrow keys only, freely type letters without pet moving">
-            ${isArrowOnly ? '⚡ Restore Full Keys' : '🛡️ Anti-typing Mode'}
+          <button class="shortcut-btn-tool ${isArrowOnly ? 'btn-active-tool' : ''}" id="btn-toggle-arrow-only" title="只保留方向键移动，完全释放字母键，彻底解决打字冲突">
+            ${isArrowOnly ? '⚡ 恢复全键模式' : '🛡️ 防打字模式 (仅方向键)'}
           </button>
-          <button class="shortcut-btn-tool" id="btn-reset-shortcut-defaults" title="Restore factory default keybindings">
-            🔄 Reset Defaults
+          <button class="shortcut-btn-tool" id="btn-reset-shortcut-defaults" title="恢复官方出厂默认快捷键">
+            🔄 恢复默认
           </button>
         </div>
       </div>
@@ -365,9 +365,9 @@ class ShortcutManager {
       <div class="pet-shortcuts-body">
         ${!isEnabled ? `
           <div class="shortcuts-disabled-notice">
-            💬 <strong>Shortcuts are fully disabled!</strong><br>
-            You can type freely; the pet will ignore keyboard input.<br>
-            Click [Enable Shortcuts] above whenever you want pet control back.
+            💬 <strong>快捷键功能已全面解除！</strong><br>
+            您现在可以无忧打字，按任何键盘按键桌宠均不会响应或乱跑。<br>
+            若需恢复控制，请点击上方【开启快捷键】。
           </div>
         ` : ''}
 
@@ -391,13 +391,13 @@ class ShortcutManager {
                             <span class="shortcut-kbd-badge ${isRec ? 'recording' : ''}" 
                                   data-action="${actionId}" 
                                   data-index="${idx}" 
-                                  title="Click to rebind; press Backspace to unbind">
-                              ${isRec ? 'Press key...' : this.formatKeyDisplay(k)}
-                              <span class="badge-remove" data-action="${actionId}" data-index="${idx}" title="Unbind">&times;</span>
+                                  title="点击修改按键；录制时按 Backspace 解除此键">
+                              ${isRec ? '按下按键...' : this.formatKeyDisplay(k)}
+                              <span class="badge-remove" data-action="${actionId}" data-index="${idx}" title="解除该键">&times;</span>
                             </span>
                           `;
                         }).join('')}
-                        <button class="btn-add-shortcut-key" data-action="${actionId}" title="Add key">+</button>
+                        <button class="btn-add-shortcut-key" data-action="${actionId}" title="添加快捷键">+</button>
                       </div>
                     </div>
                   `;
@@ -407,9 +407,9 @@ class ShortcutManager {
         `).join('')}
 
         <div class="shortcut-group-card sys-card">
-          <div class="shortcut-group-title">⚙️ System Keys (Global Safety)</div>
+          <div class="shortcut-group-title">⚙️ 系统快捷键 (全局安全保护)</div>
           <div class="shortcut-item-row">
-            <span class="shortcut-label">🔄 Switch to Chat Mode / Close Panels</span>
+            <span class="shortcut-label">🔄 切换至网页模式 / 关闭面板</span>
             <div class="shortcut-keys-container">
               <span class="shortcut-kbd-badge system-badge">Esc</span>
               <span class="shortcut-kbd-badge system-badge">F2</span>
@@ -418,7 +418,7 @@ class ShortcutManager {
         </div>
 
         <div class="shortcuts-footer-tips">
-          💡 <strong>Tip</strong>: Click key badge to record; press <code>Backspace</code> or <code>Delete</code> to unbind. Turn on [Anti-typing Mode] for uninterrupted typing.
+          💡 <strong>操作指南</strong>：点击任意按键标签可实时录制新键；录制时按 <code>Backspace</code> 或 <code>Delete</code> 可解除该键；打字频繁时推荐开启【防打字模式】或点击【解除快捷键】。
         </div>
       </div>
     `;
@@ -428,18 +428,18 @@ class ShortcutManager {
     container.querySelector('#btn-toggle-shortcut-enabled')?.addEventListener('click', () => {
       this.toggleEnabled();
       if (window.app?.petMode) {
-        window.app.petMode._showBubble?.(this.config.enabled ? 'Shortcuts enabled 🟢' : 'Shortcuts disabled 🔴 (Free typing)');
+        window.app.petMode._showBubble?.(this.config.enabled ? '快捷键已开启 🟢' : '快捷键已全面解除 🔴，可自由打字');
       }
     });
     container.querySelector('#btn-toggle-arrow-only')?.addEventListener('click', () => {
       this.toggleArrowOnlyMode();
       if (window.app?.petMode) {
-        window.app.petMode._showBubble?.(this.config.arrowOnlyMode ? '🛡️ Anti-typing mode active (Arrow keys only)' : '⚡ Full shortcuts restored');
+        window.app.petMode._showBubble?.(this.config.arrowOnlyMode ? '🛡️ 已进入防打字模式 (仅方向键)' : '⚡ 已恢复全功能快捷键');
       }
     });
     container.querySelector('#btn-reset-shortcut-defaults')?.addEventListener('click', () => {
       this.resetToDefaults();
-      if (window.app?.petMode) window.app.petMode._showBubble?.('Shortcuts reset to defaults 🔄');
+      if (window.app?.petMode) window.app.petMode._showBubble?.('快捷键已恢复默认配置 🔄');
     });
 
     // 绑定按键录制点击

@@ -1,0 +1,556 @@
+:root {
+    --bg-main: #0a0b12;
+    --bg-card: rgba(18, 22, 36, 0.85);
+    --border-color: rgba(236, 72, 153, 0.25);
+    --border-glow: rgba(236, 72, 153, 0.45);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-pink: #ec4899;
+    --accent-cyan: #00f0ff;
+    --accent-purple: #a855f7;
+    --accent-gold: #fbbf24;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-main);
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    touch-action: none;
+    overscroll-behavior: contain;
+}
+
+.game-viewport {
+    width: 100%;
+    height: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 16px;
+    position: relative;
+    background: radial-gradient(circle at 50% 15%, #24112e 0%, #07090e 80%);
+}
+
+/* 顶部 HUD */
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+}
+
+.brand-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    text-shadow: 0 0 12px var(--accent-pink);
+}
+
+.brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-pink);
+    box-shadow: 0 0 8px var(--accent-pink);
+}
+
+.hud-ctrls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    border-color: var(--accent-pink);
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px var(--border-glow);
+}
+
+/* 状态展示板 (4 列) */
+.score-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: var(--bg-card);
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.score-item {
+    text-align: center;
+}
+
+.score-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.score-value {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+.score-value.track { color: var(--accent-pink); }
+.score-value.combo { color: var(--accent-gold); }
+.score-value.acc { color: var(--accent-cyan); }
+
+/* 音轨画布容器 */
+.board-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 0;
+}
+
+#beats-canvas {
+    display: block;
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(236, 72, 153, 0.15);
+    background: rgba(12, 14, 24, 0.9);
+    border: 1px solid rgba(236, 72, 153, 0.25);
+    touch-action: none;
+}
+
+/* 底部虚拟打击按键 */
+.hit-pad-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.hit-pad-btn {
+    background: linear-gradient(180deg, rgba(30, 36, 56, 0.9), rgba(16, 20, 34, 0.95));
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    padding: 14px 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.08s ease;
+}
+
+.hit-pad-btn .key-label {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.hit-pad-btn .sub-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.hit-pad-btn.lane-0 { border-color: rgba(244, 63, 94, 0.4); }
+.hit-pad-btn.lane-1 { border-color: rgba(0, 240, 255, 0.4); }
+.hit-pad-btn.lane-2 { border-color: rgba(192, 132, 252, 0.4); }
+.hit-pad-btn.lane-3 { border-color: rgba(251, 191, 36, 0.4); }
+
+.hit-pad-btn:active, .hit-pad-btn.active {
+    transform: scale(0.95);
+    box-shadow: 0 0 18px var(--border-glow);
+    background: rgba(236, 72, 153, 0.3);
+}
+
+/* 弹窗通用样式 */
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 7, 15, 0.88);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: #111422;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(236, 72, 153, 0.3);
+    transform: scale(0.92);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.visible .modal-content {
+    transform: scale(1);
+}
+
+.modal-title {
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #ec4899, #00f0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.modal-desc {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    color: #ffffff;
+    border: none;
+    padding: 12px 0;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.4);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(236, 72, 153, 0.6);
+}
+
+/* 玩法说明弹窗 */
+.help-box {
+    text-align: left;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.help-box h3 {
+    color: var(--accent-pink);
+    font-size: 1.05rem;
+    margin: 12px 0 6px 0;
+}
+
+.help-box p, .help-box li {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.help-box ul {
+    padding-left: 18px;
+    margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   曲目选择大厅 (Song Selection Hub)
+   ========================================================================== */
+.song-select-screen {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 15%, #24112e 0%, #07090e 85%);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.song-select-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
+}
+
+.select-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+.select-title-group h2 {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.select-title-group p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.song-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.song-list-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.song-list-container::-webkit-scrollbar-thumb {
+    background: rgba(236, 72, 153, 0.3);
+    border-radius: 4px;
+}
+
+.song-card {
+    background: rgba(18, 22, 38, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.song-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--text-secondary);
+    transition: background 0.2s ease;
+}
+
+.song-card:hover {
+    border-color: rgba(0, 240, 255, 0.5);
+    transform: translateY(-2px);
+    background: rgba(24, 30, 52, 0.95);
+}
+
+.song-card.selected {
+    border-color: var(--accent-pink);
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(168, 85, 247, 0.18));
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.3);
+}
+
+.song-card.selected::before {
+    background: var(--accent-pink);
+    box-shadow: 0 0 8px var(--accent-pink);
+}
+
+.song-card.playing {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.45);
+}
+
+.song-card.playing::before {
+    background: var(--accent-cyan);
+    box-shadow: 0 0 12px var(--accent-cyan);
+}
+
+.playing-pulse-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 240, 255, 0.25);
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    animation: pulseBadge 1.2s infinite alternate;
+}
+
+@keyframes pulseBadge {
+    from { opacity: 0.75; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1.03); }
+}
+
+.song-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.song-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+}
+
+.song-card-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.song-card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.tag-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tag-bpm {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.tag-diff {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--accent-gold);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.song-card-record {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 6px;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.song-card-record strong {
+    color: #fff;
+}
+
+.select-footer {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-start-play {
+    width: 100%;
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    color: #ffffff;
+    border: none;
+    padding: 14px 0;
+    border-radius: var(--radius-sm);
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-start-play:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.7);
+}
+
+/* 准备开始倒计时覆盖层 */
+.countdown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 8, 16, 0.75);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.countdown-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.countdown-number {
+    font-size: 4.5rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 30px var(--accent-pink), 0 0 60px var(--accent-cyan);
+    animation: countPulse 0.6s ease-out infinite alternate;
+}
+
+@keyframes countPulse {
+    from { transform: scale(0.9); }
+    to { transform: scale(1.1); }
+}
+

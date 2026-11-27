@@ -1,0 +1,263 @@
+/* ============================================================
+   界面自适应层  ·  加载顺序：样式.css → 界面重构.css → 界面精修.css → 本文件
+   - 只管"不同尺寸、不同输入方式下怎么摆"：窄屏 / 矮屏 / 横屏与宽屏分栏 / 触屏 / 刘海屏安全区
+   - 全部规则挂在 body.web-mode-active 下，桌宠悬浮形态（透明窗口）完全不受影响
+   - 不改任何业务行为；删除本文件的 <link> 即回到固定竖版布局
+   ============================================================ */
+
+/* ---------- 1. 基础：视口高度、安全区、触摸手感 ---------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body.web-mode-active {
+  --ui-safe-t: env(safe-area-inset-top, 0px);
+  --ui-safe-r: env(safe-area-inset-right, 0px);
+  --ui-safe-b: env(safe-area-inset-bottom, 0px);
+  --ui-safe-l: env(safe-area-inset-left, 0px);
+  box-sizing: border-box;
+  padding: var(--ui-safe-t) var(--ui-safe-r) 0 var(--ui-safe-l);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 手机浏览器里 100vh 会把地址栏也算进去：改用动态视口高度，软键盘弹出时输入框跟着上移 */
+@supports (height: 100dvh) {
+  html:has(> body.web-mode-active),
+  body.web-mode-active { height: 100dvh; }
+}
+body.web-mode-active.arcade-mode-fullscreen .chat-panel { flex: 1 1 0 !important; height: auto !important; max-height: none !important; }
+body.web-mode-active .settings-panel,
+body.web-mode-active .character-panel,
+body.web-mode-active .create-character-panel { padding: var(--ui-safe-t) var(--ui-safe-r) var(--ui-safe-b) var(--ui-safe-l); box-sizing: border-box; }
+body.web-mode-active .input-area,
+body.web-mode-active .code-ai-area { margin-bottom: calc(12px + var(--ui-safe-b)); }
+body.web-mode-active .messages,
+body.web-mode-active .settings-content,
+body.web-mode-active .cc-content,
+body.web-mode-active .character-grid { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+body.web-mode-active button,
+body.web-mode-active .tab,
+body.web-mode-active .character-card { touch-action: manipulation; }
+
+/* ---------- 2. 窄屏（手机竖屏） ---------- */
+@media (max-width: 420px) {
+  body.web-mode-active .message.user { max-width: 84%; }
+}
+@media (max-width: 360px) {
+  body.web-mode-active .messages { padding-inline: 10px; gap: 12px; }
+  body.web-mode-active .message { gap: 7px; }
+  body.web-mode-active .message-avatar { width: 28px; height: 28px; }
+  body.web-mode-active .message-content { padding: 9px 12px; }
+  body.web-mode-active .settings-content { padding-inline: 10px; }
+  body.web-mode-active .ui-settings-nav { margin-inline: 10px; }
+  body.web-mode-active .cc-content { padding-inline: 12px; }
+  body.web-mode-active .code-header { padding-inline: 10px; }
+  body.web-mode-active .code-editor { margin-inline: 10px; }
+  body.web-mode-active .code-output { margin-inline: 10px; }
+  body.web-mode-active .ui-nameplate { left: 9px; max-width: 30%; }
+}
+/* 街机音频栏在窄屏防文字换行；游戏选择栏保持 界面精修.css 的两行 6 列网格，全部 10 款游戏常驻展示无遮挡 */
+@media (max-width: 520px) {
+  body.web-mode-active .arcade-audio-btn .arcade-audio-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* ---------- 3. 矮窗口（竖向空间紧张）：舞台让位给对话 ---------- */
+@media (max-height: 520px) and (max-width: 559px) {
+  :root { --ui-stage-h: clamp(96px, 24vh, 130px); }
+  body.web-mode-active .tab-bar { margin-top: 9px; }
+  body.web-mode-active .ui-nameplate { display: none; }
+}
+@media (max-height: 400px) and (max-width: 559px) {
+  :root { --ui-stage-h: 0px; --ui-scene-h: calc(var(--ui-titlebar-h) + 30px); }
+  body.web-mode-active .live2d-container,
+  html body.web-mode-active .sakura-container { display: none; }
+}
+
+/* ---------- 4. 分栏布局：宽屏（≥860px），或横屏矮窗（宽 ≥560px 且高 ≤480px）
+   角色舞台移到左栏并撑满整高，对话面板成为右侧的独立卡片；
+   舞台容器仍是同一个节点，只是脱离文档流贴到左边，业务代码照常往里放封面图。 ---------- */
+@media (min-width: 860px), (min-width: 560px) and (max-height: 480px) {
+  body.web-mode-active { --ui-side-w: clamp(210px, 34vw, 440px); }
+  body.web-mode-active::before {
+    background:
+      radial-gradient(60% 46% at 0% 0%, oklch(from var(--p) 0.87 0.09 h / 0.8), transparent 72%),
+      radial-gradient(46% 52% at 100% 4%, oklch(from var(--p2) 0.91 0.085 h / 0.72), transparent 72%),
+      radial-gradient(40% 42% at 14% 100%, oklch(from var(--p2) 0.93 0.06 h / 0.6), transparent 74%),
+      linear-gradient(180deg, oklch(from var(--p) 0.94 0.036 h), oklch(from var(--p) 0.968 0.02 h));
+  }
+  html body.web-mode-active .sakura-container { right: auto; width: var(--ui-side-w); height: 100%; }
+
+  body.web-mode-active .live2d-container {
+    position: absolute;
+    top: calc(var(--ui-titlebar-h) + var(--ui-safe-t));
+    left: var(--ui-safe-l);
+    bottom: 0;
+    width: var(--ui-side-w);
+    height: auto;
+  }
+  /* 封面图由业务代码以行内样式铺满容器：这里给名牌让出底部空间 */
+  body.web-mode-active #live2d-fallback { top: 4px !important; height: calc(100% - 128px) !important; }
+  body.web-mode-active .live2d-container::after {
+    background:
+      radial-gradient(circle at 50% 42%, rgb(255 255 255 / 0.92) 0, rgb(255 255 255 / 0.5) 26%, transparent 52%),
+      radial-gradient(circle, oklch(from var(--p) 0.58 0.13 h / 0.15) 1px, transparent 1.5px) center / 14px 14px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 30%, transparent 100%);
+  }
+  body.web-mode-active .live2d-container::before { bottom: 116px; width: min(58%, 210px); height: 16px; }
+  body.web-mode-active .mood-indicator { top: 8px; left: 16px; }
+
+  /* 名牌展开：名字 + 出处 + 一句话 */
+  body.web-mode-active .ui-nameplate {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    max-width: none;
+    align-items: center;
+    gap: 5px;
+    padding: 13px 16px 14px;
+    border-radius: 18px;
+    background: rgb(255 255 255 / 0.6);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.85), 0 12px 26px -18px oklch(from var(--p) 0.35 0.09 h / 0.6);
+    backdrop-filter: blur(10px) saturate(1.3);
+    text-align: center;
+  }
+  body.web-mode-active .ui-np-name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--ui-ink);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.web-mode-active .ui-np-series { padding: 3px 10px; background: var(--ui-accent-soft); box-shadow: none; color: var(--ui-accent-deep); font-size: 11px; }
+  body.web-mode-active .ui-np-tagline {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    color: var(--ui-ink-2);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  body.web-mode-active .ui-np-tagline:empty { display: none; }
+
+  /* 对话面板：右侧整卡 */
+  body.web-mode-active .chat-panel {
+    margin: 0 10px calc(10px + var(--ui-safe-b)) var(--ui-side-w);
+    border-radius: 20px;
+    box-shadow: 0 0 0 1px var(--ui-line), 0 1px 0 rgb(255 255 255 / 0.9) inset, 0 18px 40px -24px oklch(from var(--p) 0.4 0.1 h / 0.55);
+    overflow: hidden;
+  }
+  body.web-mode-active.arcade-mode-fullscreen .chat-panel { box-shadow: none; }
+  body.web-mode-active .input-area,
+  body.web-mode-active .code-ai-area { margin-bottom: 12px; }
+  /* 三个标签不再横跨整卡；消息与输入框收拢成一条适读宽度的居中栏 */
+  body.web-mode-active .tab-bar { align-self: center; width: min(420px, calc(100% - 28px)); margin-inline: 0; }
+  body.web-mode-active .messages { padding-inline: max(16px, calc((100% - 820px) / 2)); }
+  body.web-mode-active .message { max-width: min(88%, 660px); }
+  body.web-mode-active .message.user { max-width: min(76%, 560px); }
+  body.web-mode-active .input-area,
+  body.web-mode-active .code-ai-area { margin-inline: max(14px, calc((100% - 824px) / 2)); }
+  body.web-mode-active .toast { left: calc(var(--ui-side-w) + (100% - var(--ui-side-w) - 10px) / 2); }
+}
+
+/* 4.1 横屏矮窗（手机横过来）：竖向寸土寸金，名牌收成一行、标签与输入区压扁 */
+@media (min-width: 560px) and (max-height: 480px) {
+  body.web-mode-active { --ui-side-w: clamp(180px, 30vw, 300px); }
+  body.web-mode-active #live2d-fallback { height: calc(100% - 50px) !important; }
+  body.web-mode-active .live2d-container::before { bottom: 44px; }
+  body.web-mode-active .ui-nameplate { flex-direction: row; justify-content: center; gap: 8px; bottom: 8px; padding: 6px 12px; border-radius: 999px; }
+  body.web-mode-active .ui-np-name { flex: 0 1 auto; font-size: 13.5px; letter-spacing: 1px; }
+  body.web-mode-active .ui-np-series { flex: 0 1 auto; min-width: 0; }
+  body.web-mode-active .ui-np-tagline { display: none; }
+  body.web-mode-active .chat-panel { margin-bottom: calc(8px + var(--ui-safe-b)); border-radius: 16px; }
+  body.web-mode-active .tab-bar { margin-top: 8px; margin-bottom: 0; }
+  body.web-mode-active .messages { padding-block: 10px 8px; gap: 10px; }
+  body.web-mode-active .input-area,
+  body.web-mode-active .code-ai-area { margin-bottom: 8px; }
+}
+
+/* 4.2 宽屏且够高：设置 / 角色 / 新建角色不再铺满整窗，改为居中浮层，标题栏保持可拖动 */
+@media (min-width: 860px) and (min-height: 560px) {
+  body.web-mode-active .settings-panel,
+  body.web-mode-active .character-panel,
+  body.web-mode-active .create-character-panel {
+    --ui-sheet-w: min(720px, calc(100% - 48px));
+    top: calc(var(--ui-titlebar-h) + 6px);
+    right: auto;
+    bottom: 18px;
+    left: calc((100% - var(--ui-sheet-w)) / 2);
+    width: var(--ui-sheet-w);
+    padding: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--ui-line), 0 30px 70px -30px oklch(from var(--p) 0.3 0.1 h / 0.6), 0 0 0 100vmax oklch(from var(--p) 0.3 0.04 h / 0.3);
+  }
+  body.web-mode-active .character-panel { --ui-sheet-w: min(980px, calc(100% - 48px)); }
+  body.web-mode-active .character-grid { grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 12px; padding: 8px 20px 22px; }
+  body.web-mode-active .settings-header,
+  body.web-mode-active .character-header,
+  body.web-mode-active .cc-header { padding-inline: 24px 14px; }
+  body.web-mode-active .ui-settings-nav { margin-inline: 20px; }
+  body.web-mode-active .settings-content { padding-inline: 20px; }
+  body.web-mode-active .cc-content { padding-inline: 24px; }
+}
+
+/* ---------- 5. 触屏（手机 / 平板）：放大点按目标，去掉只有鼠标才用得上的悬停效果 ---------- */
+@media (hover: none) and (pointer: coarse) {
+  :root { --ui-titlebar-h: 48px; --ui-window-r: 0px; }
+  body.web-mode-active .titlebar { padding-left: 14px; }
+  body.web-mode-active .titlebar-buttons { gap: 2px; }
+  body.web-mode-active .titlebar-buttons button { width: 38px; height: 38px; border-radius: 11px; }
+  body.web-mode-active .titlebar-buttons button svg { width: 19px; height: 19px; }
+  body.web-mode-active .titlebar-buttons .btn-back-pet { height: 34px; padding: 0 12px 0 9px !important; }
+  body.web-mode-active .pet-name { font-size: 15px; }
+
+  body.web-mode-active .tab { height: 38px; font-size: 14px; }
+  body.web-mode-active .message-text { font-size: 15px; }
+  body.web-mode-active .message-text pre code,
+  body.web-mode-active .thinking-content pre code { font-size: 12.5px; }
+  body.web-mode-active .thinking-toggle { min-height: 30px; padding-inline: 10px 12px; }
+  /* iOS 上小于 16px 的输入框获得焦点时会整页放大 */
+  body.web-mode-active textarea,
+  body.web-mode-active select,
+  body.web-mode-active input:not([type="range"]):not([type="checkbox"]):not([type="color"]):not([type="file"]) { font-size: 16px; }
+  body.web-mode-active .btn-send,
+  body.web-mode-active .btn-clear-chat { width: 40px; height: 40px; flex-basis: 40px; }
+  body.web-mode-active .btn-ai-code { height: 40px; }
+  body.web-mode-active .code-header select,
+  body.web-mode-active .btn-copy,
+  body.web-mode-active .btn-run { height: 38px; }
+
+  body.web-mode-active .ui-code-copy { opacity: 1; height: 26px; }
+
+  body.web-mode-active .settings-header,
+  body.web-mode-active .character-header,
+  body.web-mode-active .cc-header { flex-basis: 54px; height: 54px; }
+  body.web-mode-active .btn-close-settings,
+  body.web-mode-active .btn-close-panel,
+  body.web-mode-active .btn-import-character,
+  body.web-mode-active .btn-add-character { width: 40px; height: 40px; }
+  body.web-mode-active .ui-settings-nav button { height: 36px; padding: 0 13px; font-size: 14px; }
+  body.web-mode-active .btn-save-settings { height: 48px; }
+  body.web-mode-active .character-card-actions { opacity: 1; visibility: visible; pointer-events: auto; }
+  body.web-mode-active input[type="range"] { min-height: 32px; }
+
+  body.web-mode-active .arcade-sub-bar { --arcade-row: 36px; }
+  body.web-mode-active .arcade-pill-btn { font-size: 13px; }
+  body.web-mode-active .arcade-actions .arcade-action-btn { width: 36px; }
+
+  /* 手指没有"悬停"：按下去的反馈保留，抬手后不留下浮起/变色的残影 */
+  body.web-mode-active .btn-send:hover,
+  body.web-mode-active .btn-run:hover,
+  body.web-mode-active .btn-ai-code:hover,
+  body.web-mode-active .character-card:hover,
+  body.web-mode-active .arcade-pill-btn:hover,
+  body.web-mode-active .arcade-action-btn:hover,
+  body.web-mode-active .message.ai .message-avatar:hover,
+  body.web-mode-active .btn-close-settings:hover,
+  body.web-mode-active .btn-close-panel:hover,
+  body.web-mode-active .btn-add-character:hover { transform: none; }
+}

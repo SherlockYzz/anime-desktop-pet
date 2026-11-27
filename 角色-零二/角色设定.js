@@ -57,8 +57,11 @@ CHARACTER_REGISTRY.zerotwo = {
     settingsBg: 'rgba(248, 210, 225, 0.35)',
   },
 
-  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  // Live2D 模型为空，改用 VRoid VRM 3D 模型（真透明、支持视线追踪与点击穿透）
   live2d: null,
+  vrm: {
+    modelPath: '../../角色-零二/VRM模型/zerotwo.vrm'
+  },
 
   // 原生CV语音配置（户松遥妖娆甜美达令御姐语音包，共10段经典语音）
   voice: {

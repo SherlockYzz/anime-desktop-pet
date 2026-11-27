@@ -1,7 +1,7 @@
 {
   "name": "ai-desktop-pet-en",
-  "version": "7.21.0",
-  "description": "AI Desktop Pet v07.21 (English Edition) - 9 iconic anime companions featuring Live2D dual-engine, emotion bonds, long-term memory, Pomodoro focus butler, and universal LLM streaming.",
+  "version": "8.1.0",
+  "description": "AI Desktop Pet v8.1.0 (English Edition) - 9 iconic anime companions (Live2D + 3D VRM instant switch + 73-frame sprite), 10 mini-games arcade with BGM jukebox, draggable/hideable bubbles, and universal LLM streaming.",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
@@ -16,8 +16,9 @@
     "live2d",
     "ai",
     "desktop-pet",
-    "virtual-assistant",
-    "anime"
+    "mimo",
+    "sprite-animation",
+    "精灵帧"
   ],
   "author": "SherlockYzz",
   "license": "MIT",
@@ -28,13 +29,18 @@
   "build": {
     "appId": "com.ai-desktop-pet.en",
     "productName": "AI Desktop Pet",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "AI桌宠.ico",
+      "角色-*/图片素材/头像.png"
+    ],
     "directories": {
       "output": "dist"
     },
     "files": [
       "程序主入口.js",
       "安全桥接.js",
+      "AI桌宠.ico",
       "核心通用代码/**/*",
       "角色-加藤惠/**/*",
       "角色-蕾姆/**/*",
@@ -44,8 +50,7 @@
       "角色-若曦/**/*",
       "角色-惠惠/**/*",
       "角色-初音未来/**/*",
-      "角色-土间埋/**/*",
-      "node_modules/**/*"
+      "角色-土间埋/**/*"
     ],
     "win": {
       "target": [
@@ -57,7 +62,7 @@
         }
       ],
       "icon": "AI桌宠.ico",
-      "artifactName": "${productName}-v07.21-Setup.${ext}"
+      "artifactName": "AI-Desktop-Pet-v${version}-EN-Setup.${ext}"
     },
     "mac": {
       "target": "dmg"
@@ -79,4 +84,3 @@
     }
   }
 }
-

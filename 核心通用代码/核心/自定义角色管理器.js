@@ -10,8 +10,11 @@ class CustomCharacterManager {
     this._loadPromise = null;
   }
 
-  /** 从磁盘加载自定义角色到 CHARACTER_REGISTRY（需在 CharacterManager 前调用） */
-  async loadCustomCharacters() {
+  /** 从磁盘加载自定义角色到 CHARACTER_REGISTRY（forceReload=true 时跳过缓存强制重载） */
+  async loadCustomCharacters(forceReload = false) {
+    if (forceReload) {
+      this._loadPromise = null;
+    }
     if (this._loadPromise) return this._loadPromise;
     this._loadPromise = this._doLoad();
     return this._loadPromise;
@@ -209,9 +212,9 @@ class CustomCharacterManager {
       if (el) el.value = '';
     });
     document.getElementById('cc-color').value = '#f0a0b0';
-    document.getElementById('cc-avatar-preview').innerHTML = '<span class="cc-upload-placeholder">Click to upload</span>';
-    document.getElementById('cc-cover-preview').innerHTML = '<span class="cc-upload-placeholder">Click to upload</span>';
-    document.getElementById('cc-live2d-label').textContent = 'Select model3.json file';
+    document.getElementById('cc-avatar-preview').innerHTML = '<span class="cc-upload-placeholder">点击上传</span>';
+    document.getElementById('cc-cover-preview').innerHTML = '<span class="cc-upload-placeholder">点击上传</span>';
+    document.getElementById('cc-live2d-label').textContent = '选择 model3.json 文件';
     this._avatarBase64 = null;
     this._coverBase64 = null;
     this._live2dBase64 = null;
@@ -230,24 +233,24 @@ class CustomCharacterManager {
     const status = document.getElementById('cc-status');
 
     // 验证必填字段
-    if (!name) { this._showStatus(status, 'Please enter character name', 'error'); return; }
-    if (!series) { this._showStatus(status, 'Please enter series origin', 'error'); return; }
-    if (!systemPrompt) { this._showStatus(status, 'Please enter system prompt', 'error'); return; }
-    if (!this._avatarBase64) { this._showStatus(status, 'Please upload character avatar', 'error'); return; }
-    if (!this._coverBase64) { this._showStatus(status, 'Please upload cover image', 'error'); return; }
+    if (!name) { this._showStatus(status, '请输入角色名称', 'error'); return; }
+    if (!series) { this._showStatus(status, '请输入作品出处', 'error'); return; }
+    if (!systemPrompt) { this._showStatus(status, '请输入系统提示词', 'error'); return; }
+    if (!this._avatarBase64) { this._showStatus(status, '请上传角色头像', 'error'); return; }
+    if (!this._coverBase64) { this._showStatus(status, '请上传封面图', 'error'); return; }
     // 原作台词集：每行一句，至少1句
     const canonicalText = document.getElementById('cc-canonical')?.value.trim();
     const canonicalLines = canonicalText ? canonicalText.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [];
-    if (canonicalLines.length < 1) { this._showStatus(status, 'Please provide at least 1 canonical line', 'error'); return; }
+    if (canonicalLines.length < 1) { this._showStatus(status, '请至少填写1句原作台词', 'error'); return; }
 
     // 检查electronAPI
     if (!window.electronAPI) {
-      this._showStatus(status, 'File system unavailable (non-desktop environment)', 'error');
+      this._showStatus(status, '文件系统不可用（非桌面环境）', 'error');
       return;
     }
 
     const saveBtn = document.getElementById('btn-cc-save');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Creating...'; }
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '创建中...'; }
 
     try {
       const result = await window.electronAPI.saveCustomCharacter({
@@ -260,11 +263,11 @@ class CustomCharacterManager {
       });
 
       if (result.success) {
-        // 重新加载自定义角色
-        await this.loadCustomCharacters();
-        this._showStatus(status, `Character "${name}" created successfully!`, 'success');
+        // 强制重新加载自定义角色，确保立即出现在角色选择器与注册表中
+        await this.loadCustomCharacters(true);
+        this._showStatus(status, `角色「${name}」创建成功！`, 'success');
         this.hideCreatePanel();
-        window.app?.showToast(`Character "${name}" created`);
+        window.app?.showToast(`角色「${name}」已创建`);
 
         // 刷新角色选择器
         if (window.characterManager && window.app) {
@@ -275,12 +278,12 @@ class CustomCharacterManager {
         const promptSelect = document.getElementById('prompt-character-select');
         if (promptSelect) promptSelect.dataset.populated = '';
       } else {
-        this._showStatus(status, 'Creation failed, please try again', 'error');
+        this._showStatus(status, '创建失败，请重试', 'error');
       }
     } catch (e) {
-      this._showStatus(status, `Creation failed: ${e.message}`, 'error');
+      this._showStatus(status, `创建失败: ${e.message}`, 'error');
     } finally {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Create Character'; }
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '创建角色'; }
     }
   }
 
@@ -292,80 +295,80 @@ class CustomCharacterManager {
 
   // ============ 导出 / 导入 ============
 
-  /** Export character as shareable JSON file */
+  /** 导出角色为可分享的 JSON 文件 */
   async exportCharacter(characterId) {
     if (!window.electronAPI) {
-      window.app?.showToast('Export is only available in desktop environment');
+      window.app?.showToast('导出功能仅在桌面环境中可用');
       return;
     }
     const char = window.characterManager.registry[characterId];
     if (!char) return;
     if (!char.isCustom) {
-      window.app?.showToast('Only custom characters can be exported');
+      window.app?.showToast('只能导出自定义角色');
       return;
     }
     try {
       const result = await window.electronAPI.exportCustomCharacter(characterId);
       if (result.success) {
-        window.app?.showToast(`Character "${char.name}" exported`);
-      } else if (result.message !== 'Cancel Export' && result.message !== '取消导出') {
-        window.app?.showToast(`Export failed: ${result.message}`);
+        window.app?.showToast(`角色「${char.name}」已导出`);
+      } else if (result.message !== '取消导出') {
+        window.app?.showToast(`导出失败: ${result.message}`);
       }
     } catch (e) {
-      window.app?.showToast(`Export failed: ${e.message}`);
+      window.app?.showToast(`导出失败: ${e.message}`);
     }
   }
 
-  /** Import character from JSON file */
+  /** 从 JSON 文件导入角色 */
   async importCharacter() {
     if (!window.electronAPI) {
-      window.app?.showToast('Import is only available in desktop environment');
+      window.app?.showToast('导入功能仅在桌面环境中可用');
       return;
     }
     try {
       const result = await window.electronAPI.importCustomCharacter();
       if (result.success) {
-        await this.loadCustomCharacters();
-        window.app?.showToast(`Character "${result.name}" imported`);
+        await this.loadCustomCharacters(true);
+        window.app?.showToast(`角色「${result.name}」已导入`);
         if (window.characterManager && window.app) {
           window.characterManager._initCharacterSelector?.();
           window.app._initCharacterSelector?.();
         }
-        // Refresh prompt editor character select
+        // 刷新提示词编辑器角色下拉
         const promptSelect = document.getElementById('prompt-character-select');
         if (promptSelect) promptSelect.dataset.populated = '';
-      } else if (result.message !== 'Cancel Import' && result.message !== '取消导入') {
-        window.app?.showToast(`Import failed: ${result.message}`);
+      } else if (result.message !== '取消导入') {
+        window.app?.showToast(`导入失败: ${result.message}`);
       }
     } catch (e) {
-      window.app?.showToast(`Import failed: ${e.message}`);
+      window.app?.showToast(`导入失败: ${e.message}`);
     }
   }
 
   _bindEvents() {
-    // Close button
+    // 关闭按钮
     document.getElementById('btn-close-create-character')?.addEventListener('click', () => this.hideCreatePanel());
 
-    // Cancel button
+    // 取消按钮
     document.getElementById('btn-cc-cancel')?.addEventListener('click', () => this.hideCreatePanel());
 
-    // Save button
+    // 保存按钮
     document.getElementById('btn-cc-save')?.addEventListener('click', () => this._handleCreate());
 
-    // Import character
+    // 导入角色
     document.getElementById('btn-import-character')?.addEventListener('click', () => this.importCharacter());
 
-    // Avatar upload
+    // 头像上传
     this._bindImageUpload('cc-avatar-upload', 'cc-avatar-input', 'cc-avatar-preview', (base64) => {
       this._avatarBase64 = base64;
     });
 
-    // Cover upload
+    // 封面上传
     this._bindImageUpload('cc-cover-upload', 'cc-cover-input', 'cc-cover-preview', (base64) => {
       this._coverBase64 = base64;
     });
 
-    // Live2D model upload
+    // Live2D模型上传
     const live2dUpload = document.getElementById('cc-live2d-upload');
     const live2dInput = document.getElementById('cc-live2d-input');
     const live2dLabel = document.getElementById('cc-live2d-label');
@@ -375,7 +378,7 @@ class CustomCharacterManager {
         const file = e.target.files?.[0];
         if (!file) return;
         if (!file.name.endsWith('.model3.json') && !file.name.endsWith('.zip')) {
-          this._showStatus(document.getElementById('cc-status'), 'Please select a .model3.json or .zip file', 'error');
+          this._showStatus(document.getElementById('cc-status'), '请选择 .model3.json 或 .zip 文件', 'error');
           return;
         }
         const reader = new FileReader();
@@ -388,7 +391,7 @@ class CustomCharacterManager {
       });
     }
 
-    // Reset form when clicking outside panel
+    // 关闭面板时重置表单
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('create-character-panel') && e.target.id === 'create-character-panel') {
         this.hideCreatePanel();
@@ -408,9 +411,9 @@ class CustomCharacterManager {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Verify image type
+      // 验证图片类型
       if (!file.type.startsWith('image/')) {
-        this._showStatus(document.getElementById('cc-status'), 'Please select an image file', 'error');
+        this._showStatus(document.getElementById('cc-status'), '请选择图片文件', 'error');
         return;
       }
 

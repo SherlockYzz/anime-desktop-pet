@@ -20,7 +20,7 @@ class App {
     this._live2dReady = false;
     this._charDataReady = false;
     this._loadingRotate = null;
-    this._loadingTexts = ['Thinking carefully...', 'Almost ready...', 'Just a moment...', 'Here it is!'];
+    this._loadingTexts = ['正在努力思考...', '快要好了...', '再等一下下...', '马上就好！'];
 
     this.chat = new ChatManager(this);
     this.codeEditor = new CodeEditor(this);
@@ -46,7 +46,7 @@ class App {
     // 梦幻星星（纯CSS装饰）
     this._initDreamStars();
     // 显示加载动画
-    this.showLoading(true, 'Starting up...');
+    this.showLoading(true, '正在启动...');
 
     // ★ 阶段2在下一个宏任务中执行，让UI先完成首帧渲染
     setTimeout(() => this._initPhase2(), 10);
@@ -58,14 +58,14 @@ class App {
       await window.characterManager.loadSavedCharacter();
       this._charDataReady = true;
     } catch (e) {
-      console.warn('Failed to load character data:', e);
+      console.warn('角色数据加载失败:', e);
     }
 
     try {
       this._showBootMessage();
       window.live2dManager?.showFallback();
     } catch (e) {
-      console.warn('Core UI init error:', e);
+      console.warn('核心UI初始化出错:', e);
     } finally {
       this.showLoading(false);
     }
@@ -86,7 +86,7 @@ class App {
         this._initCharacterSelector();
         this._showShortcutHint(); // ★ 首次使用提示快捷键
       } catch (e) {
-        console.warn('Deferred init error:', e);
+        console.warn('延迟初始化出错:', e);
       }
     }, 300);
 
@@ -98,7 +98,7 @@ class App {
     if (localStorage.getItem('shortcut_hint_shown')) return;
     localStorage.setItem('shortcut_hint_shown', '1');
     setTimeout(() => {
-      this.showToast('Shortcut: Ctrl+Shift+P to toggle display/hide');
+      this.showToast('快捷键: Ctrl+Shift+P 切换显示/隐藏');
     }, 2000);
   }
 
@@ -110,13 +110,28 @@ class App {
     // ★ 预检所有角色的模型文件（完全不阻塞任何流程）
     setTimeout(() => window.characterManager.precheckModelFiles(), 3000);
 
+    // ★ 空闲期静默预热 VRM 角色（高木同学 / 雪之下雪乃 / 零二），避免首次切到桌宠模式等待解析
+    setTimeout(() => {
+      try {
+        const allChars = window.characterManager?.getAllCharacters?.() || [];
+        const vrmPaths = allChars.map(c => c?.vrm?.modelPath).filter(Boolean);
+        if (vrmPaths.length && window.vrmManager?.prewarm) {
+          window.vrmManager.prewarm(vrmPaths);
+        }
+      } catch (e) {}
+    }, 2200);
+
     // ★ 阶段4：在空闲时加载CDN高亮库（不影响首帧）
     this._initHighlighting();
   }
 
-  // ★ 后台初始化 Live2D（不阻塞 UI）
+  // ★ 后台惰性初始化 Live2D（仅当需要 Live2D 时才创建 PIXI WebGL 上下文，默认精灵帧角色零显存浪费）
   async _initLive2D() {
     try {
+      const char = window.characterManager?.getCurrentCharacter?.();
+      const isSprite = window.SpriteAtlasManager?.isSpriteCharacter?.(char);
+      const isWebMode = document.body.classList.contains('web-mode-active');
+      if (isSprite && !isWebMode) return;
       await window.live2dManager.init();
       this._live2dReady = true;
       const savedMode = window.live2dManager.getDisplayMode();
@@ -164,7 +179,7 @@ class App {
       sp.style.top = (10 + Math.random() * 80) + '%';
       sp.style.setProperty('--sparkle-duration', (4 + Math.random() * 4) + 's');
       sp.style.setProperty('--sparkle-delay', (Math.random() * 5) + 's');
-      if (Math.random() > 0.5) sp.style.width = '4px'; sp.style.height = '4px';
+      if (Math.random() > 0.5) { sp.style.width = '4px'; sp.style.height = '4px'; }
       c.appendChild(sp);
     }
   }
@@ -208,13 +223,24 @@ class App {
     marked.use({
       breaks: true, gfm: true,
       renderer: {
-        code({ text, lang }) {
-          let h = text;
+        // 兼容 marked v9 (code, infostring) 与 v12+ ({ text, lang }) 两种签名
+        code(codeOrToken, infostring) {
+          const text = typeof codeOrToken === 'object' && codeOrToken !== null
+            ? (codeOrToken.text ?? '')
+            : (codeOrToken ?? '');
+          const lang = typeof codeOrToken === 'object' && codeOrToken !== null
+            ? (codeOrToken.lang || '')
+            : ((infostring || '').trim().split(/\s+/)[0] || '');
+          let h = escapeHtml(text);
           if (window.hljs) {
-            try { h = lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }).value : hljs.highlightAuto(text).value; }
-            catch (e) { /* fallback */ }
+            try {
+              h = lang && hljs.getLanguage(lang)
+                ? hljs.highlight(text, { language: lang }).value
+                : hljs.highlightAuto(text).value;
+            } catch (e) { /* fallback to escaped plain text */ }
           }
-          return `<pre><code class="hljs language-${lang || ''}">${h}</code></pre>`;
+          const safeLang = escapeHtml(lang);
+          return `<pre><code class="hljs language-${safeLang}">${h}</code></pre>`;
         }
       }
     });
@@ -222,7 +248,11 @@ class App {
 
   _bindEvents() {
     document.getElementById('btn-minimize')?.addEventListener('click', () => { window.electronAPI?.minimizeWindow?.()?.catch?.(e => console.warn('最小化失败:', e)); });
-    document.getElementById('btn-close')?.addEventListener('click', () => { window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e)); });
+    document.getElementById('btn-maximize-win')?.addEventListener('click', () => { window.electronAPI?.maximizeWindow?.()?.catch?.(e => console.warn('最大化失败:', e)); });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      try { window.emotionMemory?.flushSave?.(); } catch (e) {}
+      window.electronAPI?.closeWindow?.()?.catch?.(e => console.warn('关闭失败:', e));
+    });
     document.getElementById('btn-settings')?.addEventListener('click', () => this.settings.show());
     document.getElementById('btn-pomodoro-titlebar')?.addEventListener('click', () => window.desktopButler?.togglePomodoro?.());
     document.getElementById('btn-memory-diary-titlebar')?.addEventListener('click', () => window.emotionMemory?.showMemoryDiary?.());
@@ -237,6 +267,15 @@ class App {
       document.getElementById('opacity-value').textContent = e.target.value + '%';
     });
     window.electronAPI?.onShowSettings?.(() => this.settings.show());
+    // ★ 窗口隐藏到托盘/最小化时暂停所有渲染循环，显示时恢复，大幅降低待机 GPU/CPU 占用
+    window.electronAPI?.onWindowVisibilityChanged?.((visible) => {
+      const paused = !visible;
+      window.live2dManager?.setPaused?.(paused);
+      window.vrmManager?.setPaused?.(paused);
+      this.petMode?.setPaused?.(paused);
+      window.spriteAtlasManager?.setPaused?.(paused);
+      window.arcadeManager?.setPaused?.(paused);
+    });
     document.getElementById('btn-character-select')?.addEventListener('click', () => this._showCharacterSelector());
     document.getElementById('btn-close-character')?.addEventListener('click', () => this._hideCharacterSelector());
     document.getElementById('btn-create-character')?.addEventListener('click', () => {
@@ -249,8 +288,15 @@ class App {
     document.getElementById('live2d-container')?.addEventListener('click', (e) => {
       if (document.body.classList.contains('web-mode-active')) this.chat.handleCharacterClick(e);
     });
-    document.addEventListener('mousemove', () => this._resetIdle());
-    document.addEventListener('keydown', () => this._resetIdle());
+    const throttledResetIdle = () => {
+      const now = Date.now();
+      if (!this._lastIdleReset || now - this._lastIdleReset > 500) {
+        this._lastIdleReset = now;
+        this._resetIdle();
+      }
+    };
+    document.addEventListener('mousemove', throttledResetIdle, { passive: true });
+    document.addEventListener('keydown', throttledResetIdle, { passive: true });
     document.getElementById('chat-messages')?.addEventListener('click', (e) => {
       if (e.target.closest('.message.ai .message-avatar')) this.chat.handleCharacterClick();
     });
@@ -268,21 +314,33 @@ class App {
       const card = document.createElement('div');
       card.className = `character-card ${char.id === curId ? 'active' : ''}`;
       card.dataset.characterId = char.id;
+      const safeId = escapeHtml(char.id);
+      const safeName = escapeHtml(char.name);
+      const safeSeries = escapeHtml(char.series);
+      const safeTagline = escapeHtml(char.tagline);
+      const safeAvatar = escapeHtml(char.avatar);
+      const rawPrimary = String(char.theme?.primary || '').trim();
+      const isSafeColor = /^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\(\s*\d{1,3}(?:\.\d+)?%?\s*,\s*\d{1,3}(?:\.\d+)?%?\s*,\s*\d{1,3}(?:\.\d+)?%?(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\))$/i.test(rawPrimary);
+      const safePrimary = isSafeColor ? rawPrimary : '#f0a0b0';
+      const avatarBg = `color-mix(in srgb, ${safePrimary} 14%, transparent)`;
+      const avatarBorder = `color-mix(in srgb, ${safePrimary} 30%, transparent)`;
+      const safeInitial = escapeHtml((char.name || '?').charAt(0));
+      card.style.setProperty('--c', safePrimary);
       card.innerHTML = `
-        <div class="character-card-avatar" style="background:${char.theme.primary}20;border-color:${char.theme.primary}40;">
-          <img src="${char.avatar}" alt="${char.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <span class="character-card-icon" style="color:${char.theme.primary};display:none;">${char.name.charAt(0)}</span>
+        <div class="character-card-avatar" style="background:${avatarBg};border-color:${avatarBorder};">
+          <img src="${safeAvatar}" alt="${safeName}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="character-card-icon" style="color:${safePrimary};display:none;">${safeInitial}</span>
         </div>
         <div class="character-card-info">
-          <div class="character-card-name" style="color:${char.theme.primary};">${char.name}</div>
-          <div class="character-card-series">${char.series}</div>
-          <div class="character-card-tagline">${char.tagline}</div>
+          <div class="character-card-name" style="color:${safePrimary};">${safeName}</div>
+          <div class="character-card-series">${safeSeries}</div>
+          <div class="character-card-tagline">${safeTagline}</div>
         </div>
         <div class="character-card-actions">
-          <button class="character-order-btn character-order-up" data-id="${char.id}" ${index === 0 ? 'disabled' : ''} title="Move Up">&#9650;</button>
-          <button class="character-order-btn character-order-down" data-id="${char.id}" ${index === list.length - 1 ? 'disabled' : ''} title="Move Down">&#9660;</button>
+          <button class="character-order-btn character-order-up" data-id="${safeId}" ${index === 0 ? 'disabled' : ''} title="上移">&#9650;</button>
+          <button class="character-order-btn character-order-down" data-id="${safeId}" ${index === list.length - 1 ? 'disabled' : ''} title="下移">&#9660;</button>
         </div>
-        ${char.id === curId ? '<div class="character-card-badge">Active</div>' : ''}`;
+        ${char.id === curId ? '<div class="character-card-badge">当前</div>' : ''}`;
 
       card.addEventListener('mouseenter', () => { if (char.id !== curId) window.characterManager.precacheCharacter(char.id); });
       card.addEventListener('click', (e) => {
@@ -298,8 +356,10 @@ class App {
   }
 
   _bindCharacterOrderEvents() {
+    if (this._characterOrderBound) return;
     const grid = document.getElementById('character-grid');
     if (!grid) return;
+    this._characterOrderBound = true;
 
     grid.addEventListener('click', (e) => {
       const btn = e.target.closest('.character-order-btn');
@@ -334,7 +394,7 @@ class App {
     if (!char) return;
     if (window.characterManager.getCurrentCharacter()?.id === characterId) { this._hideCharacterSelector(); return; }
     this._switchingChar = true;
-    this.showToast(`Loading ${char.name}...`);
+    this.showToast(`正在加载 ${char.name}...`);
     try {
       await window.mimoAPI.switchCharacter(characterId);
       this._hideCharacterSelector();
@@ -351,7 +411,7 @@ class App {
         this.petMode._updateControlButtons();
       }
 
-      this.showToast(`Switched to ${char.name}`);
+      this.showToast(`已切换到 ${char.name}`);
     } finally { this._switchingChar = false; }
   }
 
@@ -359,10 +419,47 @@ class App {
     return this._switchTab(name);
   }
 
-  _switchTab(name) {
+  async _switchTab(name) {
     this.currentTab = name;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
+
+    const isArcade = (name === 'arcade');
+    document.body.classList.toggle('arcade-mode-fullscreen', isArcade);
+
+    const titleEl = document.querySelector('.pet-name');
+    if (isArcade) {
+      window.arcadeManager?.activate?.();
+      if (!this._origPetTitle && titleEl) this._origPetTitle = titleEl.textContent;
+      if (titleEl) titleEl.textContent = '🎮 摸鱼街机 (10款精选微游戏)';
+      // 记录进入街机前的窗口尺寸，视口过小时自适应延展以保证游戏完整显示
+      try {
+        const bounds = await window.electronAPI?.getWindowBounds?.();
+        if (bounds && !this._savedBoundsBeforeArcade) {
+          this._savedBoundsBeforeArcade = { ...bounds };
+          // 控制栏为两行网格（约 68px，比旧版高 28px），窗口高度同步上调 20px，游戏视窗仍保持 ~630px
+          if (bounds.width < 460 || bounds.height < 700) {
+            const targetW = Math.max(500, bounds.width);
+            const targetH = Math.max(740, bounds.height);
+            await window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
+          }
+        }
+      } catch (e) {
+        console.warn('调整街机视口出错:', e);
+      }
+    } else {
+      window.arcadeManager?.deactivate?.();
+      if (titleEl && this._origPetTitle) titleEl.textContent = this._origPetTitle;
+      // 恢复进入街机前的窗口尺寸
+      if (this._savedBoundsBeforeArcade) {
+        try {
+          await window.electronAPI?.setWindowBounds?.(this._savedBoundsBeforeArcade);
+        } catch (e) {
+          console.warn('恢复视口出错:', e);
+        }
+        this._savedBoundsBeforeArcade = null;
+      }
+    }
   }
 
   async _sendChat() {

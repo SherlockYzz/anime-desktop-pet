@@ -55,8 +55,11 @@ CHARACTER_REGISTRY.takagi = {
     settingsBg: 'rgba(248, 220, 210, 0.35)',
   },
 
-  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  // 原 Live2D 占位模型不可用，改用 VRoid VRM 3D 模型（真透明、支持视线追踪与点击穿透）
   live2d: null,
+  vrm: {
+    modelPath: '../../角色-高木同学/VRM模型/takagi.vrm'
+  },
 
   // 原生CV语音配置（高桥李依擅长捉弄俏皮少女语音包，共10段经典语音）
   voice: {

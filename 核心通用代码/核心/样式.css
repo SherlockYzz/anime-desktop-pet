@@ -64,9 +64,21 @@
   --loading-shadow: rgba(248, 180, 200, 0.15);
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
 body {
   font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  background: transparent;
+  background: transparent !important;
   color: var(--text-color);
   overflow: hidden;
   user-select: none;
@@ -75,11 +87,11 @@ body {
 
 /* ★ 网页模式下彻底杜绝桌面图标穿透闪烁：采用实体主题底色 */
 body.web-mode-active {
-  background: var(--bg-color, #ffffff);
+  background: var(--bg-color, #ffffff) !important;
 }
 
-/* ===== 轻量背景装饰 ===== */
-body::before {
+/* ===== 轻量背景装饰（仅在网页模式生效，桌宠模式彻底隐藏杜绝矩形光晕蒙层） ===== */
+body.web-mode-active::before {
   content: '';
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -90,6 +102,9 @@ body::before {
     radial-gradient(circle 80px at 50% 85%, rgba(255,255,255,0.2) 0%, transparent 100%),
     radial-gradient(circle 60px at 30% 60%, rgba(255,255,255,0.15) 0%, transparent 100%);
   pointer-events: none;
+}
+body:not(.web-mode-active)::before {
+  display: none !important;
 }
 
 /* ===== 梦幻粒子飘浮动画 ===== */
@@ -206,7 +221,8 @@ body::before {
   transform: rotate(90deg);
 }
 
-.btn-minimize:hover {
+.btn-minimize:hover,
+.btn-maximize-win:hover {
   background: var(--glow-color);
 }
 
@@ -1660,18 +1676,21 @@ body::before {
    - 使用 opacity 过渡实现丝滑切换
    ============================================================ */
 
-/* 桌宠覆盖层（默认可见） */
+/* 桌宠覆盖层（默认可见 · 强化透明与物理穿透，自身不拦截鼠标，由子元素与动态穿透引擎接管） */
 .pet-overlay {
   display: block;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 500;
-  background: transparent;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   overflow: hidden;
   opacity: 1;
   visibility: visible;
   transition: opacity 0.3s ease;
-  pointer-events: auto;
+  pointer-events: none !important;
 }
 body.web-mode-active .pet-overlay {
   opacity: 0;
@@ -1726,18 +1745,29 @@ body.web-mode-active .pet-overlay {
   display: none;
 }
 
-/* 文字气泡容器（适度下移至黄金视觉区，避开顶部边缘与番茄钟徽章，醒目易读） */
+/* 文字气泡容器（默认智能贴合角色头顶正斜上方，支持按住气泡自由拖动与自定义缩放） */
 .pet-bubble-container {
   position: absolute;
-  left: 50%;
-  top: 50px;
-  transform: translateX(-50%);
+  left: var(--bubble-left, 56%);
+  top: var(--bubble-top, 36px);
+  transform: translateX(-50%) scale(var(--bubble-scale, 1));
+  transform-origin: center bottom;
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 220px;
   gap: 6px;
   z-index: 520;
   pointer-events: none;
+}
+.pet-bubble-container .pet-bubble {
+  pointer-events: auto !important;
+  cursor: grab;
+  user-select: none;
+}
+.pet-bubble-container .pet-bubble.is-dragging {
+  cursor: grabbing;
+}
   width: 92%;
   max-width: 320px;
 }
@@ -3248,5 +3278,635 @@ body.web-mode-active .pet-shortcuts-menu.show {
   background: var(--glow-color);
   transform: scale(1.1);
 }
+
+/* ========================================
+   🎮 摸鱼街机模式专属样式 (Arcade Styles)
+   ======================================== */
+
+/* 当进入摸鱼街机模式时：彻底隐藏 Live2D、背景星光、聊天标签栏与闲杂标题栏按钮，全屏仅聚焦游戏视窗 */
+body.arcade-mode-fullscreen #live2d-container,
+body.arcade-mode-fullscreen .live2d-container,
+body.arcade-mode-fullscreen .dream-stars,
+body.arcade-mode-fullscreen .tab-bar,
+body.arcade-mode-fullscreen #tab-chat,
+body.arcade-mode-fullscreen #tab-code {
+  display: none !important;
+}
+
+/* 标题栏精简：隐藏无关功能图标，仅保留必要窗口控制与返回桌宠 */
+body.arcade-mode-fullscreen .titlebar-buttons #btn-pomodoro-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-memory-diary-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-shortcuts-titlebar,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-character-select,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-settings,
+body.arcade-mode-fullscreen .titlebar-buttons #btn-arcade-titlebar {
+  display: none !important;
+}
+
+body.arcade-mode-fullscreen .titlebar {
+  background: rgba(10, 15, 29, 0.98) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25) !important;
+  height: 38px !important;
+  padding: 4px 12px !important;
+  box-sizing: border-box !important;
+}
+
+body.arcade-mode-fullscreen .pet-name {
+  color: #00f0ff !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}
+
+/* 聊天面板在街机模式下转为 100% 视口容器 */
+body.arcade-mode-fullscreen .chat-panel {
+  flex: 1 1 100% !important;
+  height: calc(100vh - 38px) !important;
+  max-height: calc(100vh - 38px) !important;
+  min-height: 0 !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #070a13 !important;
+  overflow: hidden !important;
+}
+
+body.arcade-mode-fullscreen .chat-panel::before {
+  display: none !important;
+}
+
+#tab-arcade {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: #070a13;
+}
+
+#tab-arcade.active,
+body.arcade-mode-fullscreen #tab-arcade {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #070a13 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 街机控制栏 */
+.arcade-sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(13, 21, 39, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 10;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.arcade-left-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.arcade-btn-exit {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.95)) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35) !important;
+}
+
+.arcade-btn-exit:hover {
+  background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+  transform: translateY(-1px);
+}
+
+.arcade-game-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+  flex: 1;
+}
+
+.arcade-game-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.arcade-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.arcade-pill-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.arcade-pill-btn.active {
+  background: linear-gradient(135deg, #00f0ff, #a855f7);
+  color: #070a13;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(0, 240, 255, 0.45);
+  font-weight: 700;
+}
+
+.arcade-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.arcade-action-btn {
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.arcade-action-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #fff;
+}
+
+.arcade-action-btn.active {
+  background: #ff7675;
+  color: #fff;
+  border-color: transparent;
+}
+
+.arcade-action-btn.muted-pet {
+  background: rgba(245, 158, 11, 0.85);
+  color: #fff;
+  border-color: transparent;
+}
+
+.arcade-action-btn.bgm-on {
+  background: linear-gradient(135deg, #22e3f5, #a66bf8);
+  color: #06101f;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* 街机独立音频快捷条（清晰显示文字开关，一眼辨认与一键切换） */
+.arcade-audio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px 6px;
+  background: rgba(9, 14, 28, 0.98);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.arcade-audio-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 25px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.16s ease;
+}
+
+.arcade-audio-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arcade-audio-btn .icon-off { display: none; }
+.arcade-audio-btn.active .icon-on,
+.arcade-audio-btn.muted-pet .icon-on { display: none; }
+.arcade-audio-btn.active .icon-off,
+.arcade-audio-btn.muted-pet .icon-off { display: inline; }
+
+.arcade-bgm-icon-btn svg,
+.arcade-bgm-import-btn svg,
+.arcade-bgm-title svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arcade-bgm-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arcade-bgm-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#btn-arcade-bgm-play .icon-pause { display: none; }
+#btn-arcade-bgm-play.is-playing .icon-play { display: none; }
+#btn-arcade-bgm-play.is-playing .icon-pause { display: inline; }
+
+#btn-arcade-bgm-loop .icon-single { display: none; }
+#btn-arcade-bgm-loop.is-single .icon-list { display: none; }
+#btn-arcade-bgm-loop.is-single .icon-single { display: inline; }
+
+.arcade-audio-btn:hover {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: rgba(0, 240, 255, 0.45);
+  color: #fff;
+}
+
+.arcade-audio-btn.active {
+  background: rgba(239, 68, 68, 0.88);
+  border-color: transparent;
+  color: #fff;
+}
+
+.arcade-audio-btn.muted-pet {
+  background: rgba(245, 158, 11, 0.9);
+  border-color: transparent;
+  color: #111827;
+}
+
+.arcade-audio-btn.bgm-on {
+  background: linear-gradient(135deg, #22e3f5, #a66bf8);
+  border-color: transparent;
+  color: #06101f;
+}
+
+.arcade-viewport-container {
+  flex: 1 1 auto;
+  width: 100%;
+  height: calc(100% - 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070a13;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 摸鱼街机 BGM 音乐盒悬浮面板 */
+.arcade-bgm-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 286px;
+  max-height: calc(100% - 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(11, 18, 34, 0.94);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  z-index: 40;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.arcade-bgm-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.arcade-bgm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.arcade-bgm-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.3px;
+}
+
+.arcade-bgm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arcade-bgm-toggle-btn {
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.arcade-bgm-toggle-btn.on {
+  background: linear-gradient(135deg, #22e3f5, #a66bf8);
+  color: #06101f;
+  border-color: transparent;
+}
+
+.arcade-bgm-close-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arcade-bgm-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.arcade-bgm-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.arcade-bgm-now-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #7dd3fc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arcade-bgm-transport {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.arcade-bgm-icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.arcade-bgm-icon-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #fff;
+}
+
+.arcade-bgm-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.arcade-bgm-vol-label {
+  flex-shrink: 0;
+}
+
+.arcade-bgm-volume-slider {
+  flex: 1;
+  accent-color: #22e3f5;
+  height: 4px;
+  cursor: pointer;
+}
+
+.arcade-bgm-vol-val {
+  width: 30px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.arcade-bgm-duck-tip {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #fcd34d;
+}
+
+.arcade-bgm-list {
+  flex: 1 1 auto;
+  min-height: 90px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 2px;
+}
+
+.arcade-bgm-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.arcade-bgm-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+}
+
+.arcade-bgm-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.arcade-bgm-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.arcade-bgm-item.active {
+  background: rgba(34, 227, 245, 0.16);
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+.arcade-bgm-item-dot {
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #22e3f5;
+}
+
+.arcade-bgm-item-title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arcade-bgm-item-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.arcade-bgm-item.active .arcade-bgm-item-tag {
+  background: rgba(34, 227, 245, 0.22);
+  color: #bae6fd;
+}
+
+.arcade-bgm-del-btn {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arcade-bgm-del-btn:hover {
+  background: rgba(239, 68, 68, 0.45);
+  color: #fff;
+}
+
+.arcade-bgm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.arcade-bgm-import-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  background: rgba(0, 240, 255, 0.12);
+  color: #7dd3fc;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.arcade-bgm-import-btn:hover {
+  background: rgba(0, 240, 255, 0.25);
+  color: #fff;
+}
+
+.arcade-bgm-hint {
+  font-size: 10px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.arcade-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #070a13;
+}
+
 
 

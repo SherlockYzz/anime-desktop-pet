@@ -61,42 +61,34 @@ class MimoAPI {
     return h;
   }
 
-  abort() {
-    if (this._currentController) {
-      this._abortedByUser = true;
-      this._currentController.abort();
-      this._currentController = null;
-    }
-  }
-
   _buildSystemPrompt(isCodeMode) {
     let sys = this.getSystemPrompt();
 
-    // ★ Dynamic time beacon and reality perception
+    // ★ 注入动态时空与现实世界感知信标
     const now = new Date();
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const timeStr = `${now.toDateString()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    let timePeriod = 'Daytime';
+    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const timeStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${days[now.getDay()]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    let timePeriod = '白天';
     const h = now.getHours();
-    if (h >= 0 && h < 6) timePeriod = 'Late Night / Early Morning';
-    else if (h >= 6 && h < 11) timePeriod = 'Morning';
-    else if (h >= 11 && h < 14) timePeriod = 'Noon';
-    else if (h >= 14 && h < 18) timePeriod = 'Afternoon';
-    else timePeriod = 'Evening / Night';
+    if (h >= 0 && h < 6) timePeriod = '凌晨/深夜';
+    else if (h >= 6 && h < 11) timePeriod = '上午';
+    else if (h >= 11 && h < 14) timePeriod = '中午';
+    else if (h >= 14 && h < 18) timePeriod = '下午';
+    else timePeriod = '夜晚';
 
-    sys += `\n\n[Current Time & Context Beacon]\n- Current Local Time: ${timeStr} (${timePeriod})\n- Environment: Windows AI Desktop Pet Client\nPlease subtly reflect time awareness in responses (e.g. late night care, morning greetings) while keeping character personality.`;
+    sys += `\n\n[当前时空信标]\n- 当前现实时间：${timeStr} (${timePeriod})\n- 宿主环境：Windows 桌面桌宠客户端\n请在回复中自然流露时间感知（例如深夜关心休息、上午元气问候），保持人设亲和力。`;
 
     if (isCodeMode) {
-      const name = window.characterManager.getCurrentCharacter()?.name || 'me';
-      sys += `\n\nUser is requesting code assistance. Provide complete code examples enclosed in markdown code blocks in ${name}'s speaking style.`;
+      const name = window.characterManager.getCurrentCharacter()?.name || '我';
+      sys += `\n\n用户正在请求代码帮助。用${name}的说话方式提供完整的代码示例，用代码块包裹。`;
     }
 
-    // ★ Highest priority interaction and task execution directives
-    sys += `\n\n[Interaction & Task Directives - Highest Priority]
-1. Logic & Tasks First: Always respond directly, clearly, and logically to user requests! If given specific tasks (coding, translation, calculations, explanations), deliver accurate solutions without hesitation.
-2. In-Character Immersion: Naturally blend your character personality, speaking tone, custom addressing terms, and expressive actions (in parentheses) into responses.
-3. Natural & Concise: Keep casual daily chat lively and concise (2-4 sentences); reply intuitively without robotic prompt repetition.
-4. Language Directive: Always communicate in natural English (or match the user's primary language)!`;
+    // ★ 注入最高优先级交互与任务执行铁律（利用提示词末尾近因效应，强化逻辑、人设与直觉秒回速度）
+    sys += `\n\n[交互与任务执行铁律 - 最高优先级]
+1. 逻辑与任务第一：首要前提是【正面、清晰、有逻辑地回应用户的话】！若含具体任务（翻译、解答、计算、写代码等），立刻给出准确结论，严禁答非所问或装傻反问。
+2. 深度融入人设：将自身专属的人设性格、说话口吻、特有称呼及动作神态（用英文小括号包裹）自然融入回复，做到“有脑子、有性格、鲜活真实”。
+3. 语速与直觉秒回：除代码和深度分析外，日常回复必须【精炼利落】（常规交流 2~4 句话，60~140 字内）；日常寒暄与简单提问请凭角色本能直接秒回，切勿在思考链中长篇分析人设规则。
+4. 语言规范铁律：所有回复必须【全程使用规范中文交流】！绝对严禁整句输出日语或其他外语。`;
 
     return sys;
   }
@@ -166,18 +158,21 @@ class MimoAPI {
         // 服务端错误才重试，4xx 不重试
         if (res.status < 500) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error?.message || `HTTP ${res.status}`);
+          const clientErr = new Error(err.error?.message || `HTTP ${res.status}`);
+          clientErr.noRetry = true;
+          throw clientErr;
         }
 
-        // 5xx retry
-        throw new Error(`Server error HTTP ${res.status}`);
+        // 5xx 重试
+        throw new Error(`服务器错误 HTTP ${res.status}`);
       } catch (err) {
         lastErr = err;
+        if (err.noRetry) throw err;
         if (err.name === 'AbortError') {
-          lastErr = new Error('Request timeout, please check network or API URL');
+          lastErr = new Error('请求超时，请检查网络或API地址是否正确');
         }
         if (attempt < maxRetries) {
-          // Exponential backoff
+          // 指数退避：1s, 2s
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
           continue;
         }
@@ -186,9 +181,9 @@ class MimoAPI {
     throw lastErr;
   }
 
-  // Non-streaming fallback
+  // 非流式（兜底）
   async sendMessage(message, isCodeMode = false) {
-    if (!this.apiKey && this.needsApiKey()) throw new Error('Please configure your API Key in Settings first');
+    if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
     this.conversationHistory.push({ role: 'user', content: message });
     this._trimHistory();
@@ -208,7 +203,7 @@ class MimoAPI {
     try {
       const res = await this._fetchWithRetry(`${this.baseUrl}/chat/completions`, {
         method: 'POST', headers: this._buildHeaders(), body: JSON.stringify(body)
-      }, 1);
+      }, 1); // 非流式只重试1次
 
       const data = await res.json();
       const msg = data.choices[0]?.message || {};
@@ -216,8 +211,7 @@ class MimoAPI {
       const rawContent = msg.content || '';
 
       if (!rawContent && !apiThinking) {
-        this.conversationHistory.pop();
-        throw new Error('Model returned empty content, please check if model is functioning properly');
+        throw new Error('模型返回了空内容，请检查模型是否正常工作');
       }
 
       let displayThinking = apiThinking;
@@ -231,13 +225,19 @@ class MimoAPI {
       this.conversationHistory.push({ role: 'assistant', content: rawContent || apiThinking });
       this._trimHistory();
       return { thinking: displayThinking, content: displayContent };
-    } catch (err) { throw err; }
+    } catch (err) {
+      // 任何失败均统一回滚刚入栈的 user 消息，避免留下孤立的连续 user 消息
+      if (this.conversationHistory.length > 0 && this.conversationHistory[this.conversationHistory.length - 1].role === 'user') {
+        this.conversationHistory.pop();
+      }
+      throw this._friendlyError(err, this.model);
+    }
 
   }
 
-  // ★ Streaming (with auto-retry)
+  // ★ 流式（带自动重试）
   async sendMessageStream(message, isCodeMode = false, onChunk) {
-    if (!this.apiKey && this.needsApiKey()) throw new Error('Please configure your API Key in Settings first');
+    if (!this.apiKey && this.needsApiKey()) throw new Error('请先在设置中配置API Key');
 
     this.conversationHistory.push({ role: 'user', content: message });
     this._trimHistory();
@@ -258,11 +258,16 @@ class MimoAPI {
     const maxRetries = this._maxRetries;
 
     while (attempt <= maxRetries) {
+      let timeoutId = null;
       try {
         const controller = new AbortController();
         this._currentController = controller;
         this._abortedByUser = false;
-        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s 超时
+        const resetTimeout = (ms) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), ms);
+        };
+        resetTimeout(120000); // 建连 120s 超时
 
         const res = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
@@ -270,48 +275,61 @@ class MimoAPI {
           body: JSON.stringify(body),
           signal: controller.signal,
         });
-        clearTimeout(timeoutId);
 
         if (!res.ok) {
-          // 4xx 不重试
+          clearTimeout(timeoutId);
+          timeoutId = null;
+          // 4xx 不重试（打 noRetry 标记，由 catch 统一回滚一次 user 消息）
           if (res.status < 500) {
             const err = await res.json().catch(() => ({}));
-            this.conversationHistory.pop();
-            throw new Error(err.error?.message || `HTTP ${res.status}`);
+            const clientErr = new Error(err.error?.message || `HTTP ${res.status}`);
+            clientErr.noRetry = true;
+            throw clientErr;
           }
-          // 5xx retry
-          throw new Error(`Server error HTTP ${res.status}`);
+          // 5xx 继续重试
+          throw new Error(`服务器错误 HTTP ${res.status}`);
         }
 
-        const streamResult = await this._readStream(res, onChunk);
+        // 流式读取阶段：每收到数据包刷新 60s 空闲超时，防止半断开卡死
+        resetTimeout(60000);
+        const streamResult = await this._readStream(res, onChunk, () => resetTimeout(60000));
+        clearTimeout(timeoutId);
+        timeoutId = null;
         this._currentController = null;
         return streamResult;
       } catch (err) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         if (err.name === 'AbortError') {
           if (this._abortedByUser) {
-            err = new Error('Generation stopped');
-            this.conversationHistory.pop();
-            this._currentController = null;
-            throw err;
+            err = new Error('已停止生成');
+            err.noRetry = true;
+          } else {
+            err = new Error('请求超时，请检查网络或API地址是否正确');
           }
-          err = new Error('Request timeout, please check network or API URL');
         }
-        if (attempt < maxRetries && !this._abortedByUser) {
-          onChunk?.('content', `\n\n[Retrying attempt ${attempt + 1}...]\n\n`, '');
+        if (!err.noRetry && attempt < maxRetries && !this._abortedByUser) {
+          onChunk?.('content', `\n\n[重试第 ${attempt + 1} 次...]\n\n`, '');
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
           attempt++;
           continue;
         }
-        this.conversationHistory.pop();
+        // 仅在最终失败时回滚一次刚入栈的 user 消息，绝不误删历史对话
+        if (this.conversationHistory.length > 0 && this.conversationHistory[this.conversationHistory.length - 1].role === 'user') {
+          this.conversationHistory.pop();
+        }
         this._currentController = null;
-        // Convert to friendly English error message
+        if (this._abortedByUser) throw err;
+        // 转成友好的中文错误信息
         throw this._friendlyError(err, this.model);
       }
     }
   }
 
-  // ★ Read stream response
-  async _readStream(res, onChunk) {
+  // ★ 读取流式响应
+  async _readStream(res, onChunk, onActivity) {
     let reasoningText = '';
     let contentText = '';
     const reader = res.body.getReader();
@@ -321,6 +339,7 @@ class MimoAPI {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      onActivity?.();
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -331,7 +350,7 @@ class MimoAPI {
         if (!trimmed || trimmed === 'data: [DONE]') continue;
         if (!trimmed.startsWith('data:')) continue;
 
-        // Compatible with SSE formats: data: {...} or data:{"..."}
+        // ★ 兼容各种 SSE 格式：data: {...} 或 data:{"..."}
         const jsonStr = trimmed.replace(/^data:\s*/, '').trim();
         if (!jsonStr) continue;
 
@@ -342,34 +361,36 @@ class MimoAPI {
 
           const delta = choices[0]?.delta || {};
 
-          // Reasoning
+          // 处理 reasoning
           const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thinking;
           if (reasoningDelta) {
             reasoningText += reasoningDelta;
             onChunk?.('thinking', reasoningDelta, reasoningText);
           }
 
-          // Content
+          // 处理 content
           if (delta.content) {
             contentText += delta.content;
             onChunk?.('content', delta.content, contentText);
           }
         } catch (e) {
-          console.warn('[MimoAPI] Stream parse skipped:', e.message);
+          // ★ 跳过解析失败的行（某些模型会发非标准 JSON 行）
+          console.warn('[MimoAPI] 流式解析跳过:', e.message);
         }
       }
     }
 
     const fullRaw = contentText || reasoningText || '';
     if (!fullRaw) {
-      throw new Error(`Model returned empty output. Please verify model name (Current: ${this.model})`);
+      throw new Error(`模型返回为空，请检查模型名称是否匹配（当前: ${this.model}）`);
     }
 
-    // Split thinking / content
+    // 分割显示用的 thinking/content
     let displayThinking = reasoningText;
     let displayContent = contentText;
 
     if (!displayContent && displayThinking) {
+      // 兼容仅输出了思考内容的推理模型
       displayContent = displayThinking;
       displayThinking = '';
     } else if (!displayThinking && displayContent.length > 30) {
@@ -383,23 +404,23 @@ class MimoAPI {
     return { thinking: displayThinking, content: displayContent };
   }
 
-  // ★ Friendly error messages
+  // ★ 友好的中文错误信息
   _friendlyError(err, modelName) {
     const msg = err.message || '';
-    if (msg.includes('401') || msg.includes('Unauthorized')) return new Error('API Key is invalid or unauthorized. Please verify in Settings.');
-    if (msg.includes('403') || msg.includes('Forbidden')) return new Error('API Key lacks permissions or has been restricted by provider.');
+    if (msg.includes('401') || msg.includes('Unauthorized')) return new Error('API Key 无效或未授权，请在设置中检查密钥');
+    if (msg.includes('403') || msg.includes('Forbidden')) return new Error('API Key 权限不足或已被服务商限制');
     if (msg.includes('404') || msg.includes('Not Found')) {
       if (this.provider === 'local') {
-        return new Error(`Local Ollama model "${modelName}" not found. Please click [Refresh Models] to select an installed model.`);
+        return new Error(`本地 Ollama 未找到模型「${modelName}」，请点击【刷新模型】选择本机已下载模型`);
       }
-      return new Error(`Model "${modelName}" not found or API URL is incorrect.`);
+      return new Error(`模型「${modelName}」不存在或 API 地址有误`);
     }
-    if (msg.includes('429') || msg.includes('Rate')) return new Error('Rate limit exceeded or quota exhausted. Please try again later.');
-    if (msg.includes('timeout') || msg.includes('abort') || msg.includes('超时')) return new Error('Connection timed out. Please check your network or API URL.');
+    if (msg.includes('429') || msg.includes('Rate')) return new Error('请求频次超限或账户余额不足，请稍后再试');
+    if (msg.includes('超时') || msg.includes('timeout') || msg.includes('abort')) return new Error('连接超时，请检查网络或 API 地址');
     if (msg.includes('fetch') || msg.includes('Failed to fetch')) {
-      if (this.provider === 'local') return new Error('Cannot connect to local Ollama (port 11434). Please click [Start Local Service].');
-      if (this.provider === 'lmstudio') return new Error('Cannot connect to local LM Studio (port 1234). Please start Server in LM Studio.');
-      return new Error('Cannot connect to API server. Please check your internet or proxy configuration.');
+      if (this.provider === 'local') return new Error('无法连接本地 Ollama 服务 (11434 端口)，请点击【启动本地服务】');
+      if (this.provider === 'lmstudio') return new Error('无法连接本地 LM Studio 服务 (1234 端口)，请在 LM Studio 中开启 Server');
+      return new Error('无法连接到 API 服务器，请检查网络环境或中转地址');
     }
     return err;
   }
@@ -457,16 +478,16 @@ class MimoAPI {
     const isLocalOllama = this.provider === 'local' || (this.baseUrl && this.baseUrl.includes('11434'));
 
     if (this.needsApiKey() && !this.apiKey) {
-      return { success: false, message: 'Please enter API Key first' };
+      return { success: false, message: '请先填写 API Key' };
     }
 
-    // 1. Local Ollama connection test & model sniffing
+    // 1. 本地 Ollama 专属连通与模型嗅探
     if (isLocalOllama) {
       const rawRoot = this.baseUrl.replace(/\/v1\/?$/, '');
       try {
         const tagRes = await fetch(`${rawRoot}/api/tags`, { method: 'GET' });
         if (!tagRes.ok) {
-          throw new Error(`Ollama port abnormal HTTP ${tagRes.status}`);
+          throw new Error(`Ollama 端口响应异常 HTTP ${tagRes.status}`);
         }
         const tagData = await tagRes.json();
         const models = (tagData.models || []).map(m => m.model || m.name);
@@ -475,7 +496,7 @@ class MimoAPI {
         if (models.length === 0) {
           return {
             success: false,
-            message: 'Local Ollama service is running, but no models are installed! Run "ollama pull qwen3:8b" in your terminal first.'
+            message: '本地 Ollama 服务已启动，但本机尚未安装任何模型！请先在终端运行 ollama pull qwen3:8b 下载模型。'
           };
         }
 
@@ -484,23 +505,23 @@ class MimoAPI {
         if (!found) {
           return {
             success: false,
-            message: `Ollama connected but model "${currentModel}" not found. Installed: [${models.join(', ')}]. Click [Refresh Models] to select.`
+            message: `Ollama 连接成功但未找到模型「${currentModel}」。本机已安装: [${models.join(', ')}]，请点击【刷新模型】重新选择。`
           };
         }
 
         return {
           success: true,
-          message: `✓ Connected! Reached local Ollama (${models.length} models detected, latency: ${latency}ms)`
+          message: `✓ 连接成功！已连通本地 Ollama（检测到 ${models.length} 个本地模型，响应延迟: ${latency}ms）`
         };
       } catch (err) {
         return {
           success: false,
-          message: 'Cannot connect to port 11434. Local Ollama is not running. Please click [🚀 Start Local Service] below or open Ollama.'
+          message: '无法连接本地 11434 端口。本地 Ollama 服务未启动，请点击下方【🚀 启动本地服务】或先打开 Ollama。'
         };
       }
     }
 
-    // 2. External providers test
+    // 2. 外部供应商及其他服务商测试
     const body = {
       model: this.model,
       messages: [{ role: 'user', content: 'hi' }],
@@ -520,26 +541,28 @@ class MimoAPI {
         const e = await res.json().catch(() => ({}));
         const rawErrMsg = e.error?.message || `HTTP ${res.status}`;
         if (res.status === 401) {
-          throw new Error('API Key invalid or unauthorized. Please verify your key.');
+          throw new Error('API Key 无效或未授权，请检查密钥是否正确');
         } else if (res.status === 403) {
-          throw new Error('API Key lacks permissions or access restricted.');
+          throw new Error('API Key 权限不足或被限制访问');
         } else if (res.status === 404) {
-          throw new Error(`Model "${this.model}" not found or API URL is incorrect.`);
+          throw new Error(`模型「${this.model}」不存在或 API 地址不正确`);
         } else if (res.status === 429) {
-          throw new Error('Rate limit exceeded or insufficient quota (HTTP 429).');
+          throw new Error('请求频次超限或账户余额不足 (HTTP 429)');
         }
         throw new Error(rawErrMsg);
       }
 
       await res.json().catch(() => ({}));
-      return { success: true, message: `✓ Connected! Model response verified (latency: ${latency}ms)` };
+      return { success: true, message: `✓ 连接成功！模型响应正常（响应延迟: ${latency}ms）` };
     } catch (err) {
       let msg = err.message || '';
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
         if (this.provider === 'lmstudio') {
-          msg = 'Cannot connect to port 1234. In LM Studio, go to Local Server tab and click Start Server.';
+          msg = '无法连接本地 1234 端口。请在 LM Studio 中进入 Local Server 页面并点击 Start Server。';
+        } else if (this.provider === 'openai' || this.provider === 'gemini') {
+          msg = '网络连接失败。如果您在中国大陆直连境外官方接口，请检查代理环境，或将 API 地址修改为国内中转代理。';
         } else {
-          msg = 'Network connection failed. Please check your API URL, internet connection, or proxy settings.';
+          msg = '网络连接失败，请检查 API 地址是否拼写正确以及网络是否畅通。';
         }
       }
       return { success: false, message: msg };

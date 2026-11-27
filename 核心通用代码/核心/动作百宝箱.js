@@ -183,20 +183,20 @@ class ActionMenuManager {
 
     // 角色专属姿态与动作数据库（9大角色完整覆盖 + 100%音文一致专属CV语音 + 多语音不重复触碰池）
     this.ACTION_DATABASE = {
-      // 1. Ruoxi
+      // 1. 若曦（原创白狐仙 · ChatGPT Pets v2 精灵表 · 中文萌系仙狐声线）
       ruoxi: {
-        title: '✨ Ruoxi Actions',
+        title: '✨ 若曦姿态百宝箱',
         wanderVoices: { start: '04', stop: '01' },
         actions: [
-          { id: 'idle', label: 'Idle & Standby', icon: '🌸', kind: 'sprite', method: 'goIdle', voice: '01', bubble: 'At your service, breathing softly and awaiting orders. 🌸' },
-          { id: 'work', label: 'Focus Work Mode', icon: '💼', kind: 'sprite', method: 'toggleWork', voice: '02', bubble: 'Entering focus work mode! Let\'s do our best! 💼' },
-          { id: 'sleep', label: 'Cozy Sleep', icon: '🌙', kind: 'sprite', method: 'toggleSleep', voice: '03', bubble: 'Curling up with my warm fox tail, sweet dreams~ 🌙' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander', voice: '04', bubble: 'Yay! Ruoxi can freely explore Master\'s desktop now! 🐾' },
-          { id: 'wave', label: 'Paw Wave', icon: '👋', kind: 'sprite', method: 'wave', voice: '05', bubble: 'Hello there! Ruoxi is always right by your side. 👋' },
-          { id: 'jump', label: 'Light Jump', icon: '⚡', kind: 'sprite', method: 'jump', voice: '06', bubble: 'Whoosh! Look at my swift jump! ⚡' },
-          { id: 'review', label: 'Show Progress', icon: '📜', kind: 'sprite', method: 'review', voice: '07', bubble: 'Work progress is ready, please take a look! 📜' },
-          { id: 'fail', label: 'Confused & Pout', icon: '😿', kind: 'sprite', method: 'fail', voice: '08', bubble: 'Oops, hit a little snag! Give me a second~ 😿' },
-          { id: 'wait', label: 'Awaiting Orders', icon: '💭', kind: 'sprite', method: 'wait', voice: '09', bubble: 'Waiting attentively for your command. 💭' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', kind: 'sprite', method: 'goIdle', voice: '01', bubble: '乖乖待命呼吸中，随时听候主人差遣。 🌸' },
+          { id: 'work', label: '伏案专注·打工模式', icon: '💼', kind: 'sprite', method: 'toggleWork', voice: '02', bubble: '开启专注工作模式，主人也要加油哦！ 💼' },
+          { id: 'sleep', label: '抱尾入睡·呼噜呼噜', icon: '🌙', kind: 'sprite', method: 'toggleSleep', voice: '03', bubble: '抱紧暖暖的狐狸尾巴，呼噜噜睡喽。 🌙' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander', voice: '04', bubble: '好耶，若曦可以在主人的桌面上尽情溜达啦！ 🐾' },
+          { id: 'wave', label: '抬手问候·挥挥小爪', icon: '👋', kind: 'sprite', method: 'wave', voice: '05', bubble: '主人好呀，若曦一直都在你身边呢。 👋' },
+          { id: 'jump', label: '纵身跃起·轻巧一跳', icon: '⚡', kind: 'sprite', method: 'jump', voice: '06', bubble: '嗖，看若曦轻巧一跃！ ⚡' },
+          { id: 'review', label: '呈递成果·请君检阅', icon: '📜', kind: 'sprite', method: 'review', voice: '07', bubble: '成果已经准备好啦，主人请快快检阅。 📜' },
+          { id: 'fail', label: '抱头沮丧·受阻缓和', icon: '😿', kind: 'sprite', method: 'fail', voice: '08', bubble: '呜，遇到小困难了，容若曦抱头缓一缓嘛。 😿' },
+          { id: 'wait', label: '歪头眨眼·静候指令', icon: '💭', kind: 'sprite', method: 'wait', voice: '09', bubble: '歪头等待主人的新指令中。 💭' }
         ],
         touch: {
           head: { kind: 'sprite', method: 'wave', voice: '10', voices: ['10', '05', '01', '09'], bubble: '摸摸狐狸耳朵好舒服呀，尾巴都要摇起来啦！ ✨' },
@@ -205,19 +205,19 @@ class ActionMenuManager {
         }
       },
 
-      // 2. Megumi Kato
+      // 2. 加藤惠（路人女主的养成方法 · 索尼官方一択彼女Live2D · 安野希世乃温柔原声）
       megumi: {
-        title: '🌸 Megumi Actions',
+        title: '🌸 加藤惠动作百宝箱',
         wanderVoices: { start: '06', stop: '01' },
         actions: [
-          { id: 'idle', label: 'Idle & Standby', icon: '🌸', motion: 'IDLING_01', expression: 'F_NORMAL', voice: '01', bubble: '现在是下午2点20分哦。' },
-          { id: 'fun', label: 'Script Creation', icon: '😊', motion: 'I_FUN_W', expression: 'F_FUN', voice: '02', bubble: '接下来要决定只属于我们两个人的游戏剧本了哦。' },
-          { id: 'pout', label: 'Cute Pout', icon: '😤', motion: 'I_ANGRY_W', expression: 'F_ANGRY', voice: '04', bubble: '说不定会开始做出一些不可思议的举动呢。' },
-          { id: 'surprise', label: 'Gentle Hint', icon: '😳', motion: 'I_SURPRISE_W', expression: 'F_SURPRISE', voice: '08', bubble: '因为加藤会为你提供提示的哦。' },
-          { id: 'shy', label: 'Opening Heart', icon: '🥺', motion: 'I_SAD_W', expression: 'F_SAD', voice: '03', bubble: '通过这次创作活动，慢慢向你敞开心扉……' },
-          { id: 'heroine', label: 'Main Heroine', icon: '💖', motion: 'IDLING_03', expression: 'F_FUN', voice: '05', bubble: '我有没有成为只属于你的第一女主角呢？' },
-          { id: 'gentle', label: 'Cherished Memory', icon: '☕', motion: 'I_FUN_S', expression: 'F_DOWN', voice: '06', bubble: '请尽情享受只属于我们两个人的回忆制作吧。' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', motion: 'IDLING_01', expression: 'F_NORMAL', voice: '01', bubble: '现在是下午2点20分哦。' },
+          { id: 'fun', label: '身前搭手·专属剧本', icon: '😊', motion: 'I_FUN_W', expression: 'F_FUN', voice: '02', bubble: '接下来要决定只属于我们两个人的游戏剧本了哦。' },
+          { id: 'pout', label: '鼓嘴侧头·奇妙举动', icon: '😤', motion: 'I_ANGRY_W', expression: 'F_ANGRY', voice: '04', bubble: '说不定会开始做出一些不可思议的举动呢。' },
+          { id: 'surprise', label: '双手张开·贴心提示', icon: '😳', motion: 'I_SURPRISE_W', expression: 'F_SURPRISE', voice: '08', bubble: '因为加藤会为你提供提示的哦。' },
+          { id: 'shy', label: '垂首侧眸·敞开心扉', icon: '🥺', motion: 'I_SAD_W', expression: 'F_SAD', voice: '03', bubble: '通过这次创作活动，慢慢向你敞开心扉……' },
+          { id: 'heroine', label: '深情告白·第一女主', icon: '💖', motion: 'IDLING_03', expression: 'F_FUN', voice: '05', bubble: '我有没有成为只属于你的第一女主角呢？' },
+          { id: 'gentle', label: '优雅微倾·二人回忆', icon: '☕', motion: 'I_FUN_S', expression: 'F_DOWN', voice: '06', bubble: '请尽情享受只属于我们两个人的回忆制作吧。' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: 'I_FUN_W', expression: 'F_FUN', voice: '05', voices: ['05', '06', '03', '02', '07'], bubble: '我有没有成为只属于你的第一女主角呢？' },
@@ -226,19 +226,19 @@ class ActionMenuManager {
         }
       },
 
-      // 3. Megumin
+      // 3. 惠惠（为美好的世界献上祝福！· 原版动画Live2D · 高桥李依爆裂原声）
       megumin: {
-        title: '💥 Megumin Explosion',
+        title: '💥 惠惠爆裂百宝箱',
         wanderVoices: { start: '04', stop: '01' },
         actions: [
-          { id: 'idle', label: 'Idle & Standby', icon: '🌸', motion: 'bound', expression: '20_Expression_Smile_01', voice: '07', bubble: '这次邂逅乃世界之宿命。来吧，收下这起始之证吧！' },
-          { id: 'tired', label: 'Deep Thinking', icon: '💫', motion: '00_Sad_01', expression: '20_Expression_Sad_01', voice: '01', bubble: '这里是以金钱为媒介向顾客提供物品的场所……嗯，有希的说话方式好难啊。' },
-          { id: 'chant', label: 'Fire Feast', icon: '🔮', motion: '00_Skill_01', expression: '20_Expression_Anger_01', voice: '02', bubble: '现在正是狂宴之时！来吧，炽炎升腾！' },
-          { id: 'proud', label: 'Proud Pose', icon: '👑', motion: '00_Pride_01', expression: '20_Expression_Smile_01', voice: '08', bubble: '即便是魔王军干部，也绝非吾之爆裂魔法的敌手！' },
-          { id: 'bound', label: 'Joyful Cheer', icon: '⭐', motion: '00_Happy_01', expression: '20_Expression_Smile_01', voice: '04', bubble: '来吧，今天也一起 Let\'s 爆裂吧！' },
-          { id: 'magic', label: 'Crimson Magic', icon: '🔥', motion: '00_Skill_01', expression: '20_Expression_Serious_01', voice: '06', bubble: '你已经领悟到爆裂魔法的魅力了呢！' },
-          { id: 'explosion', label: 'Explosion!', icon: '💥', motion: '00_Skill_02', expression: '20_Expression_Serious_01', voice: '10', bubble: '万物皆归于灰烬，自深渊降临吧！这就是人类最大威力的究极攻击魔法——Explosion！' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', motion: 'bound', expression: '20_Expression_Smile_01', voice: '07', bubble: '这次邂逅乃世界之宿命。来吧，收下这起始之证吧！' },
+          { id: 'tired', label: '苦思冥想·模仿台词', icon: '💫', motion: '00_Sad_01', expression: '20_Expression_Sad_01', voice: '01', bubble: '这里是以金钱为媒介向顾客提供物品的场所……嗯，有希的说话方式好难啊。' },
+          { id: 'chant', label: '魔法手势·炽炎狂宴', icon: '🔮', motion: '00_Skill_01', expression: '20_Expression_Anger_01', voice: '02', bubble: '现在正是狂宴之时！来吧，炽炎升腾！' },
+          { id: 'proud', label: '单手叉腰·得意夸耀', icon: '👑', motion: '00_Pride_01', expression: '20_Expression_Smile_01', voice: '08', bubble: '即便是魔王军干部，也绝非吾之爆裂魔法的敌手！' },
+          { id: 'bound', label: '高举双手·开心欢呼', icon: '⭐', motion: '00_Happy_01', expression: '20_Expression_Smile_01', voice: '04', bubble: '来吧，今天也一起 Let\'s 爆裂吧！' },
+          { id: 'magic', label: '单手扶帽·爆裂魅力', icon: '🔥', motion: '00_Skill_01', expression: '20_Expression_Serious_01', voice: '06', bubble: '你已经领悟到爆裂魔法的魅力了呢！' },
+          { id: 'explosion', label: '高举法杖·爆裂魔法！', icon: '💥', motion: '00_Skill_02', expression: '20_Expression_Serious_01', voice: '10', bubble: '万物皆归于灰烬，自深渊降临吧！这就是人类最大威力的究极攻击魔法——Explosion！' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: '00_Shame_01', expression: '20_Expression_Shame_01', voice: '06', voices: ['06', '04', '07', '01', '03'], bubble: '你已经领悟到爆裂魔法的魅力了呢！' },
@@ -247,18 +247,18 @@ class ActionMenuManager {
         }
       },
 
-      // 4. Rem
+      // 4. 蕾姆（Re:从零开始的异世界生活 · 原版高模3D VRM + 水濑祈26段CV声库）
       rem: {
-        title: '💙 Rem Actions',
+        title: '💙 蕾姆专属百宝箱',
         wanderVoices: { start: '07', stop: '11' },
         actions: [
-          { id: 'idle', label: 'Idle & Waiting', icon: '🌸', motion: 'idle', voice: '02', bubble: '我会做好饭菜等您的，请务必平安归来。' },
-          { id: 'curtsey', label: 'Maid Bow', icon: '👗', motion: 'flick_head', voice: '26', bubble: '我名叫蕾姆。从今天起，由我来负责全力辅佐您。' },
-          { id: 'pray', label: 'Gentle Care', icon: '🙏', motion: 'tap_body', voice: '03', bubble: '请不要勉强自己，您的身体才是第一位的哦。' },
-          { id: 'shy', label: 'Sweet Smile', icon: '🌸', motion: 'talk', voice: '18', bubble: '被这样温柔以待的话，蕾姆会忍不住想要撒娇的……' },
-          { id: 'fist', label: 'Ready for Battle', icon: '👊', motion: 'tap_body', voice: '05', bubble: '蕾姆在战斗中也能派上用场，开路先锋之类的工作请尽管交给我吧。' },
-          { id: 'happy', label: 'Smiling Future', icon: '✨', motion: 'flick_head', voice: '08', bubble: '谈论未来的话题时，要笑着说才行哦，对吧？' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·备膳迎归', icon: '🌸', motion: 'idle', voice: '02', bubble: '我会做好饭菜等您的，请务必平安归来。' },
+          { id: 'curtsey', label: '双手交叠·躬身致礼', icon: '👗', motion: 'flick_head', voice: '26', bubble: '我名叫蕾姆。从今天起，由我来负责全力辅佐您。' },
+          { id: 'pray', label: '双手合十·体贴叮嘱', icon: '🙏', motion: 'tap_body', voice: '03', bubble: '请不要勉强自己，您的身体才是第一位的哦。' },
+          { id: 'shy', label: '单手抚颊·温柔撒娇', icon: '🌸', motion: 'talk', voice: '18', bubble: '被这样温柔以待的话，蕾姆会忍不住想要撒娇的……' },
+          { id: 'fist', label: '屈臂握拳·前倾助阵', icon: '👊', motion: 'tap_body', voice: '05', bubble: '蕾姆在战斗中也能派上用场，开路先锋之类的工作请尽管交给我吧。' },
+          { id: 'happy', label: '双臂挥舞·笑着谈未来', icon: '✨', motion: 'flick_head', voice: '08', bubble: '谈论未来的话题时，要笑着说才行哦，对吧？' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: 'flick_head', voice: '18', voices: ['18', '25', '07', '08', '12', '03', '04'], bubble: '被这样温柔以待的话，蕾姆会忍不住想要撒娇的……' },
@@ -267,18 +267,18 @@ class ActionMenuManager {
         }
       },
 
-      // 5. Hatsune Miku
+      // 5. 初音未来（VOCALOID · 经典电子歌姬 · 藤田咲原声+PJSK官方CV声线）
       miku: {
-        title: '🎵 Miku Actions',
+        title: '🎵 初音未来百宝箱',
         wanderVoices: { start: '05', stop: '09' },
         actions: [
-          { id: 'idle', label: 'Diva Standby', icon: '🌸', motion: 'miku_idle_01', voice: '06', bubble: '下一首歌也请多多指教哦！' },
-          { id: 'shake', label: 'Twintail Shake', icon: '🎵', motion: 'miku_shake_01', voice: '02', bubble: '好想早点见到你呀！' },
-          { id: 'wave', label: 'Stage Wave', icon: '👋', motion: 'miku_m_01', voice: '03', bubble: '谢谢你能来！' },
-          { id: 'heart', label: 'Stage Heart', icon: '💚', motion: 'miku_m_02', voice: '01', bubble: '谢谢你的应援！ ♪' },
-          { id: 'shy', label: 'Dance with Me', icon: '🌸', motion: 'miku_m_03', voice: '05', bubble: '嘿嘿，那个呀，我们一起跳舞吧！' },
-          { id: 'spin', label: 'Rhythm Bounce', icon: '✨', motion: 'miku_m_04', voice: '04', bubble: '我想用歌声传递幸福！已经等不及下一场演唱会啦！' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·歌姬待机', icon: '🌸', motion: 'miku_idle_01', voice: '06', bubble: '下一首歌也请多多指教哦！' },
+          { id: 'shake', label: '甩双马尾·动感甩动', icon: '🎵', motion: 'miku_shake_01', voice: '02', bubble: '好想早点见到你呀！' },
+          { id: 'wave', label: '躬身致意·元气招手', icon: '👋', motion: 'miku_m_01', voice: '03', bubble: '谢谢你能来！' },
+          { id: 'heart', label: '左右晃动·舞台比心', icon: '💚', motion: 'miku_m_02', voice: '01', bubble: '谢谢你的应援！ ♪' },
+          { id: 'shy', label: '歪头侧身·邀你共舞', icon: '🌸', motion: 'miku_m_03', voice: '05', bubble: '嘿嘿，那个呀，我们一起跳舞吧！' },
+          { id: 'spin', label: '微仰节奏·舞台跃动', icon: '✨', motion: 'miku_m_04', voice: '04', bubble: '我想用歌声传递幸福！已经等不及下一场演唱会啦！' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: 'miku_m_03', voice: '01', voices: ['01', '02', '03', '05', '06'], bubble: '谢谢你的应援！ ♪' },
@@ -287,19 +287,19 @@ class ActionMenuManager {
         }
       },
 
-      // 6. Takagi
+      // 6. 高木同学（擅长捉弄的高木同学 · 经典捉弄 · 高桥李依俏皮少女原声）
       takagi: {
-        title: '🍂 Takagi Actions',
+        title: '🍂 高木同学百宝箱',
         wanderVoices: { start: '06', stop: '05' },
         actions: [
-          { id: 'idle', label: 'Idle & Standby', icon: '🌸', motion: 'Idle', expression: 'Neutral', voice: '05', bubble: '呐，现在是不是感觉我就在离你非常近的地方呀？像这样。' },
-          { id: 'tease', label: 'Teasing Smile', icon: '😏', motion: 'Tease', expression: 'TeaseSmile', voice: '01', bubble: '你现在在看什么呢？哦～原来是在看我呀，这样啊～' },
-          { id: 'wink', label: 'Playful Wink', icon: '😉', motion: 'Tease', expression: 'Wink', voice: '02', bubble: '抱歉抱歉，不能再捉弄你了呢。' },
-          { id: 'surprise', label: 'Curious Wonder', icon: '😳', motion: 'Surprised', expression: 'Surprised', voice: '03', bubble: '呐，你是喜欢的吧？喜欢的话直接说喜欢不就好了嘛。' },
-          { id: 'blush', label: 'Blushing Gaze', icon: '😳', motion: 'Poke', expression: 'Blush', voice: '09', bubble: '我喜欢西片哦。' },
-          { id: 'sleep', label: 'Desk Nap', icon: '💤', motion: 'Sleep', expression: 'Sleepy', voice: '05', bubble: '呐，现在是不是感觉我就在离你非常近的地方呀？像这样。' },
-          { id: 'wakeup', label: 'Waking Up', icon: '🌤️', motion: 'WakeUp', expression: 'Neutral', voice: '06', bubble: '就算我走到这边来你也会看着我吗？啊，对上视线了，呵呵～' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', motion: 'Idle', expression: 'Neutral', voice: '05', bubble: '呐，现在是不是感觉我就在离你非常近的地方呀？像这样。' },
+          { id: 'tease', label: '歪头坏笑·西片捉弄', icon: '😏', motion: 'Tease', expression: 'TeaseSmile', voice: '01', bubble: '你现在在看什么呢？哦～原来是在看我呀，这样啊～' },
+          { id: 'wink', label: '侧首眨眼·单眼Wink', icon: '😉', motion: 'Tease', expression: 'Wink', voice: '02', bubble: '抱歉抱歉，不能再捉弄你了呢。' },
+          { id: 'surprise', label: '张嘴吃惊·直球追问', icon: '😳', motion: 'Surprised', expression: 'Surprised', voice: '03', bubble: '呐，你是喜欢的吧？喜欢的话直接说喜欢不就好了嘛。' },
+          { id: 'blush', label: '托腮凝视·害羞脸红', icon: '😳', motion: 'Poke', expression: 'Blush', voice: '09', bubble: '我喜欢西片哦。' },
+          { id: 'sleep', label: '阖眼趴桌·午间小憩', icon: '💤', motion: 'Sleep', expression: 'Sleepy', voice: '05', bubble: '呐，现在是不是感觉我就在离你非常近的地方呀？像这样。' },
+          { id: 'wakeup', label: '揉眼醒来·四目相对', icon: '🌤️', motion: 'WakeUp', expression: 'Neutral', voice: '06', bubble: '就算我走到这边来你也会看着我吗？啊，对上视线了，呵呵～' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: 'Poke', expression: 'Blush', voice: '06', voices: ['06', '09', '10', '05', '08'], bubble: '就算我走到这边来你也会看着我吗？啊，对上视线了，呵呵～' },
@@ -308,18 +308,18 @@ class ActionMenuManager {
         }
       },
 
-      // 7. Zero Two
+      // 7. 零二（DARLING in the FRANXX · 户松遥妖娆达令御姐原声）
       zerotwo: {
-        title: '🍯 Zero Two Actions',
+        title: '🍯 零二姿态百宝箱',
         wanderVoices: { start: '09', stop: '10' },
         actions: [
-          { id: 'idle', label: 'Idle & Standby', icon: '🌸', voice: '10', bubble: '只有你一个。' },
-          { id: 'darling', label: 'My Darling', icon: '🍭', voice: '01', bubble: '你就是我的达令！' },
-          { id: 'tease', label: 'Playful Smile', icon: '🍯', voice: '02', bubble: '我好像对你有点感兴趣呢，要不要成为我的达令？' },
-          { id: 'lollipop', label: 'Sweet Lollipop', icon: '🍬', voice: '03', bubble: '这个又甜又好吃哦，一起吃吧？' },
-          { id: 'flight', label: 'Strelizia Pilot', icon: '🚀', voice: '04', bubble: '好好地驾驶成功了呢，刚才很棒哦。' },
-          { id: 'pout', label: 'Cheeky Pout', icon: '😜', voice: '05', bubble: '真天真呢，不过我并不讨厌哦。' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', voice: '10', bubble: '只有你一个。' },
+          { id: 'darling', label: '我的达令', icon: '🍭', voice: '01', bubble: '你就是我的达令！' },
+          { id: 'tease', label: '调皮微笑', icon: '🍯', voice: '02', bubble: '我好像对你有点感兴趣呢，要不要成为我的达令？' },
+          { id: 'lollipop', label: '叼棒棒糖', icon: '🍬', voice: '03', bubble: '这个又甜又好吃哦，一起吃吧？' },
+          { id: 'flight', label: '鹤望兰号', icon: '🚀', voice: '04', bubble: '好好地驾驶成功了呢，刚才很棒哦。' },
+          { id: 'pout', label: '略略略', icon: '😜', voice: '05', bubble: '真天真呢，不过我并不讨厌哦。' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { voice: '06', voices: ['06', '10', '03', '09', '01'], bubble: '我也一直都是孤身一人哦，因为这对角的关系。' },
@@ -328,18 +328,18 @@ class ActionMenuManager {
         }
       },
 
-      // 8. Yukino Yukinoshita
+      // 8. 雪之下雪乃（我的青春恋爱喜剧果然有问题 · 早见沙织清冷高雅毒舌大小姐原声）
       yukino: {
-        title: '🐱 Yukino Actions',
+        title: '🐱 雪乃姿态百宝箱',
         wanderVoices: { start: '02', stop: '10' },
         actions: [
-          { id: 'idle', label: 'Quiet Standby', icon: '🌸', voice: '10', bubble: '你可以完全放心，好好休息吧。' },
-          { id: 'read', label: 'Quiet Reading', icon: '📖', voice: '01', bubble: '欢迎来到侍奉部，我很欢迎你哦。' },
-          { id: 'sigh', label: 'Gentle Sigh', icon: '🐱', voice: '02', bubble: '既然受人所托，我就会尽到责任。' },
-          { id: 'tea', label: 'Black Tea', icon: '☕', voice: '03', bubble: '我会帮你矫正你的问题，心怀感激吧。' },
-          { id: 'cat', label: 'Sharp Wit', icon: '🐾', voice: '04', bubble: '真是惊讶，一看到你的脸，困意瞬间就一扫恶空了呢。' },
-          { id: 'smile', label: 'Warm Smile', icon: '🌸', voice: '10', bubble: '你可以完全放心，好好休息吧。' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·乖乖待命', icon: '🌸', voice: '10', bubble: '你可以完全放心，好好休息吧。' },
+          { id: 'read', label: '静心阅读', icon: '📖', voice: '01', bubble: '欢迎来到侍奉部，我很欢迎你哦。' },
+          { id: 'sigh', label: '轻叹无奈', icon: '🐱', voice: '02', bubble: '既然受人所托，我就会尽到责任。' },
+          { id: 'tea', label: '享用红茶', icon: '☕', voice: '03', bubble: '我会帮你矫正你的问题，心怀感激吧。' },
+          { id: 'cat', label: '毒舌醒神', icon: '🐾', voice: '04', bubble: '真是惊讶，一看到你的脸，困意瞬间就一扫而空了呢。' },
+          { id: 'smile', label: '冰融微笑', icon: '🌸', voice: '10', bubble: '你可以完全放心，好好休息吧。' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { voice: '10', voices: ['10', '09', '01', '02', '05'], bubble: '你可以完全放心，好好休息吧。' },
@@ -348,18 +348,18 @@ class ActionMenuManager {
         }
       },
 
-      // 9. Umaru Doma
+      // 9. 土间埋（干物妹！小埋 · 田中爱美原版CV原声声库 + 仓鼠斗篷Live2D）
       umaru: {
-        title: '🐹 Umaru Actions',
+        title: '🐹 小埋干物妹百宝箱',
         wanderVoices: { start: '26', stop: '06' },
         actions: [
-          { id: 'idle', label: 'Hamster Sloth', icon: '🐹', motion: 'umaru_idle', voice: '06', bubble: '在夏天有空调、冬天有被炉的小埋天堂里，悠闲地懒散度日吧！' },
-          { id: 'cola', label: 'Cola & Chips', icon: '🥤', motion: 'rita_Live2D_001', voice: '05', bubble: '薯片和巧克力的搭配虽然棒极了，但芝士和鱿鱼的搭配也无可挑剔呢！' },
-          { id: 'game', label: 'Pro Gamer', icon: '🎮', motion: 'rita_Live2D_004', voice: '04', bubble: '好慢！太慢了啦哥哥！不陪小埋打个痛快游戏的话，我可不原谅你哦！' },
-          { id: 'roll', label: 'Rolling Around', icon: '🌀', motion: 'rita_Live2D_008', voice: '15', bubble: '好啦好啦，再睡10分钟就好……有什么关系嘛，哥哥今天也休息一天嘛……' },
-          { id: 'pout', label: 'Spoiled Pout', icon: '😤', motion: 'rita_Live2D_021', voice: '03', bubble: '帮我买漫画回来嘛，哥哥！好想看、好想看、好想看嘛——！' },
-          { id: 'happy', label: 'Happy Dance', icon: '✨', motion: 'rita_Live2D_010', voice: '19', bubble: '谢谢你，哥哥！今天工作也要加油哦！' },
-          { id: 'wander', label: 'Desktop Roaming', icon: '🐾', kind: 'wander' }
+          { id: 'idle', label: '待机呼吸·仓鼠瘫倒', icon: '🐹', motion: 'umaru_idle', voice: '06', bubble: '在夏天有空调、冬天有被炉的小埋天堂里，悠闲地懒散度日吧！' },
+          { id: 'cola', label: '开怀畅饮·零食绝配', icon: '🥤', motion: 'rita_Live2D_001', voice: '05', bubble: '薯片和巧克力的搭配虽然棒极了，但芝士和鱿鱼的搭配也无可挑剔呢！' },
+          { id: 'game', label: '全服第一·痛快通关', icon: '🎮', motion: 'rita_Live2D_004', voice: '04', bubble: '好慢！太慢了啦哥哥！不陪小埋打个痛快游戏的话，我可不原谅你哦！' },
+          { id: 'roll', label: '毛毛虫式·满地打滚', icon: '🌀', motion: 'rita_Live2D_008', voice: '15', bubble: '好啦好啦，再睡10分钟就好……有什么关系嘛，哥哥今天也休息一天嘛……' },
+          { id: 'pout', label: '鼓嘴撒娇·要买漫画', icon: '😤', motion: 'rita_Live2D_021', voice: '03', bubble: '帮我买漫画回来嘛，哥哥！好想看、好想看、好想看嘛——！' },
+          { id: 'happy', label: '手舞足蹈·欢呼雀跃', icon: '✨', motion: 'rita_Live2D_010', voice: '19', bubble: '谢谢你，哥哥！今天工作也要加油哦！' },
+          { id: 'wander', label: '自由漫步·桌面溜达', icon: '🐾', kind: 'wander' }
         ],
         touch: {
           head: { motion: 'rita_Live2D_002', voice: '10', voices: ['10', '11', '19', '13', '02', '35', '26'], bubble: '哥哥！嘿嘿，只是试着叫一下而已！' },
@@ -435,7 +435,7 @@ class ActionMenuManager {
       <div class="pet-action-grid">
         ${data.actions.map(act => {
           const isWanderBtn = act.id === 'wander' || act.kind === 'wander';
-          const label = (isWanderBtn && isWandering) ? 'Stop Wander · Idle' : act.label;
+          const label = (isWanderBtn && isWandering) ? '停止漫步·原地待命' : act.label;
           const activeStyle = (isWanderBtn && isWandering) ? 'style="border-color:#ff4757;background:rgba(255,71,87,0.12);color:#d63031;font-weight:bold;"' : '';
           return `
           <button class="pet-action-item" data-action="${act.id}" ${activeStyle}>
@@ -445,16 +445,19 @@ class ActionMenuManager {
       </div>
       <div class="pet-action-footer" style="display:flex;gap:4px;margin-top:8px;padding-top:6px;border-top:1px dashed rgba(217,79,79,0.2);">
         <button class="pet-action-footer-btn btn-toggle-pomodoro-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(255,107,107,0.4);background:rgba(255,107,107,0.1);cursor:pointer;color:#d94f4f;display:flex;align-items:center;justify-content:center;gap:2px;">
-          <span>💼</span> Pomodoro
+          <span>💼</span> 番茄钟
         </button>
         <button class="pet-action-footer-btn btn-open-scale-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:2px;">
-          <span>📐</span> Resize
+          <span>📐</span> 大小
         </button>
         <button class="pet-action-footer-btn btn-open-shortcuts-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(217,79,79,0.25);background:rgba(255,255,255,0.9);cursor:pointer;color:#b83a3a;display:flex;align-items:center;justify-content:center;gap:2px;">
-          <span>⌨️</span> Shortcuts
+          <span>⌨️</span> 快捷键
+        </button>
+        <button class="pet-action-footer-btn btn-open-arcade-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid rgba(255,159,67,0.35);background:rgba(255,159,67,0.1);cursor:pointer;color:#e67e22;display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span>🎮</span> 街机
         </button>
         <button class="pet-action-footer-btn btn-exit-pet-from-menu" style="flex:1;padding:5px 4px;font-size:11px;border-radius:6px;border:1px solid #d94f4f;background:#d94f4f;color:#fff;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:2px;">
-          <span>🔄</span> Chat UI
+          <span>🔄</span> 网页
         </button>
       </div>
     `;
@@ -478,6 +481,12 @@ class ActionMenuManager {
         window.app?.petMode?._toggleActionMenu?.(false);
         menu.classList.remove('show');
         window.shortcutManager?.toggleMenu?.(true);
+        return;
+      }
+      if (e.target.closest('.btn-open-arcade-from-menu')) {
+        window.app?.petMode?._toggleActionMenu?.(false);
+        menu.classList.remove('show');
+        window.arcadeManager?.openArcade?.();
         return;
       }
       if (e.target.closest('.btn-exit-pet-from-menu')) {
@@ -589,10 +598,10 @@ class ActionMenuManager {
 
     const transcript = this.getVoiceTranscript(id, v);
     if (id === 'ruoxi') {
-      petMode?._showBubble?.(transcript || (isWandering ? 'Yay! Ruoxi can freely explore Master desktop now! 🐾' : 'At your service, breathing softly and awaiting orders. 🌸'));
+      petMode?._showBubble?.(transcript || (isWandering ? '好耶，若曦可以在主人的桌面上尽情溜达啦！ 🐾' : '乖乖待命呼吸中，随时听候主人差遣。 🌸'));
     } else {
-      const prefix = isWandering ? '🐾 [Wandering] ' : '🌸 [Idle] ';
-      petMode?._showBubble?.(prefix + (transcript || (isWandering ? 'Exploring the desktop now~' : 'Wander ended, awaiting orders~')));
+      const prefix = isWandering ? '🐾 [开启漫步] ' : '🌸 [原地待命] ';
+      petMode?._showBubble?.(prefix + (transcript || (isWandering ? '出发去桌面上溜达咯～' : '漫步结束，乖乖待命啦～')));
     }
   }
 

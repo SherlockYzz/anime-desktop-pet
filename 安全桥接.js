@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getScreenSize: () => ipcRenderer.invoke('get-screen-size'),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+  maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   onShowSettings: (callback) => ipcRenderer.on('show-settings', callback),
   onToggleModeRequest: (callback) => ipcRenderer.on('toggle-mode-request', callback),
@@ -12,8 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ★ 本地文件检测
   checkFileExists: (relPath) => ipcRenderer.invoke('check-file-exists', relPath),
 
-  // ★ 鼠标穿透（透明区域穿透，实体区域交互）
+  // ★ 鼠标穿透（透明区域穿透，实体区域交互）与透明态防缩放
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
+  setResizable: (flag) => ipcRenderer.send('set-resizable', flag),
 
   // ★ 桌宠移动与尺寸缩放
   getWorkArea: () => ipcRenderer.invoke('get-work-area'),
@@ -33,13 +35,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveCanonicalLines: (folder, lines) => ipcRenderer.invoke('save-canonical-lines', folder, lines),
   loadCanonicalLines: (folder) => ipcRenderer.invoke('load-canonical-lines', folder),
 
-  // ★ 本地 Ollama 检测与一键启动
+  // ★ 本地 Ollama 检测、一键启动与离线模型扫描
   detectLocalOllama: () => ipcRenderer.invoke('detect-local-ollama'),
   startLocalOllama: () => ipcRenderer.invoke('start-local-ollama'),
+  listLocalOllamaModels: () => ipcRenderer.invoke('list-local-ollama-models'),
 
   // ★ 桌面贴心管家：系统负荷与气象感知
   getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
   getWeatherInfo: () => ipcRenderer.invoke('get-weather-info'),
+
+  // ★ 安全密钥存储（Electron safeStorage）
+  getSecureApiKey: () => ipcRenderer.invoke('get-secure-api-key'),
+  setSecureApiKey: (apiKey) => ipcRenderer.invoke('set-secure-api-key', apiKey),
+
+  // ★ 窗口显隐状态通知（用于隐藏到托盘/最小化时暂停渲染循环降低功耗）
+  onWindowVisibilityChanged: (callback) => ipcRenderer.on('window-visibility-changed', (_event, visible) => callback(visible)),
+
+  // ★ 摸鱼街机 BGM 本机音乐导入与管理
+  pickArcadeBgmFiles: () => ipcRenderer.invoke('arcade-bgm-pick-files'),
+  listCustomArcadeBgm: () => ipcRenderer.invoke('arcade-bgm-list-custom'),
+  deleteCustomArcadeBgm: (id) => ipcRenderer.invoke('arcade-bgm-delete-custom', id),
 });
 
 

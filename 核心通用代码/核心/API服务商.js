@@ -1,87 +1,137 @@
-// AI Desktop Pet - API Providers Registry
+// 二次元桌宠 - API提供商注册表
 const API_PROVIDERS = {
-
-  openai: {
-    id: 'openai',
-    name: '🌟 OpenAI (ChatGPT)',
-    baseUrl: 'https://api.openai.com/v1',
-    models: [
-      { id: 'gpt-4o-mini', name: 'GPT-4o mini (Fast & Lightweight Recommended)' },
-      { id: 'gpt-4o', name: 'GPT-4o (Flagship Omni)' },
-      { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest' },
-      { id: 'o3-mini', name: 'o3-mini (Reasoning Model)' },
-      { id: 'gpt-4.1-mini', name: 'GPT-4.1 mini' },
-      { id: 'gpt-4.1', name: 'GPT-4.1' },
-    ],
-    needsKey: true,
-    description: 'Official OpenAI API (platform.openai.com). High intelligence and multi-turn conversational quality.',
-  },
-
-  gemini: {
-    id: 'gemini',
-    name: '🌟 Google Gemini',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    models: [
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Ultra-low Latency Recommended)' },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Deep Reasoning)' },
-      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
-    ],
-    needsKey: true,
-    description: 'Official Google Gemini API (aistudio.google.com). High rate limits, instant streaming generation.',
-  },
 
   deepseek: {
     id: 'deepseek',
-    name: '🌟 DeepSeek (Official)',
+    name: '🌟 DeepSeek (官方直连)',
     baseUrl: 'https://api.deepseek.com',
     models: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat (V3 Recommended)' },
-      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner (R1 Deep Thinking)' },
+      { id: 'deepseek-chat', name: 'DeepSeek Chat (V3 推荐)' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner (R1 深度思考)' },
     ],
     needsKey: true,
-    description: 'Official DeepSeek API (platform.deepseek.com), top-tier reasoning and cost performance.',
+    description: 'DeepSeek 官方平台，性价比极高，具备顶尖推理能力。需要 DeepSeek API Key (platform.deepseek.com)',
   },
 
   siliconflow: {
     id: 'siliconflow',
-    name: 'SiliconFlow',
+    name: '🌟 硅基流动 (SiliconFlow)',
     baseUrl: 'https://api.siliconflow.cn/v1',
     models: [
-      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3' },
-      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1' },
-      { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen 2.5 7B' },
-      { id: 'Qwen/Qwen2.5-14B-Instruct', name: 'Qwen 2.5 14B' },
-      { id: 'Qwen/Qwen2.5-32B-Instruct', name: 'Qwen 2.5 32B' },
-      { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4 9B' },
+      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3 (强力推荐)' },
+      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (深度思考)' },
+      { id: 'Qwen/Qwen2.5-7B-Instruct', name: '通义千问 2.5 7B (极速免费)' },
+      { id: 'Qwen/Qwen2.5-14B-Instruct', name: '通义千问 2.5 14B' },
+      { id: 'Qwen/Qwen2.5-32B-Instruct', name: '通义千问 2.5 32B' },
+      { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4 9B (免费极速)' },
     ],
     needsKey: true,
-    description: 'High-concurrency model aggregation platform (cloud.siliconflow.cn) with various open-source models.',
+    description: '国内高并发聚合大模型平台，注册即送额度，支持大量免费与低价开源模型 (cloud.siliconflow.cn)',
   },
 
   dashscope: {
     id: 'dashscope',
-    name: 'Alibaba Qwen (DashScope)',
+    name: '🌟 阿里通义千问 (百炼 DashScope)',
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     models: [
-      { id: 'qwen-plus', name: 'Qwen Plus' },
-      { id: 'qwen-turbo', name: 'Qwen Turbo' },
-      { id: 'qwen-max', name: 'Qwen Max' },
-      { id: 'deepseek-v3', name: 'DeepSeek V3' },
-      { id: 'deepseek-r1', name: 'DeepSeek R1' },
+      { id: 'qwen-plus', name: '通义千问 Plus (极速推荐)' },
+      { id: 'qwen-turbo', name: '通义千问 Turbo (极低成本)' },
+      { id: 'qwen-max', name: '通义千问 Max (旗舰高智商)' },
+      { id: 'deepseek-v3', name: 'DeepSeek V3 (百炼直连)' },
+      { id: 'deepseek-r1', name: 'DeepSeek R1 (百炼深度推理)' },
     ],
     needsKey: true,
-    description: 'Alibaba Cloud DashScope platform (bailian.console.aliyun.com). Fast and reliable.',
+    description: '阿里云官方百炼大模型平台，免翻墙国内直连极低延迟，新用户免费赠送海量额度 (bailian.console.aliyun.com)',
+  },
+
+  openai: {
+    id: 'openai',
+    name: 'OpenAI (ChatGPT)',
+    baseUrl: 'https://api.openai.com/v1',
+    models: [
+      { id: 'gpt-4o-mini', name: 'GPT-4o mini (快速轻量推荐)' },
+      { id: 'gpt-4o', name: 'GPT-4o (全能旗舰)' },
+      { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest' },
+      { id: 'o3-mini', name: 'o3-mini (轻量推理)' },
+      { id: 'gpt-4.1-mini', name: 'GPT-4.1 mini' },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+    ],
+    needsKey: true,
+    description: 'OpenAI 官方 API (platform.openai.com)。国内直连若受阻，可直接将下方 API 地址修改为中转代理或反代服务',
+  },
+
+  gemini: {
+    id: 'gemini',
+    name: 'Google Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    models: [
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (超低延迟秒回推荐)' },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (深度推理)' },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+    ],
+    needsKey: true,
+    description: 'Google 官方大模型，超低延迟极速流式生成，免费配额充足 (aistudio.google.com)',
+  },
+
+  zhipu: {
+    id: 'zhipu',
+    name: '智谱 AI (GLM)',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    models: [
+      { id: 'glm-4-flash', name: 'GLM-4 Flash (永久免费极速)' },
+      { id: 'glm-4-plus', name: 'GLM-4 Plus (旗舰高智商)' },
+      { id: 'glm-4-air', name: 'GLM-4 Air (高性价比)' },
+    ],
+    needsKey: true,
+    description: '智谱 AI 大模型平台，GLM-4 Flash 永久免费开放调用 (open.bigmodel.cn)',
+  },
+
+  doubao: {
+    id: 'doubao',
+    name: '豆包 (火山引擎)',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    models: [
+      { id: 'doubao-pro-32k', name: '豆包 Pro 32K' },
+      { id: 'doubao-lite-32k', name: '豆包 Lite 32K' },
+      { id: 'doubao-pro-128k', name: '豆包 Pro 128K' },
+    ],
+    needsKey: true,
+    description: '字节跳动豆包大模型，需在火山引擎创建接入点，将 Endpoint ID 填入模型名 (volcengine.com)',
+  },
+
+  moonshot: {
+    id: 'moonshot',
+    name: '月之暗面 (Kimi)',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    models: [
+      { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K' },
+      { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K' },
+    ],
+    needsKey: true,
+    description: 'Moonshot AI，超强长文本与逻辑能力 (platform.moonshot.cn)',
+  },
+
+  mimo: {
+    id: 'mimo',
+    name: '小米 Mimo',
+    baseUrl: 'https://api.xiaomi.com/v1',
+    models: [
+      { id: 'mimo-v2.5-pro', name: 'Mimo v2.5 Pro' },
+      { id: 'mimo-v2.5-flash', name: 'Mimo v2.5 Flash' },
+    ],
+    needsKey: true,
+    description: '小米 Mimo 大模型，需要小米 AI 开放平台 API Key (ai.xiaomi.com)',
   },
 
   local: {
     id: 'local',
-    name: '💻 Local Model (Ollama)',
+    name: '💻 本地模型 (Ollama)',
     baseUrl: 'http://127.0.0.1:11434/v1',
     models: [
-      { id: 'qwen3:8b', name: 'Qwen 3 8B (Local Recommended)' },
-      { id: 'qwen3:4b', name: 'Qwen 3 4B (Fast)' },
-      { id: 'qwen3:14b', name: 'Qwen 3 14B (High Quality)' },
-      { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B' },
+      { id: 'qwen3:8b', name: '千问3 8B (本地推荐)' },
+      { id: 'qwen3:4b', name: '千问3 4B (轻量快速)' },
+      { id: 'qwen3:14b', name: '千问3 14B (高质量)' },
+      { id: 'qwen2.5:7b', name: '千问2.5 7B' },
       { id: 'deepseek-r1:8b', name: 'DeepSeek R1 8B' },
       { id: 'deepseek-r1:14b', name: 'DeepSeek R1 14B' },
       { id: 'llama3.1:8b', name: 'Llama 3.1 8B' },
@@ -89,28 +139,28 @@ const API_PROVIDERS = {
     ],
     needsKey: false,
     isLocal: true,
-    description: 'Local Ollama service, 100% private and offline, no API Key needed. Click Refresh to scan downloaded models.',
+    description: '本地 Ollama 模型，无需 API Key。支持一键检测/启动后台服务，点击下方【🔄 刷新已装模型】即可自动载入本机真实模型。',
   },
 
   lmstudio: {
     id: 'lmstudio',
-    name: '💻 Local Model (LM Studio)',
+    name: '💻 本地模型 (LM Studio)',
     baseUrl: 'http://127.0.0.1:1234/v1',
     models: [
-      { id: 'local-model', name: 'Active LM Studio Model' },
+      { id: 'local-model', name: '本地当前加载模型' },
     ],
     needsKey: false,
     isLocal: true,
-    description: 'LM Studio local server. Start server on the Local Server tab (port 1234 by default).',
+    description: 'LM Studio 本地服务，需在 LM Studio 的 Local Server 页面点击 Start Server 开启（默认端口 1234）。',
   },
 
   custom: {
     id: 'custom',
-    name: '⚙️ Custom (OpenAI Compatible)',
+    name: '⚙️ 自定义 (OpenAI 兼容)',
     baseUrl: '',
     models: [],
     needsKey: true,
-    description: 'Any OpenAI-compatible endpoint (OneAPI, NewAPI, vLLM, self-hosted proxy).',
+    description: '任何兼容 OpenAI API 格式的服务（如 OneAPI、NewAPI、个人服务器反代等），支持手动指定地址与模型名。',
   },
 };
 
@@ -139,22 +189,35 @@ async function fetchRemoteModels(providerId, baseUrl, apiKey) {
   const url = (baseUrl || '').replace(/\/+$/, '');
   if (!url) return [];
 
-  // 1. Ollama 原生接口探测
+  const fetchWithTimeout = (target, options = {}, timeoutMs = 4000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(target, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  };
+
+  // 1. Ollama 原生接口探测（兼容 localhost 解析到 IPv6 ::1 时自动回退 127.0.0.1）
   if (providerId === 'local' || url.includes('11434')) {
     const rawRoot = url.replace(/\/v1\/?$/, '');
-    try {
-      const res = await fetch(`${rawRoot}/api/tags`, { method: 'GET' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.models && Array.isArray(data.models) && data.models.length > 0) {
-          return data.models.map(m => ({
-            id: m.model || m.name,
-            name: `${m.name}${m.details?.parameter_size ? ` (${m.details.parameter_size})` : ''}`,
-          }));
+    const roots = [rawRoot];
+    if (/^http:\/\/localhost\b/i.test(rawRoot)) {
+      roots.push(rawRoot.replace(/^http:\/\/localhost\b/i, 'http://127.0.0.1'));
+    }
+    for (const root of roots) {
+      try {
+        const res = await fetchWithTimeout(`${root}/api/tags`, { method: 'GET' }, 3000);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.models && Array.isArray(data.models) && data.models.length > 0) {
+            return data.models.map(m => ({
+              id: m.model || m.name,
+              name: `${m.name}${m.details?.parameter_size ? ` (${m.details.parameter_size})` : ''}`,
+            }));
+          }
         }
+      } catch (e) {
+        // 忽略，尝试下一个地址或通用 /models 接口
       }
-    } catch (e) {
-      // 忽略，尝试通用 /models 接口
     }
   }
 
@@ -163,7 +226,7 @@ async function fetchRemoteModels(providerId, baseUrl, apiKey) {
     const headers = {};
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
     const targetUrl = url.endsWith('/models') ? url : `${url}/models`;
-    const res = await fetch(targetUrl, { method: 'GET', headers });
+    const res = await fetchWithTimeout(targetUrl, { method: 'GET', headers }, 5000);
     if (res.ok) {
       const data = await res.json();
       const list = data.data || data.models;

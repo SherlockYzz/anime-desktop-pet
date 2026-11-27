@@ -12,7 +12,8 @@ const DIALOGUE_FILE_MAP = {
   '夸奖.txt': 'praise', '晚安.txt': 'bedtime', '鼓励.txt': 'encouragement',
   '美食.txt': 'food', '料理.txt': 'cooking', '自我怀疑.txt': 'self_doubt',
   '调情.txt': 'playful', '孤独.txt': 'loneliness',
-  '捉弄.txt': 'tease', '毒舌.txt': 'sharp_tongue'
+  '捉弄.txt': 'tease', '毒舌.txt': 'sharp_tongue',
+  '可乐.txt': 'cola', '吃货.txt': 'food', '撒娇.txt': 'coquettish', '游戏.txt': 'gaming'
 };
 
 // CSS属性映射表
@@ -54,18 +55,23 @@ class CharacterManager {
     this._cachedTheme = null;
     this._precacheTimer = null;
     this._modelExistsCache = new Map();
-    // ★ 启动时清除所有台词缓存，确保从文件读取最新内容
-    this._clearAllDialogueCache();
+    // 保留基于日期版本号的 localStorage 缓存以加速冷启动（仅在需要时手动清除）
     // ★ 等待自定义角色加载完成
-    // ★ 自定义角色加载带3秒超时，防止IPC卡住阻塞整个启动流程
+    // ★ 自定义角色加载带3秒超时，加载完成后立即 clearTimeout 避免误报超时警告
     const customCharPromise = window.customCharManager
       ? window.customCharManager.loadCustomCharacters()
       : Promise.resolve();
-    const timeoutPromise = new Promise(resolve => setTimeout(() => {
-      console.warn('[CharacterManager] 自定义角色加载超时(3s)，继续启动');
-      resolve();
-    }, 3000));
-    this._customCharactersReady = Promise.race([customCharPromise, timeoutPromise]);
+    let timeoutId = null;
+    const timeoutPromise = new Promise(resolve => {
+      timeoutId = setTimeout(() => {
+        console.warn('[CharacterManager] 自定义角色加载超时(3s)，继续启动');
+        resolve();
+      }, 3000);
+    });
+    this._customCharactersReady = Promise.race([
+      Promise.resolve(customCharPromise).finally(() => { if (timeoutId) clearTimeout(timeoutId); }),
+      timeoutPromise
+    ]);
   }
 
   /** 获取台词缓存版本号（基于日期，一天一变；不影响提示词热更新） */
@@ -262,15 +268,14 @@ class CharacterManager {
   async loadCharacterDialoguesInBackground(characterId) {
     const character = this.registry[characterId];
 
-    // ★ 自定义角色：加载原作台词集（触发台词为可选，暂不加载）
+    // ★ 自定义角色：通过主进程 IPC 从 userData 读取原作台词集
     if (character?.isCustom) {
       try {
-        const canonPath = `../../自定义角色/${characterId}/原作台词集.txt`;
-        const canonResp = await fetch(canonPath);
-        if (canonResp.ok) {
-          const canonText = await canonResp.text();
-          const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-          if (canonLines.length > 0) character.lines._canonical = canonLines;
+        if (window.electronAPI?.loadCanonicalLines) {
+          const canonLines = await window.electronAPI.loadCanonicalLines(characterId);
+          if (Array.isArray(canonLines) && canonLines.length > 0) {
+            character.lines._canonical = canonLines;
+          }
         }
       } catch (e) { /* 跳过 */ }
       this._loadedCharacters.add(characterId);
@@ -309,14 +314,21 @@ class CharacterManager {
     });
     await Promise.all(linePromises);
 
-    // ★ 加载原作台词集
+    // ★ 加载原作台词集：优先通过 IPC 读取 userData 覆写文件，无 IPC 时回退内置文件
     try {
-      const canonPath = `../../${folder}/原作台词集.txt`;
-      const canonResp = await fetch(canonPath);
-      if (canonResp.ok) {
-        const canonText = await canonResp.text();
-        const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (canonLines.length > 0) character.lines._canonical = canonLines;
+      if (window.electronAPI?.loadCanonicalLines) {
+        const canonLines = await window.electronAPI.loadCanonicalLines(folder);
+        if (Array.isArray(canonLines) && canonLines.length > 0) {
+          character.lines._canonical = canonLines;
+        }
+      } else {
+        const canonPath = `../../${folder}/原作台词集.txt`;
+        const canonResp = await fetch(canonPath);
+        if (canonResp.ok) {
+          const canonText = await canonResp.text();
+          const canonLines = canonText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          if (canonLines.length > 0) character.lines._canonical = canonLines;
+        }
       }
     } catch (e) { /* 跳过 */ }
 
@@ -504,17 +516,20 @@ class CharacterManager {
   // 核心场景：优先从原作台词集取
   static _CANONICAL_SITUATIONS = new Set(['boot', 'click', 'idle', 'farewell']);
 
-  getRandomLine(situation) {
+  getRandomLine(situation, fallback = '……') {
     const char = this.currentCharacter;
-    if (!char?.lines) return '……';
+    if (!char?.lines) return fallback;
 
-    // 核心场景 + 有原作台词集 → 从原作台词集随机选
+    // 核心场景 + 有原作台词集 → 从原作台词集随机选（自动过滤 [开机] 等分节标题行）
     if (CharacterManager._CANONICAL_SITUATIONS.has(situation) && char.lines._canonical?.length > 0) {
-      return char.lines._canonical[Math.floor(Math.random() * char.lines._canonical.length)];
+      const validCanonical = char.lines._canonical.filter(l => l && !/^\[.+\]$/.test(l.trim()));
+      if (validCanonical.length > 0) {
+        return validCanonical[Math.floor(Math.random() * validCanonical.length)];
+      }
     }
 
     const lines = char.lines[situation];
-    return (lines && lines.length > 0) ? lines[Math.floor(Math.random() * lines.length)] : '……';
+    return (lines && lines.length > 0) ? lines[Math.floor(Math.random() * lines.length)] : fallback;
   }
 
   // 获取原作台词集（供前端管理界面使用）
@@ -546,15 +561,19 @@ class CharacterManager {
     this._saveCanonicalToFile();
   }
 
-  // 将原作台词集保存到文件（通过 IPC 调用主进程）
+  // 将原作台词集保存到文件（通过 IPC 调用主进程，兼容内置与自定义角色并刷新台词缓存）
   async _saveCanonicalToFile() {
-    const folder = CHARACTER_FOLDER_MAP[this.currentCharacterId];
+    const folder = this.currentCharacter?.isCustom
+      ? this.currentCharacterId
+      : CHARACTER_FOLDER_MAP[this.currentCharacterId];
     if (!folder) return;
     const lines = this.currentCharacter?.lines?._canonical || [];
     try {
       if (window.electronAPI?.saveCanonicalLines) {
         await window.electronAPI.saveCanonicalLines(folder, lines);
       }
+      // 同步刷新缓存，防止重启时命中旧缓存覆盖刚编辑的台词
+      localStorage.removeItem(`dialogue_cache_${this.currentCharacterId}`);
     } catch (e) { /* 忽略 */ }
   }
 
@@ -595,7 +614,7 @@ class CharacterManager {
   updateTitleBar(name) {
     const petName = document.querySelector('.pet-name');
     if (petName) petName.textContent = name;
-    document.title = `${name} - Desktop Pet`;
+    document.title = `${name} - 桌宠`;
   }
 
   updateTray(name) {
@@ -617,34 +636,54 @@ class CharacterManager {
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
 
-  /** 播放指定编号或随机的角色原生CV语音（含防爆音平滑淡出与双通道管理） */
+  /** 设置全局角色语音静音总闸（开启静音时立即打断正在播放的语音） */
+  setVoiceMuted(muted) {
+    this._voiceMuted = !!muted;
+    if (this._voiceMuted) {
+      this.stopVoice();
+    }
+    return this._voiceMuted;
+  }
+
+  /** 查询角色语音是否处于静音状态 */
+  isVoiceMuted() {
+    return !!this._voiceMuted;
+  }
+
+  /** 立即彻底停止当前所有正在播放或待播放的角色原生CV语音（严格单通道打断，杜绝多段叠音） */
+  stopVoice() {
+    this._voicePlaySeq = (this._voicePlaySeq || 0) + 1;
+    if (this._activeVoiceAudios) {
+      for (const a of this._activeVoiceAudios) {
+        try {
+          a.pause();
+          a.currentTime = 0;
+          a.removeAttribute('src');
+          a.load();
+        } catch (e) {}
+      }
+      this._activeVoiceAudios.clear();
+    }
+    if (this._currentAudio) {
+      try {
+        this._currentAudio.pause();
+        this._currentAudio.currentTime = 0;
+        this._currentAudio.removeAttribute('src');
+        this._currentAudio.load();
+      } catch (e) {}
+      this._currentAudio = null;
+    }
+  }
+
+  /** 播放指定编号或随机的角色原生CV语音（新语音立即打断旧语音，永不同时叠播） */
   playVoice(charId, voiceIndex) {
+    if (this._voiceMuted) return null;
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
-      // ★ 防爆音保护：对上一音频执行 40ms 平滑衰减淡出，杜绝高采样率声卡截断破音
-      if (this._currentAudio) {
-        const oldAudio = this._currentAudio;
-        this._currentAudio = null;
-        try {
-          const fadeSteps = 4;
-          const stepTime = 10;
-          let currentStep = 0;
-          const initialVol = oldAudio.volume;
-          const fadeTimer = setInterval(() => {
-            currentStep++;
-            if (currentStep >= fadeSteps || oldAudio.paused) {
-              clearInterval(fadeTimer);
-              oldAudio.pause();
-              oldAudio.currentTime = 0;
-            } else {
-              oldAudio.volume = Math.max(0, initialVol * (1 - currentStep / fadeSteps));
-            }
-          }, stepTime);
-        } catch (e) {
-          try { oldAudio.pause(); } catch (err) {}
-        }
-      }
+      this.stopVoice();
+      const seq = ++this._voicePlaySeq;
+      if (!this._activeVoiceAudios) this._activeVoiceAudios = new Set();
 
       let idx;
       if (voiceIndex !== undefined && voiceIndex !== null) {
@@ -669,8 +708,23 @@ class CharacterManager {
       const audioUrl = `${char.voice.baseDir}${idx}.${ext}`;
       const audio = new Audio(audioUrl);
       audio.volume = 0.85;
-      audio.play().catch(() => {});
+      this._activeVoiceAudios.add(audio);
       this._currentAudio = audio;
+      const cleanup = () => {
+        this._activeVoiceAudios?.delete(audio);
+        if (this._currentAudio === audio) this._currentAudio = null;
+      };
+      audio.addEventListener('ended', cleanup, { once: true });
+      audio.addEventListener('error', cleanup, { once: true });
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          if (this._voicePlaySeq !== seq) {
+            try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+            cleanup();
+          }
+        }).catch(() => cleanup());
+      }
       return audioUrl;
     } catch (e) {
       return null;
