@@ -120,14 +120,16 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-dim);
     color: var(--text-dim);
-    width: 30px;
+    min-width: 30px;
     height: 30px;
+    padding: 0 7px;
     border-radius: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.92rem;
+    font-size: 0.74rem;
+    font-weight: 600;
     transition: all 0.2s;
 }
 .btn-icon:hover {
