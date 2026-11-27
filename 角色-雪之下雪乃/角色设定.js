@@ -55,8 +55,11 @@ CHARACTER_REGISTRY.yukino = {
     settingsBg: 'rgba(200, 215, 245, 0.35)',
   },
 
-  // 无 Live2D 模型（直达 封面.png 渲染通道）
+  // Live2D 模型为空，改用 VRoid VRM 3D 模型（真透明、支持视线追踪与点击穿透）
   live2d: null,
+  vrm: {
+    modelPath: '../../角色-雪之下雪乃/VRM模型/yukino.vrm'
+  },
 
   // 原生CV语音配置（早见沙织清冷高雅毒舌大小姐语音包，共10段经典语音）
   voice: {

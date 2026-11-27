@@ -16,11 +16,14 @@ const CHARACTER_FOLDER_MAP = {
   umaru: '角色-土间埋'
 };
 
-/** HTML转义：防止XSS注入 */
+/** HTML转义：完整转义五种特殊字符，防止标签与属性上下文 XSS 注入 */
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /** 严格白名单 HTML 净化器（仅放行 Markdown 合法标签与安全属性，彻底防止 XSS 绕过） */

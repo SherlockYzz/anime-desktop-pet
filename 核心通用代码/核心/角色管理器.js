@@ -12,7 +12,8 @@ const DIALOGUE_FILE_MAP = {
   '夸奖.txt': 'praise', '晚安.txt': 'bedtime', '鼓励.txt': 'encouragement',
   '美食.txt': 'food', '料理.txt': 'cooking', '自我怀疑.txt': 'self_doubt',
   '调情.txt': 'playful', '孤独.txt': 'loneliness',
-  '捉弄.txt': 'tease', '毒舌.txt': 'sharp_tongue'
+  '捉弄.txt': 'tease', '毒舌.txt': 'sharp_tongue',
+  '可乐.txt': 'cola', '吃货.txt': 'food', '撒娇.txt': 'coquettish', '游戏.txt': 'gaming'
 };
 
 // CSS属性映射表
@@ -56,15 +57,21 @@ class CharacterManager {
     this._modelExistsCache = new Map();
     // 保留基于日期版本号的 localStorage 缓存以加速冷启动（仅在需要时手动清除）
     // ★ 等待自定义角色加载完成
-    // ★ 自定义角色加载带3秒超时，防止IPC卡住阻塞整个启动流程
+    // ★ 自定义角色加载带3秒超时，加载完成后立即 clearTimeout 避免误报超时警告
     const customCharPromise = window.customCharManager
       ? window.customCharManager.loadCustomCharacters()
       : Promise.resolve();
-    const timeoutPromise = new Promise(resolve => setTimeout(() => {
-      console.warn('[CharacterManager] 自定义角色加载超时(3s)，继续启动');
-      resolve();
-    }, 3000));
-    this._customCharactersReady = Promise.race([customCharPromise, timeoutPromise]);
+    let timeoutId = null;
+    const timeoutPromise = new Promise(resolve => {
+      timeoutId = setTimeout(() => {
+        console.warn('[CharacterManager] 自定义角色加载超时(3s)，继续启动');
+        resolve();
+      }, 3000);
+    });
+    this._customCharactersReady = Promise.race([
+      Promise.resolve(customCharPromise).finally(() => { if (timeoutId) clearTimeout(timeoutId); }),
+      timeoutPromise
+    ]);
   }
 
   /** 获取台词缓存版本号（基于日期，一天一变；不影响提示词热更新） */
@@ -509,17 +516,20 @@ class CharacterManager {
   // 核心场景：优先从原作台词集取
   static _CANONICAL_SITUATIONS = new Set(['boot', 'click', 'idle', 'farewell']);
 
-  getRandomLine(situation) {
+  getRandomLine(situation, fallback = '……') {
     const char = this.currentCharacter;
-    if (!char?.lines) return '……';
+    if (!char?.lines) return fallback;
 
-    // 核心场景 + 有原作台词集 → 从原作台词集随机选
+    // 核心场景 + 有原作台词集 → 从原作台词集随机选（自动过滤 [开机] 等分节标题行）
     if (CharacterManager._CANONICAL_SITUATIONS.has(situation) && char.lines._canonical?.length > 0) {
-      return char.lines._canonical[Math.floor(Math.random() * char.lines._canonical.length)];
+      const validCanonical = char.lines._canonical.filter(l => l && !/^\[.+\]$/.test(l.trim()));
+      if (validCanonical.length > 0) {
+        return validCanonical[Math.floor(Math.random() * validCanonical.length)];
+      }
     }
 
     const lines = char.lines[situation];
-    return (lines && lines.length > 0) ? lines[Math.floor(Math.random() * lines.length)] : '……';
+    return (lines && lines.length > 0) ? lines[Math.floor(Math.random() * lines.length)] : fallback;
   }
 
   // 获取原作台词集（供前端管理界面使用）
@@ -626,34 +636,38 @@ class CharacterManager {
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
 
+  /** 平滑停止当前正在播放的角色原生CV语音（40ms 防爆音衰减淡出） */
+  stopVoice() {
+    if (!this._currentAudio) return;
+    const oldAudio = this._currentAudio;
+    this._currentAudio = null;
+    try {
+      const fadeSteps = 4;
+      const stepTime = 10;
+      let currentStep = 0;
+      const initialVol = oldAudio.volume;
+      const fadeTimer = setInterval(() => {
+        currentStep++;
+        if (currentStep >= fadeSteps || oldAudio.paused) {
+          clearInterval(fadeTimer);
+          oldAudio.pause();
+          oldAudio.currentTime = 0;
+        } else {
+          oldAudio.volume = Math.max(0, initialVol * (1 - currentStep / fadeSteps));
+        }
+      }, stepTime);
+    } catch (e) {
+      try { oldAudio.pause(); } catch (err) {}
+    }
+  }
+
   /** 播放指定编号或随机的角色原生CV语音（含防爆音平滑淡出与双通道管理） */
   playVoice(charId, voiceIndex) {
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
       // ★ 防爆音保护：对上一音频执行 40ms 平滑衰减淡出，杜绝高采样率声卡截断破音
-      if (this._currentAudio) {
-        const oldAudio = this._currentAudio;
-        this._currentAudio = null;
-        try {
-          const fadeSteps = 4;
-          const stepTime = 10;
-          let currentStep = 0;
-          const initialVol = oldAudio.volume;
-          const fadeTimer = setInterval(() => {
-            currentStep++;
-            if (currentStep >= fadeSteps || oldAudio.paused) {
-              clearInterval(fadeTimer);
-              oldAudio.pause();
-              oldAudio.currentTime = 0;
-            } else {
-              oldAudio.volume = Math.max(0, initialVol * (1 - currentStep / fadeSteps));
-            }
-          }, stepTime);
-        } catch (e) {
-          try { oldAudio.pause(); } catch (err) {}
-        }
-      }
+      this.stopVoice();
 
       let idx;
       if (voiceIndex !== undefined && voiceIndex !== null) {

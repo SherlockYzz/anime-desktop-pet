@@ -34,7 +34,7 @@ class ChatManager {
     for (const trigger of ChatManager.KEYWORD_TRIGGERS) {
       for (const kw of trigger.keywords) {
         if (lower.includes(kw)) {
-          return window.characterManager.getRandomLine(trigger.situation);
+          return window.characterManager.getRandomLine(trigger.situation, null);
         }
       }
     }

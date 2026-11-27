@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' file: blob:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: data: blob: https: http:; media-src 'self' file: data: blob:; connect-src 'self' file: http: https: ws: wss:; frame-src 'self' file: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' file: blob:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: data: blob: https: http:; media-src 'self' file: data: blob:; connect-src 'self' file: blob: data: http: https: ws: wss:; frame-src 'self' file: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self';">
   <title>桌宠</title>
   <link rel="stylesheet" href="样式.css">
+  <link rel="stylesheet" href="界面重构.css">
+  <link rel="stylesheet" href="界面精修.css">
   <!-- ★ preload 核心库，让浏览器尽早开始加载而不阻塞渲染 -->
   <link rel="preload" href="../第三方库/marked.min.js" as="script">
 </head>
@@ -16,16 +18,16 @@
       <span class="pet-name">桌宠</span>
     </div>
     <div class="titlebar-buttons">
-      <button class="btn-back-pet" id="btn-back-pet" title="返回桌宠模式">桌宠</button>
-      <button class="btn-shortcuts-titlebar" id="btn-pomodoro-titlebar" title="专注番茄钟 (25分钟)">💼</button>
-      <button class="btn-shortcuts-titlebar" id="btn-memory-diary-titlebar" title="羁绊手账与长期记忆">📖</button>
-      <button class="btn-shortcuts-titlebar" id="btn-arcade-titlebar" title="摸鱼街机 (10款精选微游戏)">🎮</button>
-      <button class="btn-shortcuts-titlebar" id="btn-shortcuts-titlebar" title="快捷键一览与自定义 (⌨️ / F1)">⌨️</button>
-      <button class="btn-character-select" id="btn-character-select" title="切换角色">&#x1f464;</button>
-      <button class="btn-settings" id="btn-settings" title="settings">&#x2699;</button>
-      <button class="btn-minimize" id="btn-minimize" title="minimize">_</button>
-      <button class="btn-maximize-win" id="btn-maximize-win" title="最大化/还原">🗖</button>
-      <button class="btn-close" id="btn-close" title="close">&#x2715;</button>
+      <button class="btn-back-pet" id="btn-back-pet" title="返回桌宠模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.500" y="5" width="17" height="14" rx="2.500"/><rect x="12" y="11.500" width="6" height="5" rx="1" fill="currentColor" stroke="none"/></svg>桌宠</button>
+      <button class="btn-shortcuts-titlebar" id="btn-pomodoro-titlebar" title="专注番茄钟 (25分钟)" aria-label="专注番茄钟"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.500" r="7"/><path d="M12 10v3.500l2.300 1.500M9.500 3.500h5"/></svg></button>
+      <button class="btn-shortcuts-titlebar" id="btn-memory-diary-titlebar" title="羁绊手账与长期记忆" aria-label="羁绊手账"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.500c-1.800-1.300-4.300-1.800-8-1.800v11.800c3.700 0 6.200.500 8 1.800 1.800-1.300 4.300-1.800 8-1.800V5.700c-3.700 0-6.200.500-8 1.800ZM12 7.500v11.800"/></svg></button>
+      <button class="btn-shortcuts-titlebar" id="btn-arcade-titlebar" title="摸鱼街机 (10款精选微游戏)" aria-label="摸鱼街机"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8h10a4 4 0 0 1 4 4.400l-.400 3.200a2.600 2.600 0 0 1-4.600 1.300L14.800 15H9.200L8 16.900a2.600 2.600 0 0 1-4.600-1.300L3 12.400A4 4 0 0 1 7 8Z"/><path d="M8 10.800v2.600M6.700 12.100h2.600M16.500 12h.010"/></svg></button>
+      <button class="btn-shortcuts-titlebar" id="btn-shortcuts-titlebar" title="快捷键一览与自定义 (F1)" aria-label="快捷键"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.500" width="18" height="11" rx="2.500"/><path d="M7 10.200h.010M10.300 10.200h.010M13.700 10.200h.010M17 10.200h.010M8.500 14h7"/></svg></button>
+      <button class="btn-character-select" id="btn-character-select" title="切换角色" aria-label="切换角色"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.500" cy="8.500" r="3.200"/><path d="M3.500 19c.400-3.200 2.900-5 6-5s5.600 1.800 6 5M16 5.600a3.200 3.200 0 0 1 0 5.800M18.200 14.600c1.400.800 2.200 2.300 2.400 4.400"/></svg></button>
+      <button class="btn-settings" id="btn-settings" title="设置" aria-label="设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.500h9M17.500 7.500H20M4 16.500h2.500M11 16.500h9"/><circle cx="15.200" cy="7.500" r="2.300"/><circle cx="8.800" cy="16.500" r="2.300"/></svg></button>
+      <button class="btn-minimize" id="btn-minimize" title="最小化" aria-label="最小化"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.500 12h11"/></svg></button>
+      <button class="btn-maximize-win" id="btn-maximize-win" title="最大化/还原" aria-label="最大化或还原"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.500" y="6.500" width="11" height="11" rx="2"/></svg></button>
+      <button class="btn-close" id="btn-close" title="关闭" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button>
     </div>
   </div>
 
@@ -43,7 +45,7 @@
     <div class="tab-bar">
       <button class="tab active" data-tab="chat">聊天</button>
       <button class="tab" data-tab="code">写代码</button>
-      <button class="tab" data-tab="arcade">🎮 摸鱼街机</button>
+      <button class="tab" data-tab="arcade">摸鱼街机</button>
     </div>
 
     <!-- 聊天模式 -->
@@ -52,9 +54,9 @@
         <!-- ★ 初始消息由 JavaScript 动态生成，确保头像与保存的角色一致 -->
       </div>
       <div class="input-area">
-        <button class="btn-clear-chat" id="btn-clear-chat" title="清除聊天记录">清除</button>
-        <textarea id="chat-input" placeholder="输入消息..." rows="2"></textarea>
-        <button class="btn-send" id="btn-chat-send">发送</button>
+        <button class="btn-clear-chat" id="btn-clear-chat" title="清除聊天记录" aria-label="清除聊天记录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.500h14M10 4.500h4M7 7.500l.800 10.200a2 2 0 0 0 2 1.800h4.400a2 2 0 0 0 2-1.800L17 7.500M10.300 11v5M13.700 11v5"/></svg></button>
+        <textarea id="chat-input" placeholder="和她说点什么…" title="Enter 发送，Shift+Enter 换行" rows="1"></textarea>
+        <button class="btn-send" id="btn-chat-send" title="发送" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5.500M6 11l6-6 6 6"/></svg></button>
       </div>
     </div>
 
@@ -92,7 +94,7 @@
         <pre id="output-content">等待运行...</pre>
       </div>
       <div class="code-ai-area">
-        <textarea id="code-ai-input" placeholder="描述你想要的代码功能..." rows="2"></textarea>
+        <textarea id="code-ai-input" placeholder="描述你想要的代码功能…" rows="1"></textarea>
         <button class="btn-ai-code" id="btn-ai-code">帮忙写代码</button>
       </div>
     </div>
@@ -106,12 +108,52 @@
         <div class="arcade-game-pills" id="arcade-game-pills"></div>
         <div class="arcade-actions">
           <button class="arcade-action-btn" id="btn-arcade-restart" title="重新开始当前游戏">🔄 重来</button>
-          <button class="arcade-action-btn" id="btn-arcade-mute" title="小游戏静音切换">🔊 声音</button>
+          <button class="arcade-action-btn" id="btn-arcade-mute" title="游戏音效静音切换">🔊 音效</button>
+          <button class="arcade-action-btn" id="btn-arcade-pet-voice" title="桌宠说话开关（点击关闭/开启桌宠语音与喝彩）">🗣️ 桌宠</button>
+          <button class="arcade-action-btn" id="btn-arcade-bgm" title="背景音乐 BGM 设置与选曲">🎵 音乐</button>
           <button class="arcade-action-btn" id="btn-arcade-reload" title="重载游戏视窗">⚡ 刷新</button>
         </div>
       </div>
       <div class="arcade-viewport-container">
         <iframe id="arcade-viewport" class="arcade-iframe" src="about:blank" frameborder="0" allow="autoplay" sandbox="allow-scripts allow-same-origin"></iframe>
+
+        <!-- 摸鱼街机 BGM 音乐盒悬浮面板 -->
+        <div class="arcade-bgm-panel" id="arcade-bgm-panel" aria-hidden="true">
+          <div class="arcade-bgm-header">
+            <span class="arcade-bgm-title">🎵 街机背景音乐</span>
+            <div class="arcade-bgm-header-right">
+              <button class="arcade-bgm-toggle-btn" id="btn-arcade-bgm-toggle" type="button">已关闭</button>
+              <button class="arcade-bgm-close-btn" id="btn-arcade-bgm-close" type="button" title="收起面板">✕</button>
+            </div>
+          </div>
+
+          <div class="arcade-bgm-now">
+            <div class="arcade-bgm-now-title" id="arcade-bgm-now-title">未开启背景音乐</div>
+            <div class="arcade-bgm-transport">
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-prev" type="button" title="上一首">⏮</button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-play" type="button" title="播放/暂停">▶</button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-next" type="button" title="下一首">⏭</button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-loop" type="button" title="列表循环">🔁</button>
+            </div>
+          </div>
+
+          <div class="arcade-bgm-volume-row">
+            <span class="arcade-bgm-vol-label">柔和音量</span>
+            <input type="range" id="arcade-bgm-volume" class="arcade-bgm-volume-slider" min="0" max="60" step="1" value="22" />
+            <span class="arcade-bgm-vol-val" id="arcade-bgm-vol-val">22%</span>
+          </div>
+
+          <div class="arcade-bgm-duck-tip" id="arcade-bgm-duck-tip" style="display:none;">
+            🎧 当前为音游《律动共鸣》，已自动暂停背景音乐避免串音
+          </div>
+
+          <div class="arcade-bgm-list" id="arcade-bgm-list"></div>
+
+          <div class="arcade-bgm-footer">
+            <button class="arcade-bgm-import-btn" id="btn-arcade-bgm-import" type="button">➕ 添加本机音乐</button>
+            <span class="arcade-bgm-hint">默认柔和音量，不遮挡游戏音效</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -121,7 +163,7 @@
     <div class="character-header">
       <h3>选择你的桌宠</h3>
       <div class="character-header-actions">
-        <button class="btn-import-character" id="btn-import-character" title="导入角色">&#x21E9;</button>
+        <button class="btn-import-character" id="btn-import-character" title="导入角色" aria-label="导入角色"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.500v10M8 11l4 4 4-4M5 18.500h14"/></svg></button>
         <button class="btn-add-character" id="btn-create-character" title="创建新角色">+</button>
         <button class="btn-close-panel" id="btn-close-character">&#x2715;</button>
       </div>
@@ -492,5 +534,6 @@
   <script src="桌面管家.js"></script>
   <script src="摸鱼街机管理器.js"></script>
   <script src="主界面.js"></script>
+<script src="界面增强.js"></script>
 </body>
 </html>

@@ -158,13 +158,16 @@ class MimoAPI {
         // 服务端错误才重试，4xx 不重试
         if (res.status < 500) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error?.message || `HTTP ${res.status}`);
+          const clientErr = new Error(err.error?.message || `HTTP ${res.status}`);
+          clientErr.noRetry = true;
+          throw clientErr;
         }
 
         // 5xx 重试
         throw new Error(`服务器错误 HTTP ${res.status}`);
       } catch (err) {
         lastErr = err;
+        if (err.noRetry) throw err;
         if (err.name === 'AbortError') {
           lastErr = new Error('请求超时，请检查网络或API地址是否正确');
         }
@@ -208,7 +211,6 @@ class MimoAPI {
       const rawContent = msg.content || '';
 
       if (!rawContent && !apiThinking) {
-        this.conversationHistory.pop();
         throw new Error('模型返回了空内容，请检查模型是否正常工作');
       }
 
@@ -223,7 +225,13 @@ class MimoAPI {
       this.conversationHistory.push({ role: 'assistant', content: rawContent || apiThinking });
       this._trimHistory();
       return { thinking: displayThinking, content: displayContent };
-    } catch (err) { throw err; }
+    } catch (err) {
+      // 任何失败均统一回滚刚入栈的 user 消息，避免留下孤立的连续 user 消息
+      if (this.conversationHistory.length > 0 && this.conversationHistory[this.conversationHistory.length - 1].role === 'user') {
+        this.conversationHistory.pop();
+      }
+      throw this._friendlyError(err, this.model);
+    }
 
   }
 
@@ -271,11 +279,12 @@ class MimoAPI {
         if (!res.ok) {
           clearTimeout(timeoutId);
           timeoutId = null;
-          // 4xx 不重试
+          // 4xx 不重试（打 noRetry 标记，由 catch 统一回滚一次 user 消息）
           if (res.status < 500) {
             const err = await res.json().catch(() => ({}));
-            this.conversationHistory.pop();
-            throw new Error(err.error?.message || `HTTP ${res.status}`);
+            const clientErr = new Error(err.error?.message || `HTTP ${res.status}`);
+            clientErr.noRetry = true;
+            throw clientErr;
           }
           // 5xx 继续重试
           throw new Error(`服务器错误 HTTP ${res.status}`);
@@ -296,20 +305,23 @@ class MimoAPI {
         if (err.name === 'AbortError') {
           if (this._abortedByUser) {
             err = new Error('已停止生成');
-            this.conversationHistory.pop();
-            this._currentController = null;
-            throw err;
+            err.noRetry = true;
+          } else {
+            err = new Error('请求超时，请检查网络或API地址是否正确');
           }
-          err = new Error('请求超时，请检查网络或API地址是否正确');
         }
-        if (attempt < maxRetries && !this._abortedByUser) {
+        if (!err.noRetry && attempt < maxRetries && !this._abortedByUser) {
           onChunk?.('content', `\n\n[重试第 ${attempt + 1} 次...]\n\n`, '');
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
           attempt++;
           continue;
         }
-        this.conversationHistory.pop();
+        // 仅在最终失败时回滚一次刚入栈的 user 消息，绝不误删历史对话
+        if (this.conversationHistory.length > 0 && this.conversationHistory[this.conversationHistory.length - 1].role === 'user') {
+          this.conversationHistory.pop();
+        }
         this._currentController = null;
+        if (this._abortedByUser) throw err;
         // 转成友好的中文错误信息
         throw this._friendlyError(err, this.model);
       }

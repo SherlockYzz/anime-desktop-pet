@@ -1,6 +1,7 @@
 // ========================================
 //  二次元桌宠 - 摸鱼街机管理器 (ArcadeManager)
-//  管理 10 款通用轻量微游戏生命周期、Iframe 双向通信总线、CV 语音喝彩与好感度联动
+//  管理 10 款通用轻量微游戏生命周期、Iframe 双向通信总线、
+//  游戏音效静音、桌宠说话独立开关、街机背景音乐 (BGM) 与本机音乐导入
 // ========================================
 
 (function(window) {
@@ -18,6 +19,27 @@
     { id: '08-数独',         name: '极意数独',     icon: '🔢',  tag: '九宫数独', path: '../摸鱼街机/08-数独/index.html' },
     { id: '09-律动共鸣',     name: '律动共鸣',     icon: '🎵',  tag: '4轨音游',  path: '../摸鱼街机/09-律动共鸣/index.html' }
   ];
+
+  // 内置精选街机背景音乐曲库（新下载免版权纯音乐 + 本机精选曲库 + 音游内置纯音乐）
+  const BUILTIN_BGM_TRACKS = [
+    { id: 'bgm_pixelland',       title: 'Pixelland · 像素街机',         tag: '街机纯音', url: '../摸鱼街机/shared/bgm/bgm_pixelland.mp3' },
+    { id: 'bgm_lobby_time',      title: 'Lobby Time · 慵懒轻爵士',      tag: '休闲益智', url: '../摸鱼街机/shared/bgm/bgm_lobby_time.mp3' },
+    { id: 'bgm_wallpaper',       title: 'Wallpaper · 轻快电子节拍',     tag: '轻快纯音', url: '../摸鱼街机/shared/bgm/bgm_wallpaper.mp3' },
+    { id: 'local_carefree',      title: 'Carefree · 欢快悠闲日常',      tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_carefree.mp3' },
+    { id: 'local_sneaky_snitch', title: 'Sneaky Snitch · 俏皮整活',     tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_sneaky_snitch.mp3' },
+    { id: 'local_kitto_kanojo',  title: '石滨翔 · きっと彼女は (治愈)', tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_kitto_kanojo.mp3' },
+    { id: 'local_pvz_day',       title: '草坪白昼 · 经典休闲小调',      tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_pvz_day.mp3' },
+    { id: 'local_pvz_night',     title: '月夜花园 · 神秘轻节奏',        tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_pvz_night.mp3' },
+    { id: 'local_huashanxing',   title: '单桐 · 华山行 (国风纯音)',     tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_huashanxing.mp3' },
+    { id: 'local_renshijian',    title: '沈必昂 · 人世间 (舒缓纯音)',   tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_renshijian.mp3' },
+    { id: 'rhythm_oregairu',     title: '春拟き · 温柔钢琴曲',          tag: '动漫钢琴', url: '../摸鱼街机/09-律动共鸣/audio/song_03_oregairu_piano.mp3' },
+    { id: 'rhythm_paper_plane',  title: '纸飞机 · 轻盈旋律',            tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_01_paper_plane.mp3' },
+    { id: 'rhythm_broken_flower',title: '落花 · 治愈轻音',              tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_02_broken_flower.mp3' },
+    { id: 'rhythm_moon',         title: '共鸣之月 · 幻梦旋律',          tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_04_wuthering_moon.mp3' }
+  ];
+
+  // 自带完整音轨的游戏 ID（切入时自动暂停街机 BGM 防止串音）
+  const SELF_MUSIC_GAME_IDS = new Set(['09-律动共鸣']);
 
   // 全角色原声 CV 街机定制联动词典 (与各角色音频素材严格对齐)
   const CHARACTER_ARCADE_VOICES = {
@@ -72,9 +94,28 @@
     constructor() {
       this.games = ARCADE_GAMES;
       this.currentGameId = '01-拉海洛方块01';
-      this.isMuted = false;
+
+      // 游戏音效静音状态（持久化）
+      this.isMuted = localStorage.getItem('arcade_game_muted') === '1';
+      // 桌宠说话/配音开关（默认开启，支持独立关闭/开启，持久化）
+      const savedPetVoice = localStorage.getItem('arcade_pet_voice_enabled');
+      this.petVoiceEnabled = savedPetVoice === null ? true : savedPetVoice === '1';
+
       this.lastVoiceTime = 0;
       this.voiceCooldown = 5500; // 连击语音CD 5.5秒，防止高频刷屏
+
+      // 街机 BGM 背景音乐播放器状态
+      this.customBgmTracks = [];
+      this.bgmEnabled = localStorage.getItem('arcade_bgm_enabled') === '1';
+      this.bgmTrackId = localStorage.getItem('arcade_bgm_track_id') || BUILTIN_BGM_TRACKS[0].id;
+      const savedVol = parseFloat(localStorage.getItem('arcade_bgm_volume'));
+      // 默认 22% 柔和音量，上限 60%，确保不遮挡清脆的游戏声效
+      this.bgmVolume = Number.isFinite(savedVol) ? Math.max(0, Math.min(0.6, savedVol)) : 0.22;
+      this.bgmLoopMode = localStorage.getItem('arcade_bgm_loop_mode') === 'single' ? 'single' : 'list';
+      this.bgmPanelOpen = false;
+      this._bgmAudio = null;
+      this._bgmFadeTimer = null;
+      this._windowPaused = false;
 
       this.iframe = null;
       this.pillsContainer = null;
@@ -89,19 +130,89 @@
       // 1. 渲染游戏选择胶囊
       this._renderGamePills();
 
-      // 2. 绑定控制栏按钮
+      // 2. 绑定控制栏按钮与 BGM 悬浮面板
       this._bindControlButtons();
+      this._bindBgmPanel();
 
-      // 3. 监听全局小游戏 postMessage 广播总线
+      // 3. 监听 iframe 加载完成，确保切换游戏/刷新后立即同步静音状态
+      this.iframe.addEventListener('load', () => {
+        if (!this._active) return;
+        this._syncGameMuteState();
+        // 部分微游戏在 DOMContentLoaded 后才实例化 audio，延迟补发一次确保万无一失
+        setTimeout(() => {
+          if (this._active) this._syncGameMuteState();
+        }, 180);
+      });
+
+      // 4. 监听全局小游戏 postMessage 广播总线
       window.addEventListener('message', this._handleGameEvent.bind(this));
 
-      // 4. 仅恢复上次游玩的 ID 与按钮高亮，不预先加载 iframe（切入街机 Tab 时再懒加载，大幅降低冷启动与后台开销）
+      // 5. 仅恢复上次游玩的 ID 与按钮高亮，不预先加载 iframe
       const lastGame = localStorage.getItem('arcade_last_game') || '01-拉海洛方块01';
       this.currentGameId = this.games.some(g => g.id === lastGame) ? lastGame : this.games[0].id;
       this._updatePillActive(this.currentGameId);
       this._active = false;
       this._loadedGameId = null;
       this._idleUnloadTimer = null;
+
+      // 6. 同步按钮视觉状态 & 异步加载用户已导入的本机 BGM
+      this._updateMuteBtnUI();
+      this._updatePetVoiceBtnUI();
+      this._initBgmAudio();
+      this._loadCustomBgmTracks();
+    }
+
+    /** 获取完整 BGM 歌单（内置精选 + 用户导入本机音乐） */
+    _getAllBgmTracks() {
+      return [...BUILTIN_BGM_TRACKS, ...this.customBgmTracks];
+    }
+
+    _getCurrentBgmTrack() {
+      const all = this._getAllBgmTracks();
+      return all.find(t => t.id === this.bgmTrackId) || all[0];
+    }
+
+    _initBgmAudio() {
+      if (this._bgmAudio) return;
+      const audio = new Audio();
+      audio.preload = 'none';
+      audio.volume = this.bgmVolume;
+      audio.addEventListener('ended', () => {
+        if (!this.bgmEnabled || !this._active || this._shouldDuckBgm()) return;
+        if (this.bgmLoopMode === 'single') {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          this.nextBgmTrack(true);
+        }
+      });
+      audio.addEventListener('error', () => {
+        // 若单曲加载失败，自动顺延到下一首避免卡死
+        if (this.bgmEnabled && this._active && this._getAllBgmTracks().length > 1) {
+          setTimeout(() => this.nextBgmTrack(true), 600);
+        }
+      });
+      this._bgmAudio = audio;
+    }
+
+    async _loadCustomBgmTracks() {
+      try {
+        if (window.electronAPI?.listCustomArcadeBgm) {
+          const res = await window.electronAPI.listCustomArcadeBgm();
+          if (res?.success && Array.isArray(res.tracks)) {
+            this.customBgmTracks = res.tracks.map(t => ({
+              id: t.id,
+              title: t.title,
+              tag: t.tag || '本机导入',
+              url: t.url,
+              isCustom: true
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('加载本机自定义 BGM 失败:', e);
+      }
+      this._renderBgmPanel();
     }
 
     _updatePillActive(gameId) {
@@ -113,6 +224,7 @@
     /** 切入街机 Tab 时按需加载当前游戏；若 3 分钟内切回则直接 RESUME 保留当前对局 */
     activate() {
       this._active = true;
+      this._windowPaused = false;
       if (this._idleUnloadTimer) {
         clearTimeout(this._idleUnloadTimer);
         this._idleUnloadTimer = null;
@@ -124,15 +236,19 @@
           this.iframe.src = target.path;
         } else {
           this._sendControl('RESUME');
+          this._syncGameMuteState();
         }
       }
+      this._syncBgmPlayback();
     }
 
-    /** 切出街机 Tab 时发送 PAUSE 保留当前局，闲置 3 分钟后再卸载 iframe 释放内存与 GPU */
+    /** 切出街机 Tab 时发送 PAUSE 保留当前局，暂停 BGM，闲置 3 分钟后再卸载 iframe 释放内存与 GPU */
     deactivate() {
       if (!this._active) return;
       this._active = false;
       this._sendControl('PAUSE');
+      this._pauseBgmSmooth();
+      this._toggleBgmPanel(false);
       if (this._idleUnloadTimer) clearTimeout(this._idleUnloadTimer);
       this._idleUnloadTimer = setTimeout(() => {
         if (!this._active && this.iframe) {
@@ -143,10 +259,16 @@
       }, 180000);
     }
 
-    /** 窗口隐藏/显示时同步暂停/恢复当前游戏 */
+    /** 窗口隐藏/显示时同步暂停/恢复当前游戏与 BGM */
     setPaused(paused) {
+      this._windowPaused = !!paused;
       if (!this._active) return;
       this._sendControl(paused ? 'PAUSE' : 'RESUME');
+      if (paused) {
+        this._pauseBgmSmooth();
+      } else {
+        this._syncBgmPlayback();
+      }
     }
 
     _renderGamePills() {
@@ -169,6 +291,8 @@
     _bindControlButtons() {
       const btnRestart = document.getElementById('btn-arcade-restart');
       const btnMute = document.getElementById('btn-arcade-mute');
+      const btnPetVoice = document.getElementById('btn-arcade-pet-voice');
+      const btnBgm = document.getElementById('btn-arcade-bgm');
       const btnReload = document.getElementById('btn-arcade-reload');
       const btnTitlebar = document.getElementById('btn-arcade-titlebar');
       const btnExit = document.getElementById('btn-arcade-exit');
@@ -184,6 +308,15 @@
       if (btnMute) {
         btnMute.addEventListener('click', () => this.toggleMute());
       }
+      if (btnPetVoice) {
+        btnPetVoice.addEventListener('click', () => this.togglePetVoice());
+      }
+      if (btnBgm) {
+        btnBgm.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._toggleBgmPanel();
+        });
+      }
       if (btnReload) {
         btnReload.addEventListener('click', () => this.reloadGame());
       }
@@ -192,7 +325,74 @@
       }
     }
 
-    switchGame(gameId, playAudio = true) {
+    _bindBgmPanel() {
+      const panel = document.getElementById('arcade-bgm-panel');
+      const btnToggle = document.getElementById('btn-arcade-bgm-toggle');
+      const btnClose = document.getElementById('btn-arcade-bgm-close');
+      const btnPrev = document.getElementById('btn-arcade-bgm-prev');
+      const btnPlay = document.getElementById('btn-arcade-bgm-play');
+      const btnNext = document.getElementById('btn-arcade-bgm-next');
+      const btnLoop = document.getElementById('btn-arcade-bgm-loop');
+      const sliderVol = document.getElementById('arcade-bgm-volume');
+      const btnImport = document.getElementById('btn-arcade-bgm-import');
+      const listEl = document.getElementById('arcade-bgm-list');
+
+      if (!panel) return;
+
+      panel.addEventListener('click', (e) => e.stopPropagation());
+      document.addEventListener('click', (e) => {
+        if (this.bgmPanelOpen && !e.target.closest('#arcade-bgm-panel') && !e.target.closest('#btn-arcade-bgm')) {
+          this._toggleBgmPanel(false);
+        }
+      });
+
+      if (btnClose) btnClose.addEventListener('click', () => this._toggleBgmPanel(false));
+      if (btnToggle) btnToggle.addEventListener('click', () => this.toggleBgm());
+      if (btnPlay) btnPlay.addEventListener('click', () => this.toggleBgm());
+      if (btnPrev) btnPrev.addEventListener('click', () => this.prevBgmTrack());
+      if (btnNext) btnNext.addEventListener('click', () => this.nextBgmTrack(false));
+      if (btnLoop) btnLoop.addEventListener('click', () => this.toggleBgmLoopMode());
+
+      if (sliderVol) {
+        sliderVol.value = String(Math.round(this.bgmVolume * 100));
+        sliderVol.addEventListener('input', (e) => {
+          const pct = Math.max(0, Math.min(60, parseInt(e.target.value, 10) || 0));
+          this.setBgmVolume(pct / 100);
+        });
+      }
+
+      if (btnImport) {
+        btnImport.addEventListener('click', () => this.importLocalBgmFiles());
+      }
+
+      if (listEl) {
+        listEl.addEventListener('click', (e) => {
+          const delBtn = e.target.closest('.arcade-bgm-del-btn');
+          if (delBtn && delBtn.dataset.trackId) {
+            e.stopPropagation();
+            this.deleteCustomBgmTrack(delBtn.dataset.trackId);
+            return;
+          }
+          const row = e.target.closest('.arcade-bgm-item');
+          if (row && row.dataset.trackId) {
+            this.selectBgmTrack(row.dataset.trackId, true);
+          }
+        });
+      }
+    }
+
+    _toggleBgmPanel(forceState) {
+      const panel = document.getElementById('arcade-bgm-panel');
+      if (!panel) return;
+      this.bgmPanelOpen = typeof forceState === 'boolean' ? forceState : !this.bgmPanelOpen;
+      panel.classList.toggle('open', this.bgmPanelOpen);
+      panel.setAttribute('aria-hidden', this.bgmPanelOpen ? 'false' : 'true');
+      if (this.bgmPanelOpen) {
+        this._renderBgmPanel();
+      }
+    }
+
+    switchGame(gameId) {
       const target = this.games.find(g => g.id === gameId) || this.games[0];
       this.currentGameId = target.id;
       localStorage.setItem('arcade_last_game', target.id);
@@ -205,6 +405,10 @@
         this._loadedGameId = target.id;
         this.iframe.src = target.path;
       }
+
+      // 切入/切出音游时自动暂停或恢复 BGM
+      this._syncBgmPlayback();
+      if (this.bgmPanelOpen) this._renderBgmPanel();
     }
 
     restartGame() {
@@ -219,13 +423,299 @@
       }
     }
 
+    /** 切换小游戏音效静音状态（同时立即同步给当前 iframe，并在切游戏/刷新时保持） */
     toggleMute() {
       this.isMuted = !this.isMuted;
+      localStorage.setItem('arcade_game_muted', this.isMuted ? '1' : '0');
+      this._syncGameMuteState();
+      this._updateMuteBtnUI();
+    }
+
+    _syncGameMuteState() {
       this._sendControl('SET_MUTE', { muted: this.isMuted });
+    }
+
+    _updateMuteBtnUI() {
       const btnMute = document.getElementById('btn-arcade-mute');
-      if (btnMute) {
-        btnMute.innerHTML = this.isMuted ? '🔇 静音' : '🔊 声音';
-        btnMute.classList.toggle('active', this.isMuted);
+      if (!btnMute) return;
+      btnMute.innerHTML = this.isMuted ? '🔇 静音' : '🔊 音效';
+      btnMute.title = this.isMuted ? '游戏音效：已静音（点击恢复）' : '游戏音效：已开启（点击静音）';
+      btnMute.classList.toggle('active', this.isMuted);
+    }
+
+    /** 切换桌宠说话功能（独立开关：关闭后立即停止当前语音、清空喝彩气泡，且后续不再自动播报） */
+    togglePetVoice() {
+      this.petVoiceEnabled = !this.petVoiceEnabled;
+      localStorage.setItem('arcade_pet_voice_enabled', this.petVoiceEnabled ? '1' : '0');
+      if (!this.petVoiceEnabled) {
+        window.characterManager?.stopVoice?.();
+        window.app?.petMode?._clearBubbles?.();
+      }
+      this._updatePetVoiceBtnUI();
+    }
+
+    _updatePetVoiceBtnUI() {
+      const btnPetVoice = document.getElementById('btn-arcade-pet-voice');
+      if (!btnPetVoice) return;
+      btnPetVoice.innerHTML = this.petVoiceEnabled ? '🗣️ 桌宠' : '🤫 静默';
+      btnPetVoice.title = this.petVoiceEnabled
+        ? '桌宠说话：已开启（点击关闭桌宠语音与喝彩）'
+        : '桌宠说话：已关闭（点击开启桌宠语音与喝彩）';
+      btnPetVoice.classList.toggle('muted-pet', !this.petVoiceEnabled);
+    }
+
+    // ==================== 街机背景音乐 (BGM) 核心控制 ====================
+
+    _shouldDuckBgm() {
+      return SELF_MUSIC_GAME_IDS.has(this.currentGameId);
+    }
+
+    toggleBgm() {
+      this.bgmEnabled = !this.bgmEnabled;
+      localStorage.setItem('arcade_bgm_enabled', this.bgmEnabled ? '1' : '0');
+      this._syncBgmPlayback();
+      this._renderBgmPanel();
+    }
+
+    selectBgmTrack(trackId, autoEnable = true) {
+      const all = this._getAllBgmTracks();
+      const found = all.find(t => t.id === trackId);
+      if (!found) return;
+      this.bgmTrackId = found.id;
+      localStorage.setItem('arcade_bgm_track_id', found.id);
+      if (autoEnable) {
+        this.bgmEnabled = true;
+        localStorage.setItem('arcade_bgm_enabled', '1');
+      }
+      this._playCurrentBgm(true);
+      this._renderBgmPanel();
+    }
+
+    prevBgmTrack() {
+      const all = this._getAllBgmTracks();
+      if (!all.length) return;
+      const idx = Math.max(0, all.findIndex(t => t.id === this.bgmTrackId));
+      const prev = all[(idx - 1 + all.length) % all.length];
+      this.selectBgmTrack(prev.id, true);
+    }
+
+    nextBgmTrack(fromEnded = false) {
+      const all = this._getAllBgmTracks();
+      if (!all.length) return;
+      const idx = Math.max(0, all.findIndex(t => t.id === this.bgmTrackId));
+      const next = all[(idx + 1) % all.length];
+      this.selectBgmTrack(next.id, fromEnded ? this.bgmEnabled : true);
+    }
+
+    toggleBgmLoopMode() {
+      this.bgmLoopMode = this.bgmLoopMode === 'list' ? 'single' : 'list';
+      localStorage.setItem('arcade_bgm_loop_mode', this.bgmLoopMode);
+      this._renderBgmPanel();
+    }
+
+    setBgmVolume(vol) {
+      this.bgmVolume = Math.max(0, Math.min(0.6, vol));
+      localStorage.setItem('arcade_bgm_volume', String(this.bgmVolume));
+      if (this._bgmAudio && !this._bgmFadeTimer) {
+        this._bgmAudio.volume = this.bgmVolume;
+      }
+      const valEl = document.getElementById('arcade-bgm-vol-val');
+      if (valEl) valEl.textContent = `${Math.round(this.bgmVolume * 100)}%`;
+    }
+
+    _syncBgmPlayback() {
+      if (this.bgmEnabled && this._active && !this._windowPaused && !this._shouldDuckBgm()) {
+        this._playCurrentBgm(false);
+      } else {
+        this._pauseBgmSmooth();
+      }
+      this._updateBgmBtnUI();
+    }
+
+    _playCurrentBgm(forceReload = false) {
+      this._initBgmAudio();
+      if (!this._bgmAudio) return;
+      if (!this.bgmEnabled || !this._active || this._windowPaused || this._shouldDuckBgm()) {
+        this._pauseBgmSmooth();
+        this._updateBgmBtnUI();
+        return;
+      }
+
+      const track = this._getCurrentBgmTrack();
+      if (!track) return;
+
+      if (this._bgmFadeTimer) {
+        clearInterval(this._bgmFadeTimer);
+        this._bgmFadeTimer = null;
+      }
+
+      const targetSrc = new URL(track.url, window.location.href).href;
+      if (forceReload || this._bgmAudio.src !== targetSrc) {
+        this._bgmAudio.src = targetSrc;
+      }
+
+      // 平滑淡入到目标柔和音量，避免突然炸耳
+      const targetVol = this.bgmVolume;
+      this._bgmAudio.volume = Math.min(this._bgmAudio.volume, targetVol * 0.25);
+      this._bgmAudio.play().then(() => {
+        let step = 0;
+        const steps = 8;
+        const startVol = this._bgmAudio.volume;
+        this._bgmFadeTimer = setInterval(() => {
+          step++;
+          if (!this._bgmAudio || step >= steps) {
+            if (this._bgmAudio) this._bgmAudio.volume = this.bgmVolume;
+            clearInterval(this._bgmFadeTimer);
+            this._bgmFadeTimer = null;
+          } else {
+            this._bgmAudio.volume = startVol + (this.bgmVolume - startVol) * (step / steps);
+          }
+        }, 25);
+        this._updateBgmBtnUI();
+      }).catch(() => {
+        this._updateBgmBtnUI();
+      });
+    }
+
+    _pauseBgmSmooth() {
+      if (!this._bgmAudio || this._bgmAudio.paused) {
+        this._updateBgmBtnUI();
+        return;
+      }
+      if (this._bgmFadeTimer) {
+        clearInterval(this._bgmFadeTimer);
+        this._bgmFadeTimer = null;
+      }
+      const audio = this._bgmAudio;
+      const startVol = audio.volume;
+      let step = 0;
+      const steps = 5;
+      this._bgmFadeTimer = setInterval(() => {
+        step++;
+        if (step >= steps || audio.paused) {
+          clearInterval(this._bgmFadeTimer);
+          this._bgmFadeTimer = null;
+          audio.pause();
+          audio.volume = this.bgmVolume;
+          this._updateBgmBtnUI();
+        } else {
+          audio.volume = Math.max(0, startVol * (1 - step / steps));
+        }
+      }, 20);
+    }
+
+    _updateBgmBtnUI() {
+      const btnBgm = document.getElementById('btn-arcade-bgm');
+      if (!btnBgm) return;
+      const isPlayingNow = this.bgmEnabled && this._active && !this._shouldDuckBgm();
+      btnBgm.classList.toggle('bgm-on', isPlayingNow);
+      const track = this._getCurrentBgmTrack();
+      btnBgm.title = this.bgmEnabled
+        ? (this._shouldDuckBgm()
+          ? '背景音乐：音游模式已自动避让暂停'
+          : `背景音乐播放中：${track?.title || ''}（点击打开音乐盒）`)
+        : '背景音乐：已关闭（点击开启并选曲）';
+    }
+
+    _renderBgmPanel() {
+      const track = this._getCurrentBgmTrack();
+      const allTracks = this._getAllBgmTracks();
+      const ducked = this._shouldDuckBgm();
+
+      const btnToggle = document.getElementById('btn-arcade-bgm-toggle');
+      const nowTitle = document.getElementById('arcade-bgm-now-title');
+      const btnPlay = document.getElementById('btn-arcade-bgm-play');
+      const btnLoop = document.getElementById('btn-arcade-bgm-loop');
+      const sliderVol = document.getElementById('arcade-bgm-volume');
+      const valEl = document.getElementById('arcade-bgm-vol-val');
+      const duckTip = document.getElementById('arcade-bgm-duck-tip');
+      const listEl = document.getElementById('arcade-bgm-list');
+
+      if (btnToggle) {
+        btnToggle.textContent = this.bgmEnabled ? '已开启' : '已关闭';
+        btnToggle.classList.toggle('on', this.bgmEnabled);
+      }
+      if (nowTitle) {
+        nowTitle.textContent = this.bgmEnabled
+          ? (ducked ? `已暂避：${track?.title || ''}` : `♪ ${track?.title || ''}`)
+          : `已暂停 · ${track?.title || '未选择曲目'}`;
+      }
+      if (btnPlay) {
+        btnPlay.textContent = (this.bgmEnabled && !ducked) ? '⏸' : '▶';
+      }
+      if (btnLoop) {
+        btnLoop.textContent = this.bgmLoopMode === 'single' ? '🔂' : '🔁';
+        btnLoop.title = this.bgmLoopMode === 'single' ? '单曲循环（点击切换列表循环）' : '列表循环（点击切换单曲循环）';
+      }
+      if (sliderVol) sliderVol.value = String(Math.round(this.bgmVolume * 100));
+      if (valEl) valEl.textContent = `${Math.round(this.bgmVolume * 100)}%`;
+      if (duckTip) duckTip.style.display = (this.bgmEnabled && ducked) ? 'block' : 'none';
+
+      if (listEl) {
+        listEl.innerHTML = allTracks.map(t => {
+          const isCurrent = t.id === track?.id;
+          const safeTitle = String(t.title || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+          const safeTag = String(t.tag || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+          return `
+            <div class="arcade-bgm-item ${isCurrent ? 'active' : ''}" data-track-id="${t.id}">
+              <span class="arcade-bgm-item-dot">${isCurrent && this.bgmEnabled && !ducked ? '♪' : '•'}</span>
+              <span class="arcade-bgm-item-title" title="${safeTitle}">${safeTitle}</span>
+              <span class="arcade-bgm-item-tag">${safeTag}</span>
+              ${t.isCustom ? `<button class="arcade-bgm-del-btn" data-track-id="${t.id}" type="button" title="移除该曲目">✕</button>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      this._updateBgmBtnUI();
+    }
+
+    async importLocalBgmFiles() {
+      if (!window.electronAPI?.pickArcadeBgmFiles) return;
+      try {
+        const res = await window.electronAPI.pickArcadeBgmFiles();
+        if (res?.success && Array.isArray(res.tracks)) {
+          this.customBgmTracks = res.tracks.map(t => ({
+            id: t.id,
+            title: t.title,
+            tag: t.tag || '本机导入',
+            url: t.url,
+            isCustom: true
+          }));
+          if (res.added && res.added.length > 0) {
+            // 自动选中并播放刚导入的第一首本机音乐
+            this.selectBgmTrack(res.added[0].id, true);
+          } else {
+            this._renderBgmPanel();
+          }
+        }
+      } catch (e) {
+        console.warn('导入本机音乐失败:', e);
+      }
+    }
+
+    async deleteCustomBgmTrack(trackId) {
+      if (!window.electronAPI?.deleteCustomArcadeBgm) return;
+      try {
+        const res = await window.electronAPI.deleteCustomArcadeBgm(trackId);
+        if (res?.success) {
+          const wasCurrent = this.bgmTrackId === trackId;
+          this.customBgmTracks = (res.tracks || []).map(t => ({
+            id: t.id,
+            title: t.title,
+            tag: t.tag || '本机导入',
+            url: t.url,
+            isCustom: true
+          }));
+          if (wasCurrent) {
+            this.bgmTrackId = BUILTIN_BGM_TRACKS[0].id;
+            localStorage.setItem('arcade_bgm_track_id', this.bgmTrackId);
+            if (this.bgmEnabled) this._playCurrentBgm(true);
+          }
+          this._renderBgmPanel();
+        }
+      } catch (e) {
+        console.warn('删除本机音乐失败:', e);
       }
     }
 
@@ -276,7 +766,7 @@
             primaryColor: char?.theme?.primary || '#f0a0b0',
             muted: this.isMuted
           });
-          if (this.isMuted) this._sendControl('SET_MUTE', { muted: true });
+          this._syncGameMuteState();
           break;
         }
 
@@ -309,7 +799,6 @@
         case 'SCORE_UPDATE':
         case 'SCORE': {
           if (payload.current && payload.best && payload.current >= payload.best && payload.current >= 200) {
-            // 达到新纪录
             this._triggerReward(5, '打破最高纪录');
             this._triggerCheer('win', `🏆 诞生新纪录 ${payload.current} 分！`);
           }
@@ -326,8 +815,11 @@
       }
     }
 
-    /** 触发角色语音与台词气泡喝彩 */
+    /** 触发角色语音与台词气泡喝彩（严格受桌宠说话开关控制） */
     _triggerCheer(type, fallbackBubble) {
+      // 用户关闭了桌宠说话开关时，静默不发声也不打扰
+      if (!this.petVoiceEnabled) return;
+
       const now = Date.now();
       const charId = window.characterManager?.getCurrentCharacter()?.id || 'ruoxi';
       const voiceDict = CHARACTER_ARCADE_VOICES[charId] || CHARACTER_ARCADE_VOICES.ruoxi;

@@ -37,6 +37,8 @@
 
         bindGame(instance) {
             this.gameInstance = instance;
+            // 主动通知宿主游戏已就绪，便于同步静音等控制状态
+            this.emit('READY', { gameId: this.gameId });
         }
 
         /**
@@ -59,11 +61,15 @@
                     case 'RESTART':
                         if (this.gameInstance?.restart) this.gameInstance.restart();
                         break;
-                    case 'SET_MUTE':
-                        if (this.gameInstance?.audio) {
-                            this.gameInstance.audio.setMuted(!!data.payload?.muted);
+                    case 'SET_MUTE': {
+                        const muted = !!data.payload?.muted;
+                        if (this.gameInstance?.audio?.setMuted) {
+                            this.gameInstance.audio.setMuted(muted);
                         }
+                        const muteBtn = document.getElementById('btn-mute') || document.getElementById('mute-btn');
+                        if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊';
                         break;
+                    }
                 }
             });
         }

@@ -35,6 +35,7 @@
 
         bindGame(instance) {
             this.gameInstance = instance;
+            this.emit('READY', { gameId: this.gameId });
         }
 
         _initMessageListener() {
@@ -53,11 +54,15 @@
                     case 'RESTART':
                         if (this.gameInstance?.restart) this.gameInstance.restart();
                         break;
-                    case 'SET_MUTE':
-                        if (this.gameInstance?.synth) {
-                            this.gameInstance.synth.setMuted(!!data.payload?.muted);
+                    case 'SET_MUTE': {
+                        const muted = !!data.payload?.muted;
+                        if (this.gameInstance?.synth?.setMuted) {
+                            this.gameInstance.synth.setMuted(muted);
                         }
+                        const muteBtn = document.getElementById('btn-mute') || document.getElementById('mute-btn');
+                        if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊';
                         break;
+                    }
                 }
             });
         }

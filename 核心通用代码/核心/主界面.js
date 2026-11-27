@@ -212,13 +212,24 @@ class App {
     marked.use({
       breaks: true, gfm: true,
       renderer: {
-        code({ text, lang }) {
-          let h = text;
+        // 兼容 marked v9 (code, infostring) 与 v12+ ({ text, lang }) 两种签名
+        code(codeOrToken, infostring) {
+          const text = typeof codeOrToken === 'object' && codeOrToken !== null
+            ? (codeOrToken.text ?? '')
+            : (codeOrToken ?? '');
+          const lang = typeof codeOrToken === 'object' && codeOrToken !== null
+            ? (codeOrToken.lang || '')
+            : ((infostring || '').trim().split(/\s+/)[0] || '');
+          let h = escapeHtml(text);
           if (window.hljs) {
-            try { h = lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }).value : hljs.highlightAuto(text).value; }
-            catch (e) { /* fallback */ }
+            try {
+              h = lang && hljs.getLanguage(lang)
+                ? hljs.highlight(text, { language: lang }).value
+                : hljs.highlightAuto(text).value;
+            } catch (e) { /* fallback to escaped plain text */ }
           }
-          return `<pre><code class="hljs language-${lang || ''}">${h}</code></pre>`;
+          const safeLang = escapeHtml(lang);
+          return `<pre><code class="hljs language-${safeLang}">${h}</code></pre>`;
         }
       }
     });
@@ -292,19 +303,31 @@ class App {
       const card = document.createElement('div');
       card.className = `character-card ${char.id === curId ? 'active' : ''}`;
       card.dataset.characterId = char.id;
+      const safeId = escapeHtml(char.id);
+      const safeName = escapeHtml(char.name);
+      const safeSeries = escapeHtml(char.series);
+      const safeTagline = escapeHtml(char.tagline);
+      const safeAvatar = escapeHtml(char.avatar);
+      const rawPrimary = String(char.theme?.primary || '').trim();
+      const isSafeColor = /^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\(\s*\d{1,3}(?:\.\d+)?%?\s*,\s*\d{1,3}(?:\.\d+)?%?\s*,\s*\d{1,3}(?:\.\d+)?%?(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\))$/i.test(rawPrimary);
+      const safePrimary = isSafeColor ? rawPrimary : '#f0a0b0';
+      const avatarBg = `color-mix(in srgb, ${safePrimary} 14%, transparent)`;
+      const avatarBorder = `color-mix(in srgb, ${safePrimary} 30%, transparent)`;
+      const safeInitial = escapeHtml((char.name || '?').charAt(0));
+      card.style.setProperty('--c', safePrimary);
       card.innerHTML = `
-        <div class="character-card-avatar" style="background:${char.theme.primary}20;border-color:${char.theme.primary}40;">
-          <img src="${char.avatar}" alt="${char.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <span class="character-card-icon" style="color:${char.theme.primary};display:none;">${char.name.charAt(0)}</span>
+        <div class="character-card-avatar" style="background:${avatarBg};border-color:${avatarBorder};">
+          <img src="${safeAvatar}" alt="${safeName}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="character-card-icon" style="color:${safePrimary};display:none;">${safeInitial}</span>
         </div>
         <div class="character-card-info">
-          <div class="character-card-name" style="color:${char.theme.primary};">${char.name}</div>
-          <div class="character-card-series">${char.series}</div>
-          <div class="character-card-tagline">${char.tagline}</div>
+          <div class="character-card-name" style="color:${safePrimary};">${safeName}</div>
+          <div class="character-card-series">${safeSeries}</div>
+          <div class="character-card-tagline">${safeTagline}</div>
         </div>
         <div class="character-card-actions">
-          <button class="character-order-btn character-order-up" data-id="${char.id}" ${index === 0 ? 'disabled' : ''} title="上移">&#9650;</button>
-          <button class="character-order-btn character-order-down" data-id="${char.id}" ${index === list.length - 1 ? 'disabled' : ''} title="下移">&#9660;</button>
+          <button class="character-order-btn character-order-up" data-id="${safeId}" ${index === 0 ? 'disabled' : ''} title="上移">&#9650;</button>
+          <button class="character-order-btn character-order-down" data-id="${safeId}" ${index === list.length - 1 ? 'disabled' : ''} title="下移">&#9660;</button>
         </div>
         ${char.id === curId ? '<div class="character-card-badge">当前</div>' : ''}`;
 
@@ -403,9 +426,10 @@ class App {
         const bounds = await window.electronAPI?.getWindowBounds?.();
         if (bounds && !this._savedBoundsBeforeArcade) {
           this._savedBoundsBeforeArcade = { ...bounds };
-          if (bounds.width < 460 || bounds.height < 680) {
+          // 控制栏为两行网格（约 68px，比旧版高 28px），窗口高度同步上调 20px，游戏视窗仍保持 ~630px
+          if (bounds.width < 460 || bounds.height < 700) {
             const targetW = Math.max(500, bounds.width);
-            const targetH = Math.max(720, bounds.height);
+            const targetH = Math.max(740, bounds.height);
             await window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
           }
         }

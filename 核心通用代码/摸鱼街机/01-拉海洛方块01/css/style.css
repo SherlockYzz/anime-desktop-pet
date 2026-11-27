@@ -59,7 +59,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: clamp(10px, 3vh, 20px) 16px;
+    padding: clamp(8px, 1.8vh, 16px) 14px;
     position: relative;
 }
 
@@ -125,8 +125,9 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-dim);
     border-radius: 12px;
-    padding: 10px 16px;
-    margin: 8px 0;
+    padding: 7px 14px;
+    margin: 6px 0;
+    flex-shrink: 0;
 }
 
 .score-item {
@@ -152,17 +153,21 @@ body {
 
 /* Canvas 棋盘主渲染区 */
 .board-container {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     min-height: 0;
+    overflow: hidden;
+    padding: 2px 0;
 }
 
 #board-canvas {
-    width: 100%;
-    max-width: 400px;
+    width: auto;
+    height: auto;
+    max-width: min(100%, 400px);
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     display: block;
     border-radius: 14px;
@@ -173,7 +178,8 @@ body {
 /* 底部候选方块区域 */
 .dock-container {
     width: 100%;
-    height: clamp(110px, 18vh, 140px);
+    height: clamp(92px, 15vh, 124px);
+    flex-shrink: 0;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -181,8 +187,8 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-dim);
     border-radius: 14px;
-    padding: 8px 12px;
-    margin-top: 8px;
+    padding: 6px 12px;
+    margin-top: 6px;
     position: relative;
 }
 

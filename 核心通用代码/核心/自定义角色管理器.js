@@ -10,8 +10,11 @@ class CustomCharacterManager {
     this._loadPromise = null;
   }
 
-  /** 从磁盘加载自定义角色到 CHARACTER_REGISTRY（需在 CharacterManager 前调用） */
-  async loadCustomCharacters() {
+  /** 从磁盘加载自定义角色到 CHARACTER_REGISTRY（forceReload=true 时跳过缓存强制重载） */
+  async loadCustomCharacters(forceReload = false) {
+    if (forceReload) {
+      this._loadPromise = null;
+    }
     if (this._loadPromise) return this._loadPromise;
     this._loadPromise = this._doLoad();
     return this._loadPromise;
@@ -260,8 +263,8 @@ class CustomCharacterManager {
       });
 
       if (result.success) {
-        // 重新加载自定义角色
-        await this.loadCustomCharacters();
+        // 强制重新加载自定义角色，确保立即出现在角色选择器与注册表中
+        await this.loadCustomCharacters(true);
         this._showStatus(status, `角色「${name}」创建成功！`, 'success');
         this.hideCreatePanel();
         window.app?.showToast(`角色「${name}」已创建`);
@@ -325,7 +328,7 @@ class CustomCharacterManager {
     try {
       const result = await window.electronAPI.importCustomCharacter();
       if (result.success) {
-        await this.loadCustomCharacters();
+        await this.loadCustomCharacters(true);
         window.app?.showToast(`角色「${result.name}」已导入`);
         if (window.characterManager && window.app) {
           window.characterManager._initCharacterSelector?.();

@@ -189,22 +189,35 @@ async function fetchRemoteModels(providerId, baseUrl, apiKey) {
   const url = (baseUrl || '').replace(/\/+$/, '');
   if (!url) return [];
 
-  // 1. Ollama 原生接口探测
+  const fetchWithTimeout = (target, options = {}, timeoutMs = 4000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(target, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  };
+
+  // 1. Ollama 原生接口探测（兼容 localhost 解析到 IPv6 ::1 时自动回退 127.0.0.1）
   if (providerId === 'local' || url.includes('11434')) {
     const rawRoot = url.replace(/\/v1\/?$/, '');
-    try {
-      const res = await fetch(`${rawRoot}/api/tags`, { method: 'GET' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.models && Array.isArray(data.models) && data.models.length > 0) {
-          return data.models.map(m => ({
-            id: m.model || m.name,
-            name: `${m.name}${m.details?.parameter_size ? ` (${m.details.parameter_size})` : ''}`,
-          }));
+    const roots = [rawRoot];
+    if (/^http:\/\/localhost\b/i.test(rawRoot)) {
+      roots.push(rawRoot.replace(/^http:\/\/localhost\b/i, 'http://127.0.0.1'));
+    }
+    for (const root of roots) {
+      try {
+        const res = await fetchWithTimeout(`${root}/api/tags`, { method: 'GET' }, 3000);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.models && Array.isArray(data.models) && data.models.length > 0) {
+            return data.models.map(m => ({
+              id: m.model || m.name,
+              name: `${m.name}${m.details?.parameter_size ? ` (${m.details.parameter_size})` : ''}`,
+            }));
+          }
         }
+      } catch (e) {
+        // 忽略，尝试下一个地址或通用 /models 接口
       }
-    } catch (e) {
-      // 忽略，尝试通用 /models 接口
     }
   }
 
@@ -213,7 +226,7 @@ async function fetchRemoteModels(providerId, baseUrl, apiKey) {
     const headers = {};
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
     const targetUrl = url.endsWith('/models') ? url : `${url}/models`;
-    const res = await fetch(targetUrl, { method: 'GET', headers });
+    const res = await fetchWithTimeout(targetUrl, { method: 'GET', headers }, 5000);
     if (res.ok) {
       const data = await res.json();
       const list = data.data || data.models;

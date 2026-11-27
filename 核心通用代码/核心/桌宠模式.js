@@ -344,29 +344,65 @@ class PetMode {
 
     this._lastHitX = -999;
     this._lastHitY = -999;
+    this._hitTrailingTimer = null;
+    this._pendingHitX = -999;
+    this._pendingHitY = -999;
+
+    const runHitCheck = (clientX, clientY) => {
+      if (document.body.classList.contains('web-mode-active')) {
+        if (this._mouseIgnored) this._setIgnoreMouse(false);
+        return;
+      }
+      this._lastHitCheckTime = performance.now();
+      this._lastHitX = clientX;
+      this._lastHitY = clientY;
+      const isHit = this._checkHit(clientX, clientY);
+      this._setIgnoreMouse(!isHit);
+    };
+
     this._onMouseMovePassThrough = (e) => {
       if (document.body.classList.contains('web-mode-active')) {
         if (this._mouseIgnored) this._setIgnoreMouse(false);
         return;
       }
-      const now = performance.now();
-      if (now - this._lastHitCheckTime < 33) return; // ~30Hz 检测，大幅降低 gl.readPixels 开销
-      if (Math.hypot(e.clientX - this._lastHitX, e.clientY - this._lastHitY) < 2) return; // 微小抖动跳过
-      this._lastHitCheckTime = now;
-      this._lastHitX = e.clientX;
-      this._lastHitY = e.clientY;
+      this._pendingHitX = e.clientX;
+      this._pendingHitY = e.clientY;
 
-      const isHit = this._checkHit(e.clientX, e.clientY);
-      this._setIgnoreMouse(!isHit);
+      const now = performance.now();
+      const elapsed = now - this._lastHitCheckTime;
+      if (elapsed < 33) {
+        // ★ 节流尾调用补发：鼠标快速离开角色停在空白处时，必定在节流窗口结束补检一次并恢复穿透
+        if (!this._hitTrailingTimer) {
+          this._hitTrailingTimer = setTimeout(() => {
+            this._hitTrailingTimer = null;
+            runHitCheck(this._pendingHitX, this._pendingHitY);
+          }, Math.max(8, 34 - elapsed));
+        }
+        return;
+      }
+      if (this._hitTrailingTimer) {
+        clearTimeout(this._hitTrailingTimer);
+        this._hitTrailingTimer = null;
+      }
+      if (Math.hypot(e.clientX - this._lastHitX, e.clientY - this._lastHitY) < 2) return; // 微小抖动跳过
+      runHitCheck(e.clientX, e.clientY);
     };
 
     this._onMouseLeavePassThrough = () => {
+      if (this._hitTrailingTimer) {
+        clearTimeout(this._hitTrailingTimer);
+        this._hitTrailingTimer = null;
+      }
       if (document.body.classList.contains('web-mode-active')) return;
       if (this._dragging || this._isDown) return;
       this._setIgnoreMouse(true);
     };
 
     this._onBlurPassThrough = () => {
+      if (this._hitTrailingTimer) {
+        clearTimeout(this._hitTrailingTimer);
+        this._hitTrailingTimer = null;
+      }
       this._isDown = false;
       this._dragging = false;
       if (!document.body.classList.contains('web-mode-active')) {
@@ -385,6 +421,10 @@ class PetMode {
   }
 
   _stopMousePassThrough() {
+    if (this._hitTrailingTimer) {
+      clearTimeout(this._hitTrailingTimer);
+      this._hitTrailingTimer = null;
+    }
     if (!this._passThroughActive) return;
     this._passThroughActive = false;
     window.removeEventListener('mousemove', this._onMouseMovePassThrough);
@@ -412,20 +452,10 @@ class PetMode {
     if (document.body.classList.contains('web-mode-active')) return true;
     if (this._dragging || this._isDown) return true;
 
-    // 弹窗菜单（姿态百宝箱、大小滑动窗口、快捷键面板、记忆日记）打开时保持捕获
-    if (
-      this._actionMenuOpen ||
-      this._scaleMenuOpen ||
-      window.shortcutManager?._menuOpen ||
-      document.getElementById('pet-memory-diary-modal')
-    ) {
-      return true;
-    }
-
     const elem = document.elementFromPoint(clientX, clientY);
     if (!elem) return false;
 
-    // 交互控件（底部控制按钮栏、对话气泡、番茄钟徽章、菜单弹层）
+    // 交互控件与弹层（仅命中自身矩形时拦截点击，窗内其余空白保持物理穿透）
     if (
       elem.closest('#pet-controls') ||
       elem.closest('.pet-bubble') ||
@@ -434,6 +464,7 @@ class PetMode {
       elem.closest('#pet-scale-menu') ||
       elem.closest('#pet-action-menu') ||
       elem.closest('#pet-shortcuts-menu') ||
+      elem.closest('#pet-memory-diary-modal') ||
       elem.closest('.pet-control-btn')
     ) {
       return true;
@@ -664,6 +695,7 @@ class PetMode {
 
     try {
       // ★ 启动智能动态穿透引擎：初始为穿透状态，透明空白区域物理穿透直达底层桌面
+      window.electronAPI?.setResizable?.(false);
       this._startMousePassThrough();
       this._setIgnoreMouse(true);
       if (skipTransition || !this._everTransitioned) {
@@ -715,9 +747,10 @@ class PetMode {
       this._stopIdleTimer();
       this._clearBubbles();
 
-      // ★ 退出桌宠模式时，彻底停止穿透引擎，全局恢复全窗口鼠标交互捕获
+      // ★ 退出桌宠模式时，彻底停止穿透引擎，全局恢复全窗口鼠标交互捕获与面板可缩放
       this._stopMousePassThrough();
       this._setIgnoreMouse(false);
+      window.electronAPI?.setResizable?.(true);
 
       document.body.classList.add('web-mode-active');
 
@@ -1116,6 +1149,12 @@ class PetMode {
       spriteCanvas.style.width = stageW + 'px';
       spriteCanvas.style.height = stageH + 'px';
     }
+    const vrmCanvas = document.getElementById('pet-vrm-canvas');
+    if (vrmCanvas && this._renderMode === 'vrm') {
+      vrmCanvas.style.width = stageW + 'px';
+      vrmCanvas.style.height = stageH + 'px';
+      window.vrmManager?.resize?.(stageW, stageH);
+    }
 
     // 3. 对当前活跃模型应用严格等比例缩放（Uniform Scale），杜绝局部衣服/光影撕裂
     if (this._renderMode === 'live2d' && this._model) {
@@ -1454,6 +1493,8 @@ class PetMode {
           loaded = true;
           this._renderMode = 'live2d';
           this._clearAllFallbacks(area);
+          // ★ 首帧渲染后根据非透明像素包围盒自动校准垂直位置（解决加藤惠腿部裁切、上方留白过多问题）
+          this._scheduleLive2DVerticalAlign(canvas, stageH);
         } catch (e) {
           console.warn('[PetMode] Live2D 加载异常:', e);
           loaded = false;
@@ -1533,6 +1574,52 @@ class PetMode {
       if (gif) { gif.src = ''; gif.style.display = 'none'; }
       this._showPetFallback();
     }
+  }
+
+  /** 首帧渲染后按非透明像素上下边界自动校正 Live2D 垂直居中（修复加藤惠偏低裁腿与上方过多留白） */
+  _scheduleLive2DVerticalAlign(canvas, stageH) {
+    if (!canvas || !this._model) return;
+    const targetModel = this._model;
+    const alignOnce = () => {
+      if (this._model !== targetModel || this._renderMode !== 'live2d') return;
+      try {
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        if (!gl || canvas.width <= 0 || canvas.height <= 0) return;
+        const w = canvas.width;
+        const h = canvas.height;
+        const pixels = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        // WebGL y=0 在底部，转换为 CSS y=0 在顶部
+        let topCss = h;
+        let bottomCss = -1;
+        const stepX = Math.max(1, Math.floor(w / 80));
+        const stepY = Math.max(1, Math.floor(h / 120));
+        for (let glY = 0; glY < h; glY += stepY) {
+          const cssY = h - 1 - glY;
+          const rowOff = glY * w * 4;
+          for (let x = 0; x < w; x += stepX) {
+            if (pixels[rowOff + x * 4 + 3] > 20) {
+              if (cssY < topCss) topCss = cssY;
+              if (cssY > bottomCss) bottomCss = cssY;
+              break;
+            }
+          }
+        }
+        if (bottomCss <= topCss) return;
+        const topRatio = topCss / h;
+        const bottomRatio = bottomCss / h;
+        // 若上方留空超过 18% 且底部接近/触碰底边（>= 92%），按 CSS 舞台像素自动上移居中
+        if (topRatio > 0.18 && bottomRatio >= 0.92) {
+          const targetTop = Math.max(0.04, (topRatio - (1 - bottomRatio)) * 0.35);
+          const shiftRatio = topRatio - targetTop;
+          const shiftPx = Math.min(stageH * 0.32, shiftRatio * stageH);
+          if (shiftPx > 8) {
+            this._model.position.y -= shiftPx;
+          }
+        }
+      } catch (e) {}
+    };
+    requestAnimationFrame(() => requestAnimationFrame(alignOnce));
   }
 
   /** 彻底清理一切降级封面与遮盖层，消灭残留图层遮挡 */

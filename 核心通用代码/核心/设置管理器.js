@@ -108,8 +108,28 @@ class SettingsManager {
     localStorage.setItem('megumi-pet-settings', JSON.stringify(toStore));
   }
 
+  /** 确保指定角色的原作台词已加载到内存，防止未加载过台词时新增一句直接覆盖原文件 */
+  async _ensureCanonicalLoaded(characterId) {
+    const char = window.characterManager?.registry?.[characterId];
+    if (!char) return [];
+    if (!char.lines) char.lines = {};
+    if (Array.isArray(char.lines._canonical)) return char.lines._canonical;
+    const target = char.isCustom ? characterId : CHARACTER_FOLDER_MAP[characterId];
+    if (target && window.electronAPI?.loadCanonicalLines) {
+      try {
+        const loaded = await window.electronAPI.loadCanonicalLines(target);
+        if (Array.isArray(loaded)) {
+          char.lines._canonical = loaded;
+          return loaded;
+        }
+      } catch (e) {}
+    }
+    char.lines._canonical = [];
+    return char.lines._canonical;
+  }
+
   /** 添加一句原作台词 */
-  _addCanonicalLine() {
+  async _addCanonicalLine() {
     const input = document.getElementById('canonical-input');
     if (!input) return;
     const text = input.value.trim();
@@ -121,9 +141,12 @@ class SettingsManager {
     const characterId = charSelect?.value || window.characterManager.currentCharacterId;
     if (!characterId) return;
 
-    // 确保操作的是正确的角色
+    // 确保操作的是正确的角色，且非当前角色先加载已有台词再追加
     const prevId = window.characterManager.currentCharacterId;
     const isCurrentChar = characterId === prevId;
+    if (!isCurrentChar) {
+      await this._ensureCanonicalLoaded(characterId);
+    }
 
     lines.forEach(line => {
       if (isCurrentChar) {
@@ -227,9 +250,9 @@ class SettingsManager {
     if (!files || files.length === 0) return;
     const file = files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const text = e.target.result;
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !/^\[.+\]$/.test(l));
       if (lines.length === 0) {
         this.app.showToast('文件为空或无有效台词');
         return;
@@ -240,6 +263,9 @@ class SettingsManager {
       if (!characterId) return;
 
       const isCurrentChar = characterId === window.characterManager.currentCharacterId;
+      if (!isCurrentChar) {
+        await this._ensureCanonicalLoaded(characterId);
+      }
       lines.forEach(line => {
         if (isCurrentChar) {
           window.characterManager.addCanonicalLine(line);
@@ -312,7 +338,7 @@ class SettingsManager {
   }
 
   /** 刷新原作台词列表显示 */
-  _refreshCanonicalList() {
+  async _refreshCanonicalList() {
     const listEl = document.getElementById('canonical-list');
     const countEl = document.getElementById('canonical-count');
     if (!listEl) return;
@@ -329,8 +355,7 @@ class SettingsManager {
     if (characterId === window.characterManager.currentCharacterId) {
       lines = window.characterManager.getCanonicalLines();
     } else {
-      const char = window.characterManager.registry[characterId];
-      lines = char?.lines?._canonical || [];
+      lines = await this._ensureCanonicalLoaded(characterId);
     }
 
     if (countEl) countEl.textContent = lines.length;
@@ -446,7 +471,7 @@ class SettingsManager {
   // === 默认设置 ===
   static DEFAULTS = {
     provider: 'local',
-    baseUrl: 'http://localhost:11434/v1',
+    baseUrl: 'http://127.0.0.1:11434/v1',
     apiKey: '',
     model: 'qwen3:8b',
     customModel: '',
@@ -591,7 +616,7 @@ class SettingsManager {
     }
   }
 
-  /** 动态拉取当前提供商的可用模型列表 */
+  /** 动态拉取当前提供商的可用模型列表（本地 Ollama 未启动时自动拉起，失败则离线扫描 manifests 兜底） */
   async refreshModels() {
     const btn = document.getElementById('btn-refresh-models');
     const providerId = document.getElementById('api-provider')?.value || 'local';
@@ -603,7 +628,34 @@ class SettingsManager {
     if (btn) { btn.disabled = true; btn.textContent = '🔄 拉取中...'; }
 
     try {
-      const models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+      let models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+      let usedOfflineFallback = false;
+
+      // ★ 本地 Ollama 增强拾取：未连上时自动尝试拉起服务，仍未连上则离线扫描本机 manifests 目录
+      if ((!models || models.length === 0) && providerId === 'local' && window.electronAPI) {
+        try {
+          const status = await window.electronAPI.detectLocalOllama?.();
+          if (status && !status.running && status.installed && window.electronAPI.startLocalOllama) {
+            if (btn) btn.textContent = '🚀 启动服务...';
+            const startRes = await window.electronAPI.startLocalOllama();
+            await this._checkOllamaStatus();
+            if (startRes?.success) {
+              models = await window.fetchRemoteModels(providerId, baseUrl, apiKey);
+            }
+          }
+        } catch (e) {
+          console.warn('[Settings] 自动拉起本地 Ollama 失败:', e);
+        }
+
+        if ((!models || models.length === 0) && window.electronAPI.listLocalOllamaModels) {
+          const offlineModels = await window.electronAPI.listLocalOllamaModels();
+          if (Array.isArray(offlineModels) && offlineModels.length > 0) {
+            models = offlineModels;
+            usedOfflineFallback = true;
+          }
+        }
+      }
+
       if (models && models.length > 0) {
         const currentVal = modelSel.value;
         modelSel.innerHTML = '';
@@ -618,10 +670,14 @@ class SettingsManager {
         modelSel.value = matched ? currentVal : models[0].id;
         this.settings.model = modelSel.value;
         this.saveSilently();
-        this.app.showToast(`✓ 已成功获取 ${models.length} 个模型！`);
+        if (usedOfflineFallback) {
+          this.app.showToast(`✓ 已离线识别 ${models.length} 个本机模型（请启动 Ollama 后对话）`);
+        } else {
+          this.app.showToast(`✓ 已成功获取 ${models.length} 个模型！`);
+        }
       } else {
         if (providerId === 'local') {
-          this.app.showToast('未能检测到本地模型，请确认 Ollama 已启动且已下载模型');
+          this.app.showToast('未能检测到本地模型，请确认 Ollama 已安装且已下载模型');
         } else {
           this.app.showToast('未能获取到远程模型列表，请检查 API 地址或密钥');
         }
