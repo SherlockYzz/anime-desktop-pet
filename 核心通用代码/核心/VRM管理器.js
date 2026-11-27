@@ -130,19 +130,20 @@ class VRMManager {
     this.camera.position.set(0, 1.2, 2.5);
     this.camera.lookAt(0, 1, 0);
 
-    // ★ 柔和二次元照明（避免 Three.js r137 下 MToon 过曝发白）
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.72);
+    // ★ 清爽冷白柔光：中和皮肤贴图暖黄底色，白皙通透且不过曝
+    const ambientLight = new THREE.AmbientLight(0xf6f9ff, 0.94);
     this.scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.45);
-    keyLight.position.set(1.0, 2.0, 2.5);
+    const keyLight = new THREE.DirectionalLight(0xf8fbff, 0.42);
+    keyLight.position.set(0.8, 2.0, 2.8);
     this.scene.add(keyLight);
 
     this.clock = new THREE.Clock();
     this._idleTime = 0;
     this._nextBlinkAt = 2.5 + Math.random() * 2.5;
     this._blinkProgress = -1;
-    this._armBaseZ = 1.15;
+    this._armBaseZ = 1.32;
+    this._nodAnim = null;
   }
 
   // 加载 VRM 模型（带内存缓存：面板↔桌宠切换与二次切换实现秒级加载）
@@ -275,12 +276,12 @@ class VRMManager {
     this.camera.updateProjectionMatrix();
   }
 
-  /** 供桌宠模式缩放滑动窗口实时同步 VRM 画布像素分辨率（不覆写 CSS 样式防错位） */
+  /** 供桌宠模式缩放滑动窗口实时同步 VRM 画布尺寸（严格等比，修复放大反缩小） */
   resize(width, height) {
     if (!this.renderer || !this.camera) return;
     const w = Math.max(200, Math.round(width || 380));
     const h = Math.max(300, Math.round(height || 570));
-    this.renderer.setSize(w, h, false);
+    this.renderer.setSize(w, h, true);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
@@ -293,96 +294,43 @@ class VRMManager {
         return;
       }
       this._animFrameId = requestAnimationFrame(animate);
-      const delta = Math.min(0.1, this.clock ? this.clock.getDelta() : 0.016);
+      const delta = Math.min(0.05, this.clock ? this.clock.getDelta() : 0.016);
 
       if (this.vrm) {
         this._idleTime = (this._idleTime || 0) + delta;
         const t = this._idleTime;
-        // 柔和呼吸 + 重心轻微摇曳 + 自然小动作
-        const breath = Math.sin(t * 2.0);
-        const sway = Math.sin(t * 0.85);
+        // ★ 极度稳定柔和的微呼吸（绝不左右摇晃抽搐、绝不乱抬手）
+        const breath = Math.sin(t * 1.6);
         const baseZ = this._armBaseZ ?? 1.32;
         const h = this.vrm.humanoid;
 
-        // 定时自动做一个自然小动作（轻挥手/可爱歪头），告别木头人
-        if (!this._activeAnim && t >= (this._nextGestureAt || 10)) {
-          this._activeAnim = {
-            type: Math.random() > 0.45 ? 'wave' : 'tilt',
-            t: 0,
-            dur: 2.2
-          };
-          this._nextGestureAt = t + 11 + Math.random() * 9;
-        }
-
         if (h) {
-          const hips = h.getNormalizedBoneNode('hips');
-          const spine = h.getNormalizedBoneNode('spine');
-          const chest = h.getNormalizedBoneNode('chest') || spine;
-          const head = h.getNormalizedBoneNode('head');
+          const chest = h.getNormalizedBoneNode('chest') || h.getNormalizedBoneNode('spine');
           const lUpper = h.getNormalizedBoneNode('leftUpperArm');
           const rUpper = h.getNormalizedBoneNode('rightUpperArm');
-          const lLower = h.getNormalizedBoneNode('leftLowerArm');
-          const rLower = h.getNormalizedBoneNode('rightLowerArm');
 
-          if (hips) hips.rotation.z = sway * 0.018;
           if (chest) {
-            chest.rotation.x = breath * 0.024;
-            chest.rotation.y = sway * 0.028;
+            chest.rotation.x = breath * 0.014;
           }
           if (lUpper) {
-            lUpper.rotation.z = baseZ - breath * 0.035;
-            lUpper.rotation.x = 0.08 + sway * 0.025;
+            lUpper.rotation.z = baseZ - breath * 0.012;
           }
-          if (lLower) {
-            lLower.rotation.y = -0.22 - breath * 0.03;
-            lLower.rotation.z = 0.14;
-          }
-
-          // 右臂与身体动态交互动画（挥手 / 开心 / 歪头）
-          let rUpperZ = -baseZ + breath * 0.035;
-          let rUpperX = 0.08 - sway * 0.025;
-          let rLowerZ = -0.14;
-          let rLowerY = 0.22 + breath * 0.03;
-          let headTiltZ = sway * 0.03;
-          let jumpY = 0;
-
-          if (this._activeAnim) {
-            this._activeAnim.t += delta;
-            const p = Math.min(1, this._activeAnim.t / this._activeAnim.dur);
-            // 平滑包络（缓入缓出）
-            const env = Math.sin(p * Math.PI);
-            if (this._activeAnim.type === 'wave') {
-              // 自然举起右手并左右轻快挥手打招呼
-              rUpperZ = -baseZ + env * 1.45;
-              rUpperX = 0.08 - env * 0.35;
-              rLowerZ = -0.14 - env * (0.95 + Math.sin(p * Math.PI * 5) * 0.32);
-              rLowerY = 0.22 + env * 0.25;
-              headTiltZ = env * 0.09;
-            } else if (this._activeAnim.type === 'happy') {
-              jumpY = Math.abs(Math.sin(p * Math.PI * 2)) * 0.045;
-              rUpperZ = -baseZ + env * 0.55;
-              if (lUpper) lUpper.rotation.z = baseZ - env * 0.55;
-              headTiltZ = Math.sin(p * Math.PI * 2) * 0.08;
-            } else if (this._activeAnim.type === 'tilt') {
-              headTiltZ = env * 0.14;
-              rUpperZ = -baseZ + env * 0.18;
-              rLowerY = 0.22 + env * 0.28;
-            }
-            if (p >= 1) this._activeAnim = null;
-          }
-
           if (rUpper) {
-            rUpper.rotation.z = rUpperZ;
-            rUpper.rotation.x = rUpperX;
+            rUpper.rotation.z = -baseZ + breath * 0.012;
           }
-          if (rLower) {
-            rLower.rotation.z = rLowerZ;
-            rLower.rotation.y = rLowerY;
+
+          // 点击时的极柔和轻点头/微弹反馈（不折臂、不抽搐）
+          if (this._nodAnim) {
+            this._nodAnim.t += delta;
+            const p = Math.min(1, this._nodAnim.t / this._nodAnim.dur);
+            const env = Math.sin(p * Math.PI);
+            this.vrm.scene.position.y = env * 0.018;
+            if (chest) chest.rotation.x = breath * 0.014 + env * 0.04;
+            if (p >= 1) {
+              this.vrm.scene.position.y = 0;
+              this._nodAnim = null;
+            }
           }
-          if (head && !this._mouseHeadOverride) {
-            head.rotation.z = headTiltZ;
-          }
-          this.vrm.scene.position.y = jumpY;
         }
         // 自然随机眨眼（每 2.8~6 秒轻眨一次）
         const em = this.vrm.expressionManager;
@@ -484,22 +432,16 @@ class VRMManager {
     }
   }
 
-  // 播放动态骨骼动画（挥手 / 开心轻跳 / 歪头打招呼）
+  // 播放柔和反馈动画（轻点头 + 微笑表情，绝不鬼畜折臂）
   playAnimation(type) {
     if (!this.vrm || !this.vrm.humanoid) return;
-    if (type === 'wave' || type === 'tap') {
-      this._activeAnim = { type: 'wave', t: 0, dur: 1.9 };
-      this.playExpression('happy');
-      setTimeout(() => this.playExpression('idle'), 1900);
-    } else if (type === 'happy' || type === 'jump') {
-      this._activeAnim = { type: 'happy', t: 0, dur: 1.2 };
-      this.playExpression('happy');
-      setTimeout(() => this.playExpression('idle'), 1400);
-    } else if (type === 'idle') {
-      this._activeAnim = null;
-    } else {
-      this._activeAnim = { type: 'tilt', t: 0, dur: 1.6 };
+    if (type === 'idle') {
+      this._nodAnim = null;
+      return;
     }
+    this._nodAnim = { t: 0, dur: 0.45 };
+    this.playExpression('happy');
+    setTimeout(() => this.playExpression('idle'), 1400);
   }
 
   // 根据 AI 回复更新表情（由 Live2DManager.updateByAIResponse 委托调用）

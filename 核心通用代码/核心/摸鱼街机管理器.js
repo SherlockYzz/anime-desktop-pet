@@ -134,18 +134,23 @@
       this._bindControlButtons();
       this._bindBgmPanel();
 
-      // 3. 监听 iframe 加载完成，确保切换游戏/刷新后立即同步静音状态
+      // 3. 监听 iframe 加载完成，确保切换游戏/刷新后立即同步静音状态并自动聚焦游戏
       this.iframe.addEventListener('load', () => {
         if (!this._active) return;
         this._syncGameMuteState();
+        this._focusGameIframe();
         // 部分微游戏在 DOMContentLoaded 后才实例化 audio，延迟补发一次确保万无一失
         setTimeout(() => {
-          if (this._active) this._syncGameMuteState();
+          if (this._active) {
+            this._syncGameMuteState();
+            this._focusGameIframe();
+          }
         }, 180);
       });
 
-      // 4. 监听全局小游戏 postMessage 广播总线
+      // 4. 监听全局小游戏 postMessage 广播总线 & 父窗口键盘转发（彻底解决点完按钮后方向键/WASD/空格失灵）
       window.addEventListener('message', this._handleGameEvent.bind(this));
+      this._bindKeyboardForwarding();
 
       // 5. 仅恢复上次游玩的 ID 与按钮高亮，不预先加载 iframe
       const lastGame = localStorage.getItem('arcade_last_game') || '01-拉海洛方块01';
@@ -241,6 +246,65 @@
       }
       this._syncBgmPlayback();
       this._syncPetVoiceGate();
+      this._focusGameIframe();
+    }
+
+    /** 将键盘焦点归还给当前游戏 iframe，避免焦点停留在父窗口按钮上导致方向键/WASD失效 */
+    _focusGameIframe() {
+      try {
+        if (!this._active || !this.iframe) return;
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl !== this.iframe && activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'TEXTAREA') {
+          activeEl.blur?.();
+        }
+        this.iframe.focus?.();
+        this.iframe.contentWindow?.focus?.();
+      } catch (e) {}
+    }
+
+    /** 父窗口键盘兜底转发：街机激活态下，即使焦点短暂留在父窗口，按下方向键/WASD/空格等也能 100% 直达当前游戏 */
+    _bindKeyboardForwarding() {
+      const GAME_CODES = new Set([
+        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'KeyW', 'KeyA', 'KeyS', 'KeyD',
+        'KeyQ', 'KeyE', 'KeyF', 'KeyV', 'KeyC', 'KeyJ', 'KeyK', 'KeyP', 'KeyR',
+        'Space', 'Enter', 'ShiftLeft', 'ShiftRight',
+        'Digit1', 'Digit2', 'Digit3', 'Digit4'
+      ]);
+
+      const forwardKey = (type, e) => {
+        if (!this._active || !this.iframe || !this.iframe.contentWindow) return;
+        if (this.bgmPanelOpen) return;
+        if (window.shortcutManager?.isRecording) return;
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+        if (!GAME_CODES.has(e.code)) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        this._focusGameIframe();
+
+        try {
+          const iframeWin = this.iframe.contentWindow;
+          const forwarded = new iframeWin.KeyboardEvent(type, {
+            key: e.key,
+            code: e.code,
+            keyCode: e.keyCode,
+            which: e.which,
+            shiftKey: e.shiftKey,
+            ctrlKey: e.ctrlKey,
+            altKey: e.altKey,
+            metaKey: e.metaKey,
+            repeat: e.repeat,
+            bubbles: true,
+            cancelable: true
+          });
+          iframeWin.dispatchEvent(forwarded);
+        } catch (err) {}
+      };
+
+      window.addEventListener('keydown', (e) => forwardKey('keydown', e), true);
+      window.addEventListener('keyup', (e) => forwardKey('keyup', e), true);
     }
 
     /** 切出街机 Tab 时发送 PAUSE 保留当前局，暂停 BGM，恢复桌宠日常语音总闸，闲置 3 分钟后再卸载 iframe */
@@ -306,13 +370,22 @@
         });
       }
       if (btnRestart) {
-        btnRestart.addEventListener('click', () => this.restartGame());
+        btnRestart.addEventListener('click', () => {
+          this.restartGame();
+          this._focusGameIframe();
+        });
       }
       if (btnMute) {
-        btnMute.addEventListener('click', () => this.toggleMute());
+        btnMute.addEventListener('click', () => {
+          this.toggleMute();
+          this._focusGameIframe();
+        });
       }
       if (btnPetVoice) {
-        btnPetVoice.addEventListener('click', () => this.togglePetVoice());
+        btnPetVoice.addEventListener('click', () => {
+          this.togglePetVoice();
+          this._focusGameIframe();
+        });
       }
       if (btnBgm) {
         btnBgm.addEventListener('click', (e) => {
@@ -321,7 +394,10 @@
         });
       }
       if (btnReload) {
-        btnReload.addEventListener('click', () => this.reloadGame());
+        btnReload.addEventListener('click', () => {
+          this.reloadGame();
+          this._focusGameIframe();
+        });
       }
       if (btnTitlebar) {
         btnTitlebar.addEventListener('click', () => this.openArcade());
@@ -392,6 +468,8 @@
       panel.setAttribute('aria-hidden', this.bgmPanelOpen ? 'false' : 'true');
       if (this.bgmPanelOpen) {
         this._renderBgmPanel();
+      } else {
+        this._focusGameIframe();
       }
     }
 
@@ -441,7 +519,10 @@
     _updateMuteBtnUI() {
       const btnMute = document.getElementById('btn-arcade-mute');
       if (!btnMute) return;
-      btnMute.textContent = this.isMuted ? '🔇 游戏音效:关' : '🔊 游戏音效:开';
+      const label = btnMute.querySelector('.arcade-audio-text');
+      const txt = this.isMuted ? '游戏音效 · 关' : '游戏音效 · 开';
+      if (label) label.textContent = txt;
+      else btnMute.textContent = txt;
       btnMute.title = this.isMuted ? '游戏音效已静音（点击开启）' : '游戏音效已开启（点击静音）';
       btnMute.classList.toggle('active', this.isMuted);
     }
@@ -467,10 +548,13 @@
     _updatePetVoiceBtnUI() {
       const btnPetVoice = document.getElementById('btn-arcade-pet-voice');
       if (!btnPetVoice) return;
-      btnPetVoice.textContent = this.petVoiceEnabled ? '🗣️ 角色说话:开' : '🤫 角色说话:关';
+      const label = btnPetVoice.querySelector('.arcade-audio-text');
+      const txt = this.petVoiceEnabled ? '角色说话 · 开' : '角色说话 · 静默';
+      if (label) label.textContent = txt;
+      else btnPetVoice.textContent = txt;
       btnPetVoice.title = this.petVoiceEnabled
-        ? '玩游戏时角色说话：已开启（点击暂停/静音角色说话）'
-        : '玩游戏时角色说话：已静音（点击重新开启角色说话）';
+        ? '玩游戏时角色说话：已开启（点击静音角色说话）'
+        : '玩游戏时角色说话：已静音（点击开启角色说话）';
       btnPetVoice.classList.toggle('muted-pet', !this.petVoiceEnabled);
     }
 
@@ -620,11 +704,12 @@
       const isPlayingNow = this.bgmEnabled && this._active && !this._shouldDuckBgm();
       btnBgm.classList.toggle('bgm-on', isPlayingNow);
       const track = this._getCurrentBgmTrack();
-      if (this.bgmEnabled) {
-        btnBgm.textContent = this._shouldDuckBgm() ? '🎵 音乐:音游暂避' : '🎵 音乐:开 ▾';
-      } else {
-        btnBgm.textContent = '🎵 音乐:关 ▾';
-      }
+      const label = btnBgm.querySelector('.arcade-audio-text');
+      const txt = this.bgmEnabled
+        ? (this._shouldDuckBgm() ? '背景音乐 · 暂避' : '背景音乐 · 开')
+        : '背景音乐 · 关';
+      if (label) label.textContent = txt;
+      else btnBgm.textContent = txt;
       btnBgm.title = this.bgmEnabled
         ? (this._shouldDuckBgm()
           ? '背景音乐：音游模式已自动避让暂停'
@@ -652,15 +737,18 @@
       }
       if (nowTitle) {
         nowTitle.textContent = this.bgmEnabled
-          ? (ducked ? `已暂避：${track?.title || ''}` : `♪ ${track?.title || ''}`)
+          ? (ducked ? `已暂避 · ${track?.title || ''}` : `${track?.title || ''}`)
           : `已暂停 · ${track?.title || '未选择曲目'}`;
       }
       if (btnPlay) {
-        btnPlay.textContent = (this.bgmEnabled && !ducked) ? '⏸' : '▶';
+        const playing = this.bgmEnabled && !ducked;
+        btnPlay.classList.toggle('is-playing', playing);
+        btnPlay.title = playing ? '暂停背景音乐' : '播放背景音乐';
       }
       if (btnLoop) {
-        btnLoop.textContent = this.bgmLoopMode === 'single' ? '🔂' : '🔁';
-        btnLoop.title = this.bgmLoopMode === 'single' ? '单曲循环（点击切换列表循环）' : '列表循环（点击切换单曲循环）';
+        const isSingle = this.bgmLoopMode === 'single';
+        btnLoop.classList.toggle('is-single', isSingle);
+        btnLoop.title = isSingle ? '单曲循环（点击切换列表循环）' : '列表循环（点击切换单曲循环）';
       }
       if (sliderVol) sliderVol.value = String(Math.round(this.bgmVolume * 100));
       if (valEl) valEl.textContent = `${Math.round(this.bgmVolume * 100)}%`;

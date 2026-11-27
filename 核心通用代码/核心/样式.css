@@ -1745,15 +1745,17 @@ body.web-mode-active .pet-overlay {
   display: none;
 }
 
-/* 文字气泡容器（适度下移至黄金视觉区，避开顶部边缘与番茄钟徽章，醒目易读） */
+/* 文字气泡容器（定位至角色右上角，彻底避开人物额头与面部） */
 .pet-bubble-container {
   position: absolute;
-  left: 50%;
-  top: 50px;
-  transform: translateX(-50%);
+  left: auto;
+  right: 8px;
+  top: 10px;
+  transform: none;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  max-width: 220px;
   gap: 6px;
   z-index: 520;
   pointer-events: none;
@@ -3486,7 +3488,7 @@ body.arcade-mode-fullscreen #tab-arcade {
 .arcade-audio-btn {
   flex: 1 1 0;
   min-width: 0;
-  height: 24px;
+  height: 25px;
   padding: 0 8px;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3495,11 +3497,65 @@ body.arcade-mode-fullscreen #tab-arcade {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: all 0.16s ease;
 }
+
+.arcade-audio-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arcade-audio-btn .icon-off { display: none; }
+.arcade-audio-btn.active .icon-on,
+.arcade-audio-btn.muted-pet .icon-on { display: none; }
+.arcade-audio-btn.active .icon-off,
+.arcade-audio-btn.muted-pet .icon-off { display: inline; }
+
+.arcade-bgm-icon-btn svg,
+.arcade-bgm-import-btn svg,
+.arcade-bgm-title svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arcade-bgm-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arcade-bgm-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#btn-arcade-bgm-play .icon-pause { display: none; }
+#btn-arcade-bgm-play.is-playing .icon-play { display: none; }
+#btn-arcade-bgm-play.is-playing .icon-pause { display: inline; }
+
+#btn-arcade-bgm-loop .icon-single { display: none; }
+#btn-arcade-bgm-loop.is-single .icon-list { display: none; }
+#btn-arcade-bgm-loop.is-single .icon-single { display: inline; }
 
 .arcade-audio-btn:hover {
   background: rgba(0, 240, 255, 0.16);

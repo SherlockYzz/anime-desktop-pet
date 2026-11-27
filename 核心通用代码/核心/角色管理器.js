@@ -650,39 +650,40 @@ class CharacterManager {
     return !!this._voiceMuted;
   }
 
-  /** 平滑停止当前正在播放的角色原生CV语音（40ms 防爆音衰减淡出） */
+  /** 立即彻底停止当前所有正在播放或待播放的角色原生CV语音（严格单通道打断，杜绝多段叠音） */
   stopVoice() {
-    if (!this._currentAudio) return;
-    const oldAudio = this._currentAudio;
-    this._currentAudio = null;
-    try {
-      const fadeSteps = 4;
-      const stepTime = 10;
-      let currentStep = 0;
-      const initialVol = oldAudio.volume;
-      const fadeTimer = setInterval(() => {
-        currentStep++;
-        if (currentStep >= fadeSteps || oldAudio.paused) {
-          clearInterval(fadeTimer);
-          oldAudio.pause();
-          oldAudio.currentTime = 0;
-        } else {
-          oldAudio.volume = Math.max(0, initialVol * (1 - currentStep / fadeSteps));
-        }
-      }, stepTime);
-    } catch (e) {
-      try { oldAudio.pause(); } catch (err) {}
+    this._voicePlaySeq = (this._voicePlaySeq || 0) + 1;
+    if (this._activeVoiceAudios) {
+      for (const a of this._activeVoiceAudios) {
+        try {
+          a.pause();
+          a.currentTime = 0;
+          a.removeAttribute('src');
+          a.load();
+        } catch (e) {}
+      }
+      this._activeVoiceAudios.clear();
+    }
+    if (this._currentAudio) {
+      try {
+        this._currentAudio.pause();
+        this._currentAudio.currentTime = 0;
+        this._currentAudio.removeAttribute('src');
+        this._currentAudio.load();
+      } catch (e) {}
+      this._currentAudio = null;
     }
   }
 
-  /** 播放指定编号或随机的角色原生CV语音（含防爆音平滑淡出与双通道管理） */
+  /** 播放指定编号或随机的角色原生CV语音（新语音立即打断旧语音，永不同时叠播） */
   playVoice(charId, voiceIndex) {
     if (this._voiceMuted) return null;
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
-      // ★ 防爆音保护：对上一音频执行 40ms 平滑衰减淡出，杜绝高采样率声卡截断破音
       this.stopVoice();
+      const seq = ++this._voicePlaySeq;
+      if (!this._activeVoiceAudios) this._activeVoiceAudios = new Set();
 
       let idx;
       if (voiceIndex !== undefined && voiceIndex !== null) {
@@ -707,8 +708,23 @@ class CharacterManager {
       const audioUrl = `${char.voice.baseDir}${idx}.${ext}`;
       const audio = new Audio(audioUrl);
       audio.volume = 0.85;
-      audio.play().catch(() => {});
+      this._activeVoiceAudios.add(audio);
       this._currentAudio = audio;
+      const cleanup = () => {
+        this._activeVoiceAudios?.delete(audio);
+        if (this._currentAudio === audio) this._currentAudio = null;
+      };
+      audio.addEventListener('ended', cleanup, { once: true });
+      audio.addEventListener('error', cleanup, { once: true });
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          if (this._voicePlaySeq !== seq) {
+            try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+            cleanup();
+          }
+        }).catch(() => cleanup());
+      }
       return audioUrl;
     } catch (e) {
       return null;

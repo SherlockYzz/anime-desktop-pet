@@ -112,9 +112,20 @@
         </div>
       </div>
       <div class="arcade-audio-bar">
-        <button class="arcade-audio-btn" id="btn-arcade-mute" title="小游戏音效开关">🔊 游戏音效:开</button>
-        <button class="arcade-audio-btn" id="btn-arcade-pet-voice" title="玩游戏时角色说话开关（可暂停静音或开启）">🗣️ 角色说话:开</button>
-        <button class="arcade-audio-btn" id="btn-arcade-bgm" title="背景音乐 BGM 设置与选曲">🎵 音乐:关 ▾</button>
+        <button class="arcade-audio-btn" id="btn-arcade-mute" title="小游戏音效开关">
+          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4ZM15.5 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4"/></svg>
+          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4ZM16 9.5l5 5M21 9.5l-5 5"/></svg>
+          <span class="arcade-audio-text">游戏音效 · 开</span>
+        </button>
+        <button class="arcade-audio-btn" id="btn-arcade-pet-voice" title="玩游戏时角色说话开关（可静音或开启）">
+          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5zM3 3l18 18"/></svg>
+          <span class="arcade-audio-text">角色说话 · 开</span>
+        </button>
+        <button class="arcade-audio-btn" id="btn-arcade-bgm" title="背景音乐 BGM 设置与选曲">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+          <span class="arcade-audio-text">背景音乐 · 关</span>
+        </button>
       </div>
       <div class="arcade-viewport-container">
         <iframe id="arcade-viewport" class="arcade-iframe" src="about:blank" frameborder="0" allow="autoplay" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -122,7 +133,10 @@
         <!-- 摸鱼街机 BGM 音乐盒悬浮面板 -->
         <div class="arcade-bgm-panel" id="arcade-bgm-panel" aria-hidden="true">
           <div class="arcade-bgm-header">
-            <span class="arcade-bgm-title">🎵 街机背景音乐</span>
+            <span class="arcade-bgm-title">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+              <span>街机背景音乐</span>
+            </span>
             <div class="arcade-bgm-header-right">
               <button class="arcade-bgm-toggle-btn" id="btn-arcade-bgm-toggle" type="button">已关闭</button>
               <button class="arcade-bgm-close-btn" id="btn-arcade-bgm-close" type="button" title="收起面板">✕</button>
@@ -132,10 +146,20 @@
           <div class="arcade-bgm-now">
             <div class="arcade-bgm-now-title" id="arcade-bgm-now-title">未开启背景音乐</div>
             <div class="arcade-bgm-transport">
-              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-prev" type="button" title="上一首">⏮</button>
-              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-play" type="button" title="播放/暂停">▶</button>
-              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-next" type="button" title="下一首">⏭</button>
-              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-loop" type="button" title="列表循环">🔁</button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-prev" type="button" title="上一首">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20L9 12l10-8v16zM5 19V5"/></svg>
+              </button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-play" type="button" title="播放/暂停">
+                <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+              </button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-next" type="button" title="下一首">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+              </button>
+              <button class="arcade-bgm-icon-btn" id="btn-arcade-bgm-loop" type="button" title="列表循环">
+                <svg class="icon-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                <svg class="icon-single" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3M11 10h1v4"/></svg>
+              </button>
             </div>
           </div>
 
@@ -146,13 +170,16 @@
           </div>
 
           <div class="arcade-bgm-duck-tip" id="arcade-bgm-duck-tip" style="display:none;">
-            🎧 当前为音游《律动共鸣》，已自动暂停背景音乐避免串音
+            当前为音游《律动共鸣》，已自动暂停背景音乐避免串音
           </div>
 
           <div class="arcade-bgm-list" id="arcade-bgm-list"></div>
 
           <div class="arcade-bgm-footer">
-            <button class="arcade-bgm-import-btn" id="btn-arcade-bgm-import" type="button">➕ 添加本机音乐</button>
+            <button class="arcade-bgm-import-btn" id="btn-arcade-bgm-import" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span>添加本机音乐</span>
+            </button>
             <span class="arcade-bgm-hint">默认柔和音量，不遮挡游戏音效</span>
           </div>
         </div>

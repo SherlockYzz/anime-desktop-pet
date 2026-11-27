@@ -280,10 +280,12 @@ class PetMode {
       // ★ 核心功能：解除快捷键！如果用户已解除/停用快捷键，100% 阻断所有键盘响应，自由打字不冲突
       if (window.shortcutManager && !window.shortcutManager.isEnabled()) return;
 
-      // 1. 移动键匹配（支持自定义快捷键与防打字模式过滤）
-      const moveDir = window.shortcutManager 
-        ? window.shortcutManager.getMovementDirection(e.key) 
-        : (MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()]);
+      // 1. 移动键匹配（同时兼容 e.key 与 e.code，解决中文输入法/大写锁定下部分角色 WASD 失效问题）
+      const codeKeyMap = { KeyW: 'w', KeyS: 's', KeyA: 'a', KeyD: 'd', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight' };
+      const mappedKey = codeKeyMap[e.code] || e.key;
+      const moveDir = window.shortcutManager
+        ? (window.shortcutManager.getMovementDirection(e.key) || window.shortcutManager.getMovementDirection(mappedKey))
+        : (MOVE_KEYS[mappedKey] || MOVE_KEYS[mappedKey?.toLowerCase?.()]);
 
       if (moveDir) {
         this._keys[moveDir] = true;
@@ -320,9 +322,11 @@ class PetMode {
     });
 
     document.addEventListener('keyup', (e) => {
-      const dir = window.shortcutManager 
-        ? window.shortcutManager.getMovementDirection(e.key) 
-        : (MOVE_KEYS[e.key] || MOVE_KEYS[e.key?.toLowerCase?.()]);
+      const codeKeyMap = { KeyW: 'w', KeyS: 's', KeyA: 'a', KeyD: 'd', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight' };
+      const mappedKey = codeKeyMap[e.code] || e.key;
+      const dir = window.shortcutManager
+        ? (window.shortcutManager.getMovementDirection(e.key) || window.shortcutManager.getMovementDirection(mappedKey))
+        : (MOVE_KEYS[mappedKey] || MOVE_KEYS[mappedKey?.toLowerCase?.()]);
       if (dir) this._keys[dir] = false;
     });
     window.addEventListener('blur', () => {
@@ -827,11 +831,11 @@ class PetMode {
       const dy = this._smoothTrackY;
 
       if (this._renderMode === 'vrm' && window.vrmManager?.vrm) {
-        // VRM：平滑转动头部骨骼
+        // VRM：柔和限幅头部视线跟随（修正垂直方向，彻底消除上下抬头鬼畜）
         const head = window.vrmManager.vrm.humanoid?.getNormalizedBoneNode('head');
         if (head) {
-          head.rotation.y = dx * 0.3;
-          head.rotation.x = dy * 0.15;
+          head.rotation.y = dx * 0.18;
+          head.rotation.x = -dy * 0.09;
         }
       } else if (this._renderMode === 'live2d' && this._model) {
         // Live2D：全版本双轨平滑视线与头部跟踪
@@ -1159,8 +1163,6 @@ class PetMode {
     }
     const vrmCanvas = document.getElementById('pet-vrm-canvas');
     if (vrmCanvas && this._renderMode === 'vrm') {
-      vrmCanvas.style.width = '100%';
-      vrmCanvas.style.height = '100%';
       window.vrmManager?.resize?.(stageW, stageH);
     }
 
@@ -1616,14 +1618,16 @@ class PetMode {
         if (bottomCss <= topCss) return;
         const topRatio = topCss / h;
         const bottomRatio = bottomCss / h;
-        // 若上方留空超过 18% 且底部接近/触碰底边（>= 92%），按 CSS 舞台像素自动上移居中
+        // 1) 若上方留空过多且底部接近/裁切底边（如加藤惠），自动上移居中
         if (topRatio > 0.18 && bottomRatio >= 0.92) {
           const targetTop = Math.max(0.04, (topRatio - (1 - bottomRatio)) * 0.35);
-          const shiftRatio = topRatio - targetTop;
-          const shiftPx = Math.min(stageH * 0.32, shiftRatio * stageH);
-          if (shiftPx > 8) {
-            this._model.position.y -= shiftPx;
-          }
+          const shiftPx = Math.min(stageH * 0.32, (topRatio - targetTop) * stageH);
+          if (shiftPx > 8) this._model.position.y -= shiftPx;
+        } else if (bottomRatio < 0.80) {
+          // 2) 若人物脚底悬空太高、与底部工作栏相隔很远（如惠惠），自动下移贴合底栏上方
+          const targetBottom = 0.87;
+          const shiftPx = Math.min(stageH * 0.28, (targetBottom - bottomRatio) * stageH);
+          if (shiftPx > 8) this._model.position.y += shiftPx;
         }
       } catch (e) {}
     };

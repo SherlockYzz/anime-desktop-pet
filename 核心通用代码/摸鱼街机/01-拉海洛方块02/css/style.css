@@ -121,7 +121,8 @@ body {
     gap: 10px;
     position: relative;
     min-height: 0;
-    margin: 6px 0;
+    overflow: hidden;
+    margin: 4px 0;
 }
 
 .side-panel {
@@ -192,14 +193,15 @@ body {
 
 /* 触控虚拟手柄控制盘 (全端自适应) */
 .gamepad-container {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
     background: var(--bg-card);
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-dim);
     border-radius: 14px;
-    padding: 8px 10px;
+    padding: 6px 8px;
 }
 
 .pad-row {
