@@ -12,6 +12,9 @@ class VRMManager {
     this._onMouseMove = null;
     this._scriptsLoaded = false;
     this._loadSeq = 0;
+    this._vrmCache = new Map();
+    this._activeAnim = null;
+    this._nextGestureAt = 8 + Math.random() * 6;
   }
 
   // 通过 script 标签动态加载 three.js 和 three-vrm（UMD 方式）
@@ -142,18 +145,28 @@ class VRMManager {
     this._armBaseZ = 1.15;
   }
 
-  // 加载 VRM 模型
+  // 加载 VRM 模型（带内存缓存：面板↔桌宠切换与二次切换实现秒级加载）
   async loadModel(modelPath) {
     if (!this.isInitialized || !this.scene) return false;
 
     const currentSeq = ++this._loadSeq;
 
     try {
-      // 清除旧模型
+      // 从场景摘下旧模型（保留在缓存中不销毁，避免重复 4~5 秒解析）
       if (this.vrm) {
         if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
-        try { if (typeof this.vrm.dispose === 'function') this.vrm.dispose(); } catch (e) {}
         this.vrm = null;
+      }
+
+      // ★ 命中内存缓存：直接复用已解析的 VRM 实例（< 50ms 秒切）
+      if (this._vrmCache.has(modelPath)) {
+        this.vrm = this._vrmCache.get(modelPath);
+        if (this.vrm && this.scene) {
+          this.scene.add(this.vrm.scene);
+          this._applyNaturalIdlePose();
+          this._fitCameraToModel();
+          return true;
+        }
       }
 
       const loader = new THREE.GLTFLoader();
@@ -175,10 +188,11 @@ class VRMManager {
       this.vrm = gltf.userData.vrm;
 
       if (this.vrm && this.scene) {
-        // VRM 0.0 模型默认背对 +Z，按规范旋转 180° 面向相机
+        // VRM 0.0 模型默认背对 +Z，按规范旋转 180° 面向相机（仅首次加载旋转一次）
         if (window.THREE_VRM?.VRMUtils?.rotateVRM0) {
           THREE_VRM.VRMUtils.rotateVRM0(this.vrm);
         }
+        this._vrmCache.set(modelPath, this.vrm);
         this.scene.add(this.vrm.scene);
         this._applyNaturalIdlePose();
         this._fitCameraToModel();
@@ -194,30 +208,13 @@ class VRMManager {
     }
   }
 
-  /** 将默认 T-pose/A-pose 调整为自然垂手放松站姿（自动检测模型初始臂角，防止高木同学等 A-pose 模型过度旋转穿模） */
+  /** 将默认僵硬 T-pose 调整为柔和贴身自然站姿 + 十指微蜷 */
   _applyNaturalIdlePose() {
     const h = this.vrm?.humanoid;
     if (!h) return;
     try {
-      this.vrm.scene.updateMatrixWorld(true);
-      const rawLU = h.getRawBoneNode('leftUpperArm');
-      const rawLL = h.getRawBoneNode('leftLowerArm');
-      // 测量初始状态下左上臂与水平面的向下夹角，T-pose 约为 0°，MMD A-pose 约为 35°~45°
-      let initDownAngle = 0;
-      if (rawLU && rawLL) {
-        const p1 = new THREE.Vector3();
-        const p2 = new THREE.Vector3();
-        rawLU.getWorldPosition(p1);
-        rawLL.getWorldPosition(p2);
-        const dx = Math.abs(p2.x - p1.x);
-        const dy = p1.y - p2.y; // 向下为正
-        if (dx > 0.01) {
-          initDownAngle = Math.max(0, Math.atan2(dy, dx));
-        }
-      }
-      // 目标最终下垂角度约 1.18 rad (~68°)，只需补足差值
-      const deltaZ = Math.max(0.25, Math.min(1.18, 1.18 - initDownAngle));
-      this._armBaseZ = deltaZ;
+      // 目标最终贴身垂手角度约 1.32 rad (~76°)，告别大字外斜僵硬感
+      this._armBaseZ = 1.32;
 
       const lUpper = h.getNormalizedBoneNode('leftUpperArm');
       const rUpper = h.getNormalizedBoneNode('rightUpperArm');
@@ -225,13 +222,33 @@ class VRMManager {
       const rLower = h.getNormalizedBoneNode('rightLowerArm');
       const lHand = h.getNormalizedBoneNode('leftHand');
       const rHand = h.getNormalizedBoneNode('rightHand');
-      // ★ 在 VRM 0.0 规范 + rotateVRM0 面向 +Z 下：左臂 +Z 向下放、右臂 -Z 向下放
-      if (lUpper) { lUpper.rotation.z = deltaZ; lUpper.rotation.x = 0.05; }
-      if (rUpper) { rUpper.rotation.z = -deltaZ; rUpper.rotation.x = 0.05; }
-      if (lLower) { lLower.rotation.z = 0.08; lLower.rotation.y = -0.10; }
-      if (rLower) { rLower.rotation.z = -0.08; rLower.rotation.y = 0.10; }
-      if (lHand) { lHand.rotation.z = 0.03; }
-      if (rHand) { rHand.rotation.z = -0.03; }
+      // ★ 在 VRM 0.0 规范 + rotateVRM0 面向 +Z 下：左臂 +Z 向下贴近身侧、右臂 -Z 向下贴近身侧
+      if (lUpper) { lUpper.rotation.set(0.08, 0.06, this._armBaseZ); }
+      if (rUpper) { rUpper.rotation.set(0.08, -0.06, -this._armBaseZ); }
+      if (lLower) { lLower.rotation.set(0.06, -0.22, 0.14); }
+      if (rLower) { rLower.rotation.set(0.06, 0.22, -0.14); }
+      if (lHand) { lHand.rotation.set(0.04, 0, 0.08); }
+      if (rHand) { rHand.rotation.set(0.04, 0, -0.08); }
+
+      // ★ 十指自然微蜷（彻底告别僵直摊手掌）
+      const fingers = ['Index', 'Middle', 'Ring', 'Little'];
+      for (const side of ['left', 'right']) {
+        const sign = side === 'left' ? 1 : -1;
+        for (let i = 0; i < fingers.length; i++) {
+          const curl = 0.22 + i * 0.06;
+          const p = h.getNormalizedBoneNode(`${side}${fingers[i]}Proximal`);
+          const m = h.getNormalizedBoneNode(`${side}${fingers[i]}Intermediate`);
+          const d = h.getNormalizedBoneNode(`${side}${fingers[i]}Distal`);
+          if (p) p.rotation.z = sign * curl;
+          if (m) m.rotation.z = sign * (curl * 1.1);
+          if (d) d.rotation.z = sign * (curl * 0.6);
+        }
+        const thumbP = h.getNormalizedBoneNode(`${side}ThumbProximal`);
+        const thumbD = h.getNormalizedBoneNode(`${side}ThumbDistal`);
+        if (thumbP) { thumbP.rotation.y = -sign * 0.25; thumbP.rotation.z = sign * 0.12; }
+        if (thumbD) { thumbD.rotation.y = -sign * 0.18; }
+      }
+
       this.vrm.update(0.016);
       // ★ 重置物理弹簧骨（消除 rotateVRM0 瞬转 180° 导致的头发甩到脸上与裙摆飞起）
       try {
@@ -258,12 +275,12 @@ class VRMManager {
     this.camera.updateProjectionMatrix();
   }
 
-  /** 供桌宠模式缩放滑动窗口实时同步 VRM 画布尺寸 */
+  /** 供桌宠模式缩放滑动窗口实时同步 VRM 画布像素分辨率（不覆写 CSS 样式防错位） */
   resize(width, height) {
     if (!this.renderer || !this.camera) return;
     const w = Math.max(200, Math.round(width || 380));
     const h = Math.max(300, Math.round(height || 570));
-    this.renderer.setSize(w, h);
+    this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
@@ -280,19 +297,94 @@ class VRMManager {
 
       if (this.vrm) {
         this._idleTime = (this._idleTime || 0) + delta;
-        // 柔和呼吸起伏与双臂微摆
-        const breath = Math.sin(this._idleTime * 2.1);
-        const baseZ = this._armBaseZ ?? 1.15;
+        const t = this._idleTime;
+        // 柔和呼吸 + 重心轻微摇曳 + 自然小动作
+        const breath = Math.sin(t * 2.0);
+        const sway = Math.sin(t * 0.85);
+        const baseZ = this._armBaseZ ?? 1.32;
         const h = this.vrm.humanoid;
+
+        // 定时自动做一个自然小动作（轻挥手/可爱歪头），告别木头人
+        if (!this._activeAnim && t >= (this._nextGestureAt || 10)) {
+          this._activeAnim = {
+            type: Math.random() > 0.45 ? 'wave' : 'tilt',
+            t: 0,
+            dur: 2.2
+          };
+          this._nextGestureAt = t + 11 + Math.random() * 9;
+        }
+
         if (h) {
-          const chest = h.getNormalizedBoneNode('chest') || h.getNormalizedBoneNode('spine');
-          if (chest) chest.rotation.x = breath * 0.022;
+          const hips = h.getNormalizedBoneNode('hips');
+          const spine = h.getNormalizedBoneNode('spine');
+          const chest = h.getNormalizedBoneNode('chest') || spine;
+          const head = h.getNormalizedBoneNode('head');
           const lUpper = h.getNormalizedBoneNode('leftUpperArm');
           const rUpper = h.getNormalizedBoneNode('rightUpperArm');
-          if (lUpper) lUpper.rotation.z = baseZ - breath * 0.022;
-          if (rUpper) rUpper.rotation.z = -baseZ + breath * 0.022;
+          const lLower = h.getNormalizedBoneNode('leftLowerArm');
+          const rLower = h.getNormalizedBoneNode('rightLowerArm');
+
+          if (hips) hips.rotation.z = sway * 0.018;
+          if (chest) {
+            chest.rotation.x = breath * 0.024;
+            chest.rotation.y = sway * 0.028;
+          }
+          if (lUpper) {
+            lUpper.rotation.z = baseZ - breath * 0.035;
+            lUpper.rotation.x = 0.08 + sway * 0.025;
+          }
+          if (lLower) {
+            lLower.rotation.y = -0.22 - breath * 0.03;
+            lLower.rotation.z = 0.14;
+          }
+
+          // 右臂与身体动态交互动画（挥手 / 开心 / 歪头）
+          let rUpperZ = -baseZ + breath * 0.035;
+          let rUpperX = 0.08 - sway * 0.025;
+          let rLowerZ = -0.14;
+          let rLowerY = 0.22 + breath * 0.03;
+          let headTiltZ = sway * 0.03;
+          let jumpY = 0;
+
+          if (this._activeAnim) {
+            this._activeAnim.t += delta;
+            const p = Math.min(1, this._activeAnim.t / this._activeAnim.dur);
+            // 平滑包络（缓入缓出）
+            const env = Math.sin(p * Math.PI);
+            if (this._activeAnim.type === 'wave') {
+              // 自然举起右手并左右轻快挥手打招呼
+              rUpperZ = -baseZ + env * 1.45;
+              rUpperX = 0.08 - env * 0.35;
+              rLowerZ = -0.14 - env * (0.95 + Math.sin(p * Math.PI * 5) * 0.32);
+              rLowerY = 0.22 + env * 0.25;
+              headTiltZ = env * 0.09;
+            } else if (this._activeAnim.type === 'happy') {
+              jumpY = Math.abs(Math.sin(p * Math.PI * 2)) * 0.045;
+              rUpperZ = -baseZ + env * 0.55;
+              if (lUpper) lUpper.rotation.z = baseZ - env * 0.55;
+              headTiltZ = Math.sin(p * Math.PI * 2) * 0.08;
+            } else if (this._activeAnim.type === 'tilt') {
+              headTiltZ = env * 0.14;
+              rUpperZ = -baseZ + env * 0.18;
+              rLowerY = 0.22 + env * 0.28;
+            }
+            if (p >= 1) this._activeAnim = null;
+          }
+
+          if (rUpper) {
+            rUpper.rotation.z = rUpperZ;
+            rUpper.rotation.x = rUpperX;
+          }
+          if (rLower) {
+            rLower.rotation.z = rLowerZ;
+            rLower.rotation.y = rLowerY;
+          }
+          if (head && !this._mouseHeadOverride) {
+            head.rotation.z = headTiltZ;
+          }
+          this.vrm.scene.position.y = jumpY;
         }
-        // 自然随机眨眼（每 3~6 秒轻眨一次）
+        // 自然随机眨眼（每 2.8~6 秒轻眨一次）
         const em = this.vrm.expressionManager;
         if (em) {
           if (this._blinkProgress < 0 && this._idleTime >= (this._nextBlinkAt || 3)) {
@@ -392,22 +484,21 @@ class VRMManager {
     }
   }
 
-  // 播放动画
+  // 播放动态骨骼动画（挥手 / 开心轻跳 / 歪头打招呼）
   playAnimation(type) {
     if (!this.vrm || !this.vrm.humanoid) return;
-
-    const spine = this.vrm.humanoid.getNormalizedBoneNode('spine');
-    if (!spine) return;
-
-    switch (type) {
-      case 'tap':
-        spine.rotation.z = 0.05;
-        setTimeout(() => { if (spine) spine.rotation.z = 0; }, 300);
-        break;
-      case 'happy':
-        this.vrm.scene.position.y = 0.03;
-        setTimeout(() => { if (this.vrm) this.vrm.scene.position.y = 0; }, 300);
-        break;
+    if (type === 'wave' || type === 'tap') {
+      this._activeAnim = { type: 'wave', t: 0, dur: 1.9 };
+      this.playExpression('happy');
+      setTimeout(() => this.playExpression('idle'), 1900);
+    } else if (type === 'happy' || type === 'jump') {
+      this._activeAnim = { type: 'happy', t: 0, dur: 1.2 };
+      this.playExpression('happy');
+      setTimeout(() => this.playExpression('idle'), 1400);
+    } else if (type === 'idle') {
+      this._activeAnim = null;
+    } else {
+      this._activeAnim = { type: 'tilt', t: 0, dur: 1.6 };
     }
   }
 
@@ -427,9 +518,9 @@ class VRMManager {
       window.removeEventListener('resize', this._resizeHandler);
       this._resizeHandler = null;
     }
+    // ★ 仅从当前场景摘下 VRM，保留在 _vrmCache 中，避免模式切换时重复 4~5 秒重载
     if (this.vrm) {
       if (this.scene && this.vrm.scene) this.scene.remove(this.vrm.scene);
-      try { if (typeof this.vrm.dispose === 'function') this.vrm.dispose(); } catch (e) {}
       this.vrm = null;
     }
     if (this.renderer) {

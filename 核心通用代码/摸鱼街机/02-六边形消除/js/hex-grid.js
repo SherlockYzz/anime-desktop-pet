@@ -88,12 +88,22 @@
         }
 
         _initDPI() {
-            const rect = this.canvas.getBoundingClientRect();
+            const container = this.canvas.parentElement;
             const dpr = window.devicePixelRatio || 1;
-            const w = rect.width > 0 ? rect.width : (this.canvas.clientWidth || 360);
-            const h = rect.height > 0 ? rect.height : (this.canvas.clientHeight || 360);
-            this.canvas.width = w * dpr;
-            this.canvas.height = h * dpr;
+            let side = 360;
+            if (container) {
+                const cRect = container.getBoundingClientRect();
+                const availW = Math.max(160, cRect.width);
+                const availH = Math.max(160, cRect.height - 4);
+                side = Math.floor(Math.min(availW, availH, 410));
+            } else {
+                const rect = this.canvas.getBoundingClientRect();
+                side = Math.floor(Math.min(rect.width || 360, rect.height || 360, 410));
+            }
+            this.canvas.style.width = `${side}px`;
+            this.canvas.style.height = `${side}px`;
+            this.canvas.width = side * dpr;
+            this.canvas.height = side * dpr;
             this.dpr = dpr;
 
             this.centerX = this.canvas.width / 2;

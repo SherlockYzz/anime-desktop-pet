@@ -889,19 +889,19 @@ body.web-mode-active .pet-shortcuts-menu {
 body.web-mode-active.arcade-mode-fullscreen .titlebar { flex-basis: 38px; }
 body.web-mode-active .arcade-sub-bar {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(128px, 1.55fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   --arcade-row: 25px;
   grid-auto-rows: var(--arcade-row);
   gap: 5px;
   height: auto;
-  padding: 6px 8px;
+  padding: 6px 8px 4px;
   background: linear-gradient(180deg, rgb(13 21 39 / 0.98), rgb(9 14 28 / 0.98));
-  border-bottom: 1px solid rgb(0 240 255 / 0.18);
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
   backdrop-filter: none;
 }
 body.web-mode-active .arcade-game-pills { display: contents; } /* 让游戏按钮直接成为控制栏网格的格子 */
 body.web-mode-active .arcade-left-actions { grid-column: 1; grid-row: 1; min-width: 0; align-items: stretch; }
-body.web-mode-active .arcade-actions { grid-column: 6; grid-row: 2; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; min-width: 0; }
+body.web-mode-active .arcade-actions { grid-column: 6; grid-row: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; min-width: 0; }
 body.web-mode-active .arcade-pill-btn,
 body.web-mode-active .arcade-action-btn {
   display: flex;

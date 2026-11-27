@@ -222,17 +222,15 @@ ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
   }
 });
 
-// ★ 桌宠透明态禁用窗口拖拽缩放，并在面板态恢复安全最小尺寸（防裁切输入框），桌宠态允许缩到 75%
+// ★ 面板态恢复安全最小尺寸（防裁切输入框），桌宠态允许缩到 75%；不锁死 resizable 以免 Windows 下 setBounds 抖动或失效
 ipcMain.on('set-resizable', (event, flag) => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   try {
     const allow = Boolean(flag);
     if (allow) {
       mainWindow.setMinimumSize(380, 540);
-      mainWindow.setResizable(true);
     } else {
       mainWindow.setMinimumSize(200, 300);
-      mainWindow.setResizable(false);
     }
   } catch (e) {}
 });
@@ -269,11 +267,7 @@ ipcMain.handle('set-window-bounds', (event, bounds) => {
   const newY = bounds.y !== undefined ? Math.round(bounds.y) : Math.round(cur.y + (cur.height - newH));
 
   const p = clampToWorkArea(newX, newY, newW, newH);
-  // ★ Windows 下 resizable=false 时 setBounds 会被锁住宽高，先临时解锁再恢复
-  const wasResizable = mainWindow.isResizable();
-  if (!wasResizable) mainWindow.setResizable(true);
   mainWindow.setBounds({ x: p.x, y: p.y, width: newW, height: newH });
-  if (!wasResizable) mainWindow.setResizable(false);
   return mainWindow.getBounds();
 });
 

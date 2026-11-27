@@ -16,7 +16,7 @@
     { id: '05-溢彩画',       name: '溢彩水墨',     icon: '🎨',  tag: '水墨同化', path: '../摸鱼街机/05-溢彩画/index.html' },
     { id: '06-堆叠高塔',     name: '堆叠高塔',     icon: '🏰',  tag: '切片登顶', path: '../摸鱼街机/06-堆叠高塔/index.html' },
     { id: '07-镜光引路',     name: '镜光引路',     icon: '🪞',  tag: '激光折射', path: '../摸鱼街机/07-镜光引路/index.html' },
-    { id: '08-数独',         name: '极意数独',     icon: '🔢',  tag: '九宫数独', path: '../摸鱼街机/08-数独/index.html' },
+    { id: '08-霓虹贪吃蛇',   name: '霓虹贪吃蛇',   icon: '🐍',  tag: '赛博冲刺', path: '../摸鱼街机/08-霓虹贪吃蛇/index.html' },
     { id: '09-律动共鸣',     name: '律动共鸣',     icon: '🎵',  tag: '4轨音游',  path: '../摸鱼街机/09-律动共鸣/index.html' }
   ];
 
@@ -240,15 +240,18 @@
         }
       }
       this._syncBgmPlayback();
+      this._syncPetVoiceGate();
     }
 
-    /** 切出街机 Tab 时发送 PAUSE 保留当前局，暂停 BGM，闲置 3 分钟后再卸载 iframe 释放内存与 GPU */
+    /** 切出街机 Tab 时发送 PAUSE 保留当前局，暂停 BGM，恢复桌宠日常语音总闸，闲置 3 分钟后再卸载 iframe */
     deactivate() {
       if (!this._active) return;
       this._active = false;
       this._sendControl('PAUSE');
       this._pauseBgmSmooth();
       this._toggleBgmPanel(false);
+      // 退出街机后恢复角色正常语音，不影响日常聊天与桌宠互动
+      window.characterManager?.setVoiceMuted?.(false);
       if (this._idleUnloadTimer) clearTimeout(this._idleUnloadTimer);
       this._idleUnloadTimer = setTimeout(() => {
         if (!this._active && this.iframe) {
@@ -438,15 +441,22 @@
     _updateMuteBtnUI() {
       const btnMute = document.getElementById('btn-arcade-mute');
       if (!btnMute) return;
-      btnMute.innerHTML = this.isMuted ? '🔇 静音' : '🔊 音效';
-      btnMute.title = this.isMuted ? '游戏音效：已静音（点击恢复）' : '游戏音效：已开启（点击静音）';
+      btnMute.textContent = this.isMuted ? '🔇 游戏音效:关' : '🔊 游戏音效:开';
+      btnMute.title = this.isMuted ? '游戏音效已静音（点击开启）' : '游戏音效已开启（点击静音）';
       btnMute.classList.toggle('active', this.isMuted);
     }
 
-    /** 切换桌宠说话功能（独立开关：关闭后立即停止当前语音、清空喝彩气泡，且后续不再自动播报） */
+    /** 将当前街机「角色说话」开关同步到全局 CharacterManager 底层总闸 */
+    _syncPetVoiceGate() {
+      if (!this._active) return;
+      window.characterManager?.setVoiceMuted?.(!this.petVoiceEnabled);
+    }
+
+    /** 切换桌宠说话功能（独立开关：关闭后锁死底层语音总闸、立即停止当前语音并清空喝彩气泡；开启后恢复） */
     togglePetVoice() {
       this.petVoiceEnabled = !this.petVoiceEnabled;
       localStorage.setItem('arcade_pet_voice_enabled', this.petVoiceEnabled ? '1' : '0');
+      this._syncPetVoiceGate();
       if (!this.petVoiceEnabled) {
         window.characterManager?.stopVoice?.();
         window.app?.petMode?._clearBubbles?.();
@@ -457,10 +467,10 @@
     _updatePetVoiceBtnUI() {
       const btnPetVoice = document.getElementById('btn-arcade-pet-voice');
       if (!btnPetVoice) return;
-      btnPetVoice.innerHTML = this.petVoiceEnabled ? '🗣️ 桌宠' : '🤫 静默';
+      btnPetVoice.textContent = this.petVoiceEnabled ? '🗣️ 角色说话:开' : '🤫 角色说话:关';
       btnPetVoice.title = this.petVoiceEnabled
-        ? '桌宠说话：已开启（点击关闭桌宠语音与喝彩）'
-        : '桌宠说话：已关闭（点击开启桌宠语音与喝彩）';
+        ? '玩游戏时角色说话：已开启（点击暂停/静音角色说话）'
+        : '玩游戏时角色说话：已静音（点击重新开启角色说话）';
       btnPetVoice.classList.toggle('muted-pet', !this.petVoiceEnabled);
     }
 
@@ -610,6 +620,11 @@
       const isPlayingNow = this.bgmEnabled && this._active && !this._shouldDuckBgm();
       btnBgm.classList.toggle('bgm-on', isPlayingNow);
       const track = this._getCurrentBgmTrack();
+      if (this.bgmEnabled) {
+        btnBgm.textContent = this._shouldDuckBgm() ? '🎵 音乐:音游暂避' : '🎵 音乐:开 ▾';
+      } else {
+        btnBgm.textContent = '🎵 音乐:关 ▾';
+      }
       btnBgm.title = this.bgmEnabled
         ? (this._shouldDuckBgm()
           ? '背景音乐：音游模式已自动避让暂停'

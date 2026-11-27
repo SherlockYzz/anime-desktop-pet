@@ -165,15 +165,18 @@ canvas {
 
 /* 核心画布区域 */
 .board-container {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 280px;
+    min-height: 0;
+    overflow: hidden;
     position: relative;
 }
 
 #chroma-canvas {
+    max-width: 100%;
+    max-height: 100%;
     border-radius: var(--radius-lg);
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.15);
     background: #0f141f;
@@ -182,7 +185,8 @@ canvas {
 
 /* 调色盘区域 */
 .palette-container {
-    margin: 12px 0 8px 0;
+    margin: 8px 0 4px 0;
+    flex-shrink: 0;
 }
 
 .palette-bar {

@@ -143,17 +143,21 @@ body {
 }
 
 .board-container {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     min-height: 0;
+    overflow: hidden;
+    padding: 2px 0;
 }
 
 #flow-canvas {
-    width: 100%;
-    max-width: 400px;
+    width: auto;
+    height: auto;
+    max-width: min(100%, 400px);
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     display: block;
     border-radius: 14px;
@@ -166,7 +170,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 4px 4px 4px;
+    padding: 8px 4px 2px 4px;
+    flex-shrink: 0;
 }
 
 .level-switch-btn {

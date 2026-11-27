@@ -145,17 +145,21 @@ body {
 }
 
 .board-container {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     min-height: 0;
+    overflow: hidden;
+    padding: 2px 0;
 }
 
 #hex-canvas {
-    width: 100%;
-    max-width: 410px;
+    width: auto;
+    height: auto;
+    max-width: min(100%, 410px);
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     display: block;
     border-radius: 14px;
@@ -165,7 +169,8 @@ body {
 
 .dock-container {
     width: 100%;
-    height: clamp(110px, 18vh, 140px);
+    height: clamp(92px, 15vh, 124px);
+    flex-shrink: 0;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -173,8 +178,8 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-dim);
     border-radius: 14px;
-    padding: 8px 12px;
-    margin-top: 8px;
+    padding: 6px 12px;
+    margin-top: 6px;
     position: relative;
 }
 

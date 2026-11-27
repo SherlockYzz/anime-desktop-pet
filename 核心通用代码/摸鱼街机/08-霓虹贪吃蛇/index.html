@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>霓虹贪吃蛇 · Neon Snake</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-viewport">
+        <!-- 顶部 HUD 栏 -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span class="brand-dot"></span>
+                <span>NEON SNAKE</span>
+            </div>
+            <div class="hud-ctrls">
+                <button id="btn-mode" class="btn-mode" title="切换穿墙/经典模式">穿墙</button>
+                <button id="btn-help" class="btn-icon" title="玩法说明">❓</button>
+                <button id="btn-mute" class="btn-icon" title="静音切换">🔊</button>
+                <button id="btn-restart" class="btn-icon" title="重开一局">🔄</button>
+            </div>
+        </header>
+
+        <!-- 积分与连击面板 -->
+        <section class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div id="score-val" class="score-value">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">COMBO</div>
+                <div id="combo-val" class="score-value combo">x1</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">BEST</div>
+                <div id="high-score-val" class="score-value high">0</div>
+            </div>
+        </section>
+
+        <!-- 20x20 赛博霓虹蛇盘面 -->
+        <main class="board-container">
+            <canvas id="snake-canvas" tabindex="0"></canvas>
+            <div id="combo-banner" class="combo-banner">⚡ OVERDRIVE x2</div>
+            <div id="start-hint" class="start-hint">按方向键 / WASD 或点击下方方向键开始</div>
+        </main>
+
+        <!-- 底部紧凑方向控制区（兼容键鼠与触控） -->
+        <footer class="dpad-footer">
+            <div class="dpad-grid">
+                <button class="dpad-btn dpad-up" data-dir="up" aria-label="上">▲</button>
+                <button class="dpad-btn dpad-left" data-dir="left" aria-label="左">◀</button>
+                <button class="dpad-btn dpad-pause" id="btn-pause-toggle" aria-label="暂停或继续">⏸</button>
+                <button class="dpad-btn dpad-right" data-dir="right" aria-label="右">▶</button>
+                <button class="dpad-btn dpad-down" data-dir="down" aria-label="下">▼</button>
+            </div>
+            <div class="dpad-tips">
+                <span><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> 转向</span>
+                <span><kbd>Space</kbd> 暂停 · <kbd>Shift</kbd> 加速</span>
+            </div>
+        </footer>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">SIGNAL LOST</h2>
+                <p class="modal-desc">
+                    能量回路中断，本局蛇身长度：<span id="final-len-val" style="color:var(--green); font-weight:700;">3</span><br>
+                    最终得分：<span id="final-score-val" style="color:var(--cyan); font-weight:700; font-size:1.2rem;">0</span>
+                </p>
+                <button id="btn-restart-modal" class="btn-primary">再来一局 (RESTART)</button>
+            </div>
+        </div>
+
+        <!-- 暂停弹窗 -->
+        <div id="pause-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">PAUSED</h2>
+                <p class="modal-desc">霓虹回路已暂停</p>
+                <button id="btn-resume" class="btn-primary">继续游戏 (RESUME)</button>
+            </div>
+        </div>
+
+        <!-- 玩法说明弹窗 -->
+        <div id="help-modal" class="modal-overlay">
+            <div class="modal-content help-box">
+                <h2 class="modal-title" style="text-align:center;">🐍 霓虹贪吃蛇指南</h2>
+                <div class="help-section">
+                    <div class="help-section-title">🎯 核心玩法</div>
+                    <p class="help-text">操控赛博光蛇吞噬霓虹能量豆，不断拉长身躯并刷新最高得分！</p>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">⚡ 特殊机制</div>
+                    <ul class="help-list">
+                        <li><b>穿墙 / 经典模式</b>：点击右上角模式按钮切换；穿墙模式可从边缘循环穿梭，适合轻松摸鱼。</li>
+                        <li><b>金色超频核</b>：每吃 5 颗普通豆刷出一颗限时金核，吞噬获 <b>+30 高分</b> 与连击爆发。</li>
+                        <li><b>连续吞噬连击</b>：在 4 秒内连续吃豆叠加 COMBO 倍率，分数更高！</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <div class="help-section-title">🎮 操作方式</div>
+                    <ul class="help-list">
+                        <li><b>键盘</b>：方向键或 WASD 转向（内置双步防误触缓冲），按住 Shift 冲刺，空格暂停。</li>
+                        <li><b>鼠标 / 触控</b>：点击底部方向键或在棋盘上直接滑动转向。</li>
+                    </ul>
+                </div>
+                <button id="btn-close-help" class="btn-primary" style="margin-top:8px;">开始霓虹冲刺！</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="../shared/bridge.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>

@@ -3470,6 +3470,61 @@ body.arcade-mode-fullscreen #tab-arcade {
   font-weight: 600;
 }
 
+/* 街机独立音频快捷条（清晰显示文字开关，一眼辨认与一键切换） */
+.arcade-audio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px 6px;
+  background: rgba(9, 14, 28, 0.98);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.arcade-audio-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.16s ease;
+}
+
+.arcade-audio-btn:hover {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: rgba(0, 240, 255, 0.45);
+  color: #fff;
+}
+
+.arcade-audio-btn.active {
+  background: rgba(239, 68, 68, 0.88);
+  border-color: transparent;
+  color: #fff;
+}
+
+.arcade-audio-btn.muted-pet {
+  background: rgba(245, 158, 11, 0.9);
+  border-color: transparent;
+  color: #111827;
+}
+
+.arcade-audio-btn.bgm-on {
+  background: linear-gradient(135deg, #22e3f5, #a66bf8);
+  border-color: transparent;
+  color: #06101f;
+}
+
 .arcade-viewport-container {
   flex: 1 1 auto;
   width: 100%;

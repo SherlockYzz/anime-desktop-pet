@@ -1132,8 +1132,16 @@ class PetMode {
     const stageW = Math.round(380 * s);
     const stageH = Math.round(570 * s);
 
-    // 1. 动态调整 Electron 窗口外框尺寸（保持底部居中对齐）
-    window.electronAPI?.setWindowBounds?.({ width: targetW, height: targetH });
+    // 1. 动态调整 Electron 窗口外框尺寸（节流合批，防止滑块拖动高频 IPC 导致窗口闪烁抖动）
+    this._pendingScaleBounds = { width: targetW, height: targetH };
+    if (!this._scaleBoundsTimer) {
+      this._scaleBoundsTimer = setTimeout(() => {
+        this._scaleBoundsTimer = null;
+        if (this._pendingScaleBounds) {
+          window.electronAPI?.setWindowBounds?.(this._pendingScaleBounds);
+        }
+      }, 24);
+    }
 
     // 2. 同步 WebGL 视口与物理画布像素尺寸（由 Pixi/精灵引擎全权管理高分屏 DPR，杜绝硬设 canvas.width 导致显存腰斩）
     if (this._pixiApp && this._pixiApp.renderer) {
@@ -1151,8 +1159,8 @@ class PetMode {
     }
     const vrmCanvas = document.getElementById('pet-vrm-canvas');
     if (vrmCanvas && this._renderMode === 'vrm') {
-      vrmCanvas.style.width = stageW + 'px';
-      vrmCanvas.style.height = stageH + 'px';
+      vrmCanvas.style.width = '100%';
+      vrmCanvas.style.height = '100%';
       window.vrmManager?.resize?.(stageW, stageH);
     }
 

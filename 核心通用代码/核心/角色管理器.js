@@ -636,6 +636,20 @@ class CharacterManager {
     return `${c.name}（${c.nameJa}）- ${c.series}\n${c.description}`;
   }
 
+  /** 设置全局角色语音静音总闸（开启静音时立即打断正在播放的语音） */
+  setVoiceMuted(muted) {
+    this._voiceMuted = !!muted;
+    if (this._voiceMuted) {
+      this.stopVoice();
+    }
+    return this._voiceMuted;
+  }
+
+  /** 查询角色语音是否处于静音状态 */
+  isVoiceMuted() {
+    return !!this._voiceMuted;
+  }
+
   /** 平滑停止当前正在播放的角色原生CV语音（40ms 防爆音衰减淡出） */
   stopVoice() {
     if (!this._currentAudio) return;
@@ -663,6 +677,7 @@ class CharacterManager {
 
   /** 播放指定编号或随机的角色原生CV语音（含防爆音平滑淡出与双通道管理） */
   playVoice(charId, voiceIndex) {
+    if (this._voiceMuted) return null;
     const char = charId ? this.registry[charId] : this.getCurrentCharacter();
     if (!char?.voice?.baseDir || !char?.voice?.count) return null;
     try {
