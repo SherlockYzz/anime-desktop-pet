@@ -20,8 +20,10 @@
     { id: '09-律动共鸣',     name: '律动共鸣',     icon: '🎵',  tag: '4轨音游',  path: '../摸鱼街机/09-律动共鸣/index.html' }
   ];
 
-  // 内置精选街机背景音乐曲库（新下载免版权纯音乐 + 本机精选曲库 + 音游内置纯音乐）
+  // 内置精选街机背景音乐曲库（纸飞机与落花置顶 + 新下载免版权纯音乐 + 本机精选曲库）
   const BUILTIN_BGM_TRACKS = [
+    { id: 'rhythm_paper_plane',  title: '纸飞机 · 轻盈旋律',            tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_01_paper_plane.mp3' },
+    { id: 'rhythm_broken_flower',title: '落花 · 治愈轻音',              tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_02_broken_flower.mp3' },
     { id: 'bgm_pixelland',       title: 'Pixelland · 像素街机',         tag: '街机纯音', url: '../摸鱼街机/shared/bgm/bgm_pixelland.mp3' },
     { id: 'bgm_lobby_time',      title: 'Lobby Time · 慵懒轻爵士',      tag: '休闲益智', url: '../摸鱼街机/shared/bgm/bgm_lobby_time.mp3' },
     { id: 'bgm_wallpaper',       title: 'Wallpaper · 轻快电子节拍',     tag: '轻快纯音', url: '../摸鱼街机/shared/bgm/bgm_wallpaper.mp3' },
@@ -33,8 +35,6 @@
     { id: 'local_huashanxing',   title: '单桐 · 华山行 (国风纯音)',     tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_huashanxing.mp3' },
     { id: 'local_renshijian',    title: '沈必昂 · 人世间 (舒缓纯音)',   tag: '本机曲库', url: '../摸鱼街机/shared/bgm/local_renshijian.mp3' },
     { id: 'rhythm_oregairu',     title: '春拟き · 温柔钢琴曲',          tag: '动漫钢琴', url: '../摸鱼街机/09-律动共鸣/audio/song_03_oregairu_piano.mp3' },
-    { id: 'rhythm_paper_plane',  title: '纸飞机 · 轻盈旋律',            tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_01_paper_plane.mp3' },
-    { id: 'rhythm_broken_flower',title: '落花 · 治愈轻音',              tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_02_broken_flower.mp3' },
     { id: 'rhythm_moon',         title: '共鸣之月 · 幻梦旋律',          tag: '内置曲库', url: '../摸鱼街机/09-律动共鸣/audio/song_04_wuthering_moon.mp3' }
   ];
 

@@ -21,49 +21,11 @@ class Live2DManager {
   }
 
   async init() {
-    try {
-      // 立即显示封面图作为占位，不等CDN加载
-      this.showFallback();
-
-      // 监听窗口可见性变化，控制GIF播放
-      this._onVisibilityChange = () => {
-        if (this.isGifMode && this.gifElement) {
-          if (document.hidden) {
-            this.pauseGif();
-          } else {
-            this.resumeGif();
-          }
-        }
-      };
-      document.addEventListener('visibilitychange', this._onVisibilityChange);
-
-      await this.loadScripts();
-
-      const canvas = document.getElementById('live2d-canvas');
-      const container = document.getElementById('live2d-container');
-
-      this.app = new PIXI.Application({
-        view: canvas,
-        width: container.clientWidth,
-        height: container.clientHeight,
-        transparent: true,
-        backgroundAlpha: 0,
-        antialias: true,
-        autoDensity: true,
-        resolution: window.devicePixelRatio || 1,
-        resizeTo: container
-      });
-
-      if (document.body.classList.contains('web-mode-active')) {
-        await this.loadCharacterModel();
-      }
-      this.isInitialized = true;
-      window.addEventListener('resize', () => this.handleResize());
-      return true;
-    } catch (error) {
-      this.showFallback();
-      return false;
-    }
+    // ★ 模式分离：面板/网页模式仅展示当前角色高清静态封面图，动态桌宠（Live2D/VRM/精灵表）专属桌宠模式
+    this.showFallback();
+    this.currentRenderMode = 'static';
+    this.isInitialized = true;
+    return true;
   }
 
   async loadScripts() {
@@ -216,64 +178,16 @@ class Live2DManager {
     }
   }
 
-  // 加载当前角色的模型（自动降级：Live2D > VRM > GIF > 静态图）
+  // 面板/网页模式统一展示高清静态封面图（动态桌宠专属桌宠模式）
   async loadCharacterModel() {
-    // ★ 彻底清空旧角色残留元素，杜绝图层遮挡
-    const oldFallback = document.getElementById('live2d-fallback');
-    if (oldFallback) oldFallback.remove();
+    this._cleanupSpriteMode();
+    this._cleanupVrmMode();
+    this._cleanupGifMode();
     const oldGif = document.getElementById('gif-fallback-container');
     if (oldGif) oldGif.remove();
-
-    const character = window.characterManager?.getCurrentCharacter();
-    if (!character) {
-      this.showFallback();
-      return false;
-    }
-
-    // 清理上一角色的精灵表模式（若曦）
-    this._cleanupSpriteMode();
-
-    // 精灵表角色（若曦）：ChatGPT Pets v2 精灵表 + 状态机 + 16 向视线（优先级最高）
-    if (window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(character)) {
-      const spriteOk = await this.loadSpriteMode(character);
-      if (spriteOk) return true;
-    }
-
-    // 第一优先：Live2D — 先缓存检查，避免不必要的HTTP请求
-    if (character.live2d?.modelPath) {
-      const exists = await window.characterManager.checkModelFileExists(character.live2d.modelPath);
-      if (exists) {
-        const success = await this.loadCustomModel(character.live2d.modelPath, character.name);
-        if (success) {
-          this.currentRenderMode = 'live2d';
-          return true;
-        }
-      }
-    }
-
-    // 第二优先：VRM
-    if (character.vrm?.modelPath) {
-      const exists = await window.characterManager.checkModelFileExists(character.vrm.modelPath);
-      if (exists) {
-        const vrmSuccess = await this._loadVrmModel(character.vrm.modelPath);
-        if (vrmSuccess) {
-          this.currentRenderMode = 'vrm';
-          return true;
-        }
-      }
-    }
-
-    // 第三优先：GIF
-    const gifLoaded = await this.loadGifFallback();
-    if (gifLoaded) {
-      this.currentRenderMode = 'gif';
-      return true;
-    }
-
-    // 最后：静态封面图
     this.currentRenderMode = 'static';
     this.showFallback();
-    return false;
+    return true;
   }
 
   // 加载 VRM 模型
@@ -977,26 +891,13 @@ class Live2DManager {
     return true;
   }
 
-  // 切换到网页模式（显示封面图或Live2D或VRM）
+  // 切换到网页/面板模式（统一展示角色高清静态封面图，零动态模型开销）
   switchToWebMode() {
-    // 清理GIF模式
     this._cleanupGifMode();
-    // 清理VRM
     this._cleanupVrmMode();
-
-    // ★ 精灵表角色（若曦）：单例引擎被桌宠画布重新绑定过，需重新绑定到网页容器
-    const character = window.characterManager?.getCurrentCharacter();
-    if (window.spriteAtlasManager && SpriteAtlasManager.isSpriteCharacter(character)) {
-      this.loadSpriteMode(character);
-      return;
-    }
-
-    // 重新加载模型（自动降级，会在需要时自愈重建 PIXI.Application）
-    if (this.isInitialized) {
-      this.loadCharacterModel();
-    } else {
-      this.showFallback();
-    }
+    this._cleanupSpriteMode();
+    this.currentRenderMode = 'static';
+    this.showFallback();
   }
 
   // 获取当前显示模式

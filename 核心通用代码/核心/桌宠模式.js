@@ -76,8 +76,12 @@ class PetMode {
       this._moved = false;
 
       const rect = area.getBoundingClientRect();
-      const clickY = e.clientY - rect.top;
-      downPart = (clickY < rect.height * 0.38) ? 'head' : 'body';
+      const relX = (e.clientX - rect.left) / Math.max(1, rect.width);
+      const relY = (e.clientY - rect.top) / Math.max(1, rect.height);
+      if (relY >= 0.72) downPart = 'foot';
+      else if (relY < 0.30) downPart = 'head';
+      else if (relX < 0.36 || relX > 0.64) downPart = 'hand';
+      else downPart = 'body';
 
       startScreen = { x: e.screenX, y: e.screenY };
       try {
@@ -172,12 +176,31 @@ class PetMode {
     document.getElementById('pet-bubble-scale-slider')?.addEventListener('input', (e) => {
       this.setBubbleScale(parseFloat(e.target.value));
     });
+    document.getElementById('pet-bubble-x-slider')?.addEventListener('input', (e) => {
+      const ySlider = document.getElementById('pet-bubble-y-slider');
+      this.setBubblePosition(parseFloat(e.target.value), parseFloat(ySlider?.value || '60'));
+    });
+    document.getElementById('pet-bubble-y-slider')?.addEventListener('input', (e) => {
+      const xSlider = document.getElementById('pet-bubble-x-slider');
+      this.setBubblePosition(parseFloat(xSlider?.value || '58'), parseFloat(e.target.value));
+    });
+    document.getElementById('btn-toggle-bubble-visible')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.setBubbleEnabled(this._bubbleEnabled === false, true);
+    });
     document.getElementById('btn-reset-bubble-pos')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.resetBubblePosition();
     });
-    // 初始化持久化的气泡大小
+    // 初始化持久化的气泡开关与大小
+    try {
+      const savedBubbleOn = localStorage.getItem('pet_bubble_enabled');
+      this._bubbleEnabled = savedBubbleOn === null ? true : savedBubbleOn !== 'false';
+    } catch (e) {
+      this._bubbleEnabled = true;
+    }
     this.setBubbleScale(parseFloat(localStorage.getItem('pet_bubble_scale') || '1.0'));
+    this._syncBubbleControlsUI();
     document.getElementById('pet-scale-menu')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const preset = e.target.closest('.scale-preset-btn');
@@ -1123,6 +1146,7 @@ class PetMode {
     if (next) {
       this._toggleActionMenu(false);
       this._syncScaleUI(this._petScale, this._calcMaxSafeScale());
+      this._syncBubbleControlsUI();
     }
     menu.classList.toggle('show', next);
   }
@@ -1736,12 +1760,74 @@ class PetMode {
     if (val) val.textContent = Math.round(s * 100) + '%';
   }
 
+  /** 设置气泡显示/隐藏并持久化 */
+  setBubbleEnabled(enabled, showFeedback = false) {
+    this._bubbleEnabled = Boolean(enabled);
+    try { localStorage.setItem('pet_bubble_enabled', this._bubbleEnabled ? 'true' : 'false'); } catch (e) {}
+    if (!this._bubbleEnabled) {
+      this._clearBubbles();
+    } else if (showFeedback) {
+      this._showBubble('说话气泡已恢复显示 💬');
+    }
+    this._syncBubbleControlsUI();
+    return this._bubbleEnabled;
+  }
+
+  /** 设置当前角色的气泡位置（左右百分比 + 距顶部像素）并实时预览 */
+  setBubblePosition(leftPct, topPx) {
+    const c = document.getElementById('pet-bubble-container');
+    const overlay = document.getElementById('pet-overlay');
+    if (!c) return;
+    const maxTop = Math.max(220, (overlay?.clientHeight || 600) - 90);
+    const l = Math.max(15, Math.min(85, Math.round(parseFloat(leftPct) || 58)));
+    const t = Math.max(8, Math.min(maxTop, Math.round(parseFloat(topPx) || 60)));
+    c.style.setProperty('--bubble-left', `${l}%`);
+    c.style.setProperty('--bubble-top', `${t}px`);
+    const charId = window.characterManager?.getCurrentCharacter()?.id || 'default';
+    try { localStorage.setItem(`pet_bubble_pos_${charId}`, JSON.stringify({ leftPct: l, topPx: t })); } catch (e) {}
+    this._syncBubbleControlsUI(l, t);
+    // 调节位置时若当前无气泡且未隐藏，弹出预览气泡方便实时对齐
+    if (this._bubbleEnabled !== false && !c.querySelector('.pet-bubble')) {
+      this._showBubble('拖动滑块或按住我调整位置 ✨');
+    }
+  }
+
+  /** 同步气泡开关与左右/上下滑块 UI */
+  _syncBubbleControlsUI(overrideLeft, overrideTop) {
+    const toggleBtn = document.getElementById('btn-toggle-bubble-visible');
+    if (toggleBtn) {
+      const hidden = this._bubbleEnabled === false;
+      toggleBtn.textContent = hidden ? '显示气泡' : '隐藏气泡';
+      toggleBtn.style.opacity = hidden ? '0.95' : '1';
+      toggleBtn.style.borderColor = hidden ? 'var(--primary-color, #f0a0b0)' : 'rgba(150,150,150,0.28)';
+      toggleBtn.style.color = hidden ? 'var(--primary-color, #f0a0b0)' : 'var(--text-primary, #333)';
+    }
+    const c = document.getElementById('pet-bubble-container');
+    const curLeft = typeof overrideLeft === 'number'
+      ? overrideLeft
+      : Math.round(parseFloat(c?.style.getPropertyValue('--bubble-left') || '58') || 58);
+    const curTop = typeof overrideTop === 'number'
+      ? overrideTop
+      : Math.round(parseFloat(c?.style.getPropertyValue('--bubble-top') || '60') || 60);
+    const xSlider = document.getElementById('pet-bubble-x-slider');
+    const xVal = document.getElementById('pet-bubble-x-val');
+    const ySlider = document.getElementById('pet-bubble-y-slider');
+    const yVal = document.getElementById('pet-bubble-y-val');
+    if (xSlider) xSlider.value = String(Math.max(15, Math.min(85, curLeft)));
+    if (xVal) xVal.textContent = `${Math.max(15, Math.min(85, curLeft))}%`;
+    if (ySlider) ySlider.value = String(Math.max(8, Math.min(420, curTop)));
+    if (yVal) yVal.textContent = `${Math.max(8, Math.min(420, curTop))}px`;
+  }
+
   /** 重置当前角色气泡位置为智能头顶斜上方 */
   resetBubblePosition() {
     const charId = window.characterManager?.getCurrentCharacter()?.id || 'default';
     try { localStorage.removeItem(`pet_bubble_pos_${charId}`); } catch (e) {}
     this._applyBubbleAnchor(true);
-    this._showBubble('气泡位置已恢复默认 ✨');
+    this._syncBubbleControlsUI();
+    if (this._bubbleEnabled !== false) {
+      this._showBubble('气泡位置已恢复默认 ✨');
+    }
   }
 
   /** 智能探测当前角色在窗口内的头顶像素位置，让气泡刚好位于头顶正斜上方（不远不近不遮额头） */
@@ -1887,6 +1973,7 @@ class PetMode {
         if (moved && c._lastDragPos) {
           const charId = window.characterManager?.getCurrentCharacter()?.id || 'default';
           try { localStorage.setItem(`pet_bubble_pos_${charId}`, JSON.stringify(c._lastDragPos)); } catch (err) {}
+          this._syncBubbleControlsUI(c._lastDragPos.leftPct, c._lastDragPos.topPx);
           scheduleAutoHide();
         } else {
           // 未拖动 -> 视为轻点，立即关闭气泡
@@ -1905,11 +1992,7 @@ class PetMode {
 
   /** 切换气泡台词显示/静音 */
   _toggleBubble() {
-    this._bubbleEnabled = !this._bubbleEnabled;
-    if (!this._bubbleEnabled) {
-      this._clearBubbles();
-    }
-    return this._bubbleEnabled;
+    return this.setBubbleEnabled(this._bubbleEnabled === false, false);
   }
 
   _clearBubbles() {

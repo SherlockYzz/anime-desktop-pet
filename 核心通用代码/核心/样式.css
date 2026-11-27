@@ -1761,6 +1761,7 @@ body.web-mode-active .pet-overlay {
   pointer-events: none;
 }
 .pet-bubble-container .pet-bubble {
+  pointer-events: auto !important;
   cursor: grab;
   user-select: none;
 }
