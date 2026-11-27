@@ -38,7 +38,6 @@ body.web-mode-active .character-card { touch-action: manipulation; }
 
 /* ---------- 2. 窄屏（手机竖屏） ---------- */
 @media (max-width: 420px) {
-  body.web-mode-active .message { max-width: 90%; }
   body.web-mode-active .message.user { max-width: 84%; }
 }
 @media (max-width: 360px) {
@@ -46,7 +45,6 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .message { gap: 7px; }
   body.web-mode-active .message-avatar { width: 28px; height: 28px; }
   body.web-mode-active .message-content { padding: 9px 12px; }
-  body.web-mode-active .ui-suggest { margin-inline: 8px; }
   body.web-mode-active .settings-content { padding-inline: 10px; }
   body.web-mode-active .ui-settings-nav { margin-inline: 10px; }
   body.web-mode-active .cc-content { padding-inline: 12px; }
@@ -55,35 +53,8 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .code-output { margin-inline: 10px; }
   body.web-mode-active .ui-nameplate { left: 9px; max-width: 30%; }
 }
-/* 街机控制栏：6 列网格在窄屏会把游戏名截成"拉海…"——改成一条可横滑的胶囊带，名字完整露出 */
+/* 街机音频栏在窄屏防文字换行；游戏选择栏保持 界面精修.css 的两行 6 列网格，全部 10 款游戏常驻展示无遮挡 */
 @media (max-width: 520px) {
-  body.web-mode-active .arcade-sub-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 8px 6px;
-    --arcade-row: 30px;
-  }
-  body.web-mode-active .arcade-left-actions,
-  body.web-mode-active .arcade-actions { flex: 0 0 auto; }
-  body.web-mode-active .arcade-left-actions .arcade-action-btn { width: 58px; }
-  body.web-mode-active .arcade-actions { display: flex; gap: 4px; }
-  body.web-mode-active .arcade-actions .arcade-action-btn { width: 30px; }
-  body.web-mode-active .arcade-game-pills {
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-    gap: 5px;
-    padding: 2px 10px 2px 2px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    scroll-snap-type: x proximity;
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
-    mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
-  }
-  body.web-mode-active .arcade-game-pills::-webkit-scrollbar { display: none; }
-  body.web-mode-active .arcade-pill-btn { flex: 0 0 auto; width: auto; padding: 0 11px; font-size: 12px; scroll-snap-align: start; }
-  body.web-mode-active .arcade-pill-btn .pill-name { overflow: visible; }
   body.web-mode-active .arcade-audio-btn .arcade-audio-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
@@ -97,14 +68,12 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   :root { --ui-stage-h: 0px; --ui-scene-h: calc(var(--ui-titlebar-h) + 30px); }
   body.web-mode-active .live2d-container,
   html body.web-mode-active .sakura-container { display: none; }
-  body.web-mode-active .ui-suggest { display: none; }
 }
 
 /* ---------- 4. 分栏布局：宽屏（≥860px），或横屏矮窗（宽 ≥560px 且高 ≤480px）
    角色舞台移到左栏并撑满整高，对话面板成为右侧的独立卡片；
    舞台容器仍是同一个节点，只是脱离文档流贴到左边，业务代码照常往里放封面图。 ---------- */
 @media (min-width: 860px), (min-width: 560px) and (max-height: 480px) {
-  :root { --ui-scene-h: 100%; }
   body.web-mode-active { --ui-side-w: clamp(210px, 34vw, 440px); }
   body.web-mode-active::before {
     background:
@@ -189,7 +158,6 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .messages { padding-inline: max(16px, calc((100% - 820px) / 2)); }
   body.web-mode-active .message { max-width: min(88%, 660px); }
   body.web-mode-active .message.user { max-width: min(76%, 560px); }
-  body.web-mode-active .ui-suggest,
   body.web-mode-active .input-area,
   body.web-mode-active .code-ai-area { margin-inline: max(14px, calc((100% - 824px) / 2)); }
   body.web-mode-active .toast { left: calc(var(--ui-side-w) + (100% - var(--ui-side-w) - 10px) / 2); }
@@ -209,20 +177,6 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .messages { padding-block: 10px 8px; gap: 10px; }
   body.web-mode-active .input-area,
   body.web-mode-active .code-ai-area { margin-bottom: 8px; }
-  body.web-mode-active .ui-suggest { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
-  body.web-mode-active .ui-suggest::-webkit-scrollbar { display: none; }
-  body.web-mode-active .ui-day-chip { display: none; }
-  /* 街机：两行控制栏并成一行（退出 | 游戏横滑 | 重来/刷新），音频三键缩成图标挂在右侧 */
-  body.web-mode-active .arcade-sub-bar { display: flex; align-items: center; gap: 6px; padding: 5px 8px; --arcade-row: 28px; }
-  body.web-mode-active .arcade-left-actions,
-  body.web-mode-active .arcade-actions { flex: 0 0 auto; }
-  body.web-mode-active .arcade-left-actions .arcade-action-btn { width: 58px; }
-  body.web-mode-active .arcade-actions { display: flex; gap: 4px; }
-  body.web-mode-active .arcade-actions .arcade-action-btn { width: 30px; }
-  body.web-mode-active .arcade-game-pills { flex: 1 1 0; min-width: 0; display: flex; gap: 5px; padding: 2px; overflow-x: auto; scrollbar-width: none; }
-  body.web-mode-active .arcade-game-pills::-webkit-scrollbar { display: none; }
-  body.web-mode-active .arcade-pill-btn { flex: 0 0 auto; width: auto; padding: 0 11px; }
-  body.web-mode-active .arcade-pill-btn .pill-name { overflow: visible; }
 }
 
 /* 4.2 宽屏且够高：设置 / 角色 / 新建角色不再铺满整窗，改为居中浮层，标题栏保持可拖动 */
@@ -277,21 +231,7 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .btn-copy,
   body.web-mode-active .btn-run { height: 38px; }
 
-  body.web-mode-active .ui-suggest {
-    flex-wrap: nowrap;
-    margin-inline: 0;
-    padding-inline: 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    scroll-padding-inline: 12px;
-  }
-  body.web-mode-active .ui-suggest::-webkit-scrollbar { display: none; }
-  body.web-mode-active .ui-chip { height: 34px; padding: 0 14px; font-size: 13.5px; }
-  body.web-mode-active .ui-suggest-lead { height: 34px; }
-  body.web-mode-active .ui-scroll-fab { width: 40px; height: 40px; margin-left: -20px; }
-  body.web-mode-active .ui-msg-copy { width: 30px; height: 30px; opacity: 0.6; }
   body.web-mode-active .ui-code-copy { opacity: 1; height: 26px; }
-  body.web-mode-active .message.ai { max-width: 88%; }
 
   body.web-mode-active .settings-header,
   body.web-mode-active .character-header,
@@ -310,7 +250,6 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .arcade-actions .arcade-action-btn { width: 36px; }
 
   /* 手指没有"悬停"：按下去的反馈保留，抬手后不留下浮起/变色的残影 */
-  body.web-mode-active .ui-chip:hover,
   body.web-mode-active .btn-send:hover,
   body.web-mode-active .btn-run:hover,
   body.web-mode-active .btn-ai-code:hover,
@@ -321,10 +260,4 @@ body.web-mode-active .character-card { touch-action: manipulation; }
   body.web-mode-active .btn-close-settings:hover,
   body.web-mode-active .btn-close-panel:hover,
   body.web-mode-active .btn-add-character:hover { transform: none; }
-}
-
-/* ---------- 6. 无障碍：减少动态效果 ---------- */
-@media (prefers-reduced-motion: reduce) {
-  body.web-mode-active .ui-scroll-fab,
-  body.web-mode-active .ui-msg-copy { transition: opacity 0.15s; }
 }
