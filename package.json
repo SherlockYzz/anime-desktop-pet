@@ -1,7 +1,7 @@
 {
   "name": "megumi-desktop-pet",
-  "version": "8.0.1",
-  "description": "二次元AI桌宠 v8.0.1 - 安全加固(HTML净化/IPC白名单/Worker沙箱/safeStorage加密/userData持久化) · 功耗与启动优化(街机懒加载/渲染库惰性化/隐藏停帧/30Hz穿透) · 十款H5微游戏 · 133段CV原声 · 真透明物理穿透 · 双核Live2D",
+  "version": "8.1.0",
+  "description": "二次元AI桌宠 v8.1.0 - 九大角色全动态驱动(Live2D + 3D VRM预热秒切 + 73帧精灵表) · 90%默认尺寸与气泡自由定位/隐藏 · 桌宠/面板展示分离 · 摸鱼街机10款微游戏两行网格+BGM音乐盒 · 133段CV原声 · 视觉精修与自适应布局",
   "main": "程序主入口.js",
   "scripts": {
     "start": "electron .",
