@@ -1,26 +1,43 @@
 ﻿<#
 .SYNOPSIS
-    更新桌面 AI 桌宠快捷方式为最新版本 (v8.0.1)
+    更新桌面 AI 桌宠快捷方式为当前版本
 .DESCRIPTION
-    更新 F:\Desktop\AI桌宠.lnk，准确指向最新 dist\win-unpacked\AI桌宠.exe，
-    配置专属高分辨率图标与工作目录，并触发 Windows Shell 图标缓存刷新。
+    从 package.json 动态读取版本号，同步更新既有桌宠快捷方式指向最新 dist\win-unpacked\AI桌宠.exe，
+    并通知 Windows Shell 刷新图标缓存。
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [switch]$CreateDesktop
+)
 
 $ErrorActionPreference = 'Stop'
 
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   二次元AI桌宠 - 桌面快捷方式更新引擎   " -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
+$projectRoot = $PSScriptRoot
+$pkgJson     = Get-Content (Join-Path $projectRoot 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$version     = if ($pkgJson.version) { $pkgJson.version } else { '8.1.0' }
 
-$desktopPath  = "F:\Desktop"
-$shortcutPath = Join-Path $desktopPath "AI桌宠.lnk"
-$targetExe    = "F:\Desktop\.DeskBox\文件夹\项目与开发\二次元桌宠项目\dist\win-unpacked\AI桌宠.exe"
-$workDir      = "F:\Desktop\.DeskBox\文件夹\项目与开发\二次元桌宠项目\dist\win-unpacked"
-$iconPath     = "F:\Desktop\.DeskBox\文件夹\项目与开发\二次元桌宠项目\AI桌宠.ico"
-$description  = "二次元AI桌宠 v8.0.1 - 真透明与像素级物理穿透 · 九大角色全阵容 (点击直接启动)"
+$targetExe   = Join-Path $projectRoot 'dist\win-unpacked\AI桌宠.exe'
+$workDir     = Join-Path $projectRoot 'dist\win-unpacked'
+$iconPath    = Join-Path $projectRoot 'AI桌宠.ico'
+$description = "二次元AI桌宠 v$version - 真透明与像素级物理穿透 · 九大角色全阵容 (点击直接启动)"
+
+# 优先更新既有桌面收纳或主桌面快捷方式，避免在 F:\Desktop 散落重复副本
+$candidates = @(
+    'F:\Desktop\桌面收纳\AI 与大模型\AI桌宠.lnk',
+    'F:\Desktop\AI桌宠.lnk'
+)
+$targets = @()
+foreach ($c in $candidates) {
+    if (Test-Path $c) { $targets += $c }
+}
+if ($CreateDesktop -and ($targets -notcontains 'F:\Desktop\AI桌宠.lnk')) {
+    $targets += 'F:\Desktop\AI桌宠.lnk'
+}
+if ($targets.Count -eq 0) {
+    $organizedDir = 'F:\Desktop\桌面收纳\AI 与大模型'
+    $targets += if (Test-Path $organizedDir) { Join-Path $organizedDir 'AI桌宠.lnk' } else { 'F:\Desktop\AI桌宠.lnk' }
+}
 
 # 1. 存在性校验
 if (-not (Test-Path $targetExe)) {
@@ -35,22 +52,25 @@ if (-not (Test-Path $iconPath)) {
 
 # 2. 写入/更新快捷方式
 $wsh = New-Object -ComObject WScript.Shell
-$shortcut = $wsh.CreateShortcut($shortcutPath)
-$shortcut.TargetPath       = $targetExe
-$shortcut.WorkingDirectory = $workDir
-$shortcut.IconLocation     = $iconLocation
-$shortcut.Description      = $description
-$shortcut.WindowStyle      = 1 # 正常窗口
-$shortcut.Save()
+foreach ($shortcutPath in $targets) {
+    $shortcut = $wsh.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath       = $targetExe
+    $shortcut.WorkingDirectory = $workDir
+    $shortcut.Arguments        = ''
+    $shortcut.IconLocation     = $iconLocation
+    $shortcut.Description      = $description
+    $shortcut.WindowStyle      = 1 # 正常窗口
+    $shortcut.Save()
+
+    Write-Host "✔ 快捷方式已成功更新: $shortcutPath" -ForegroundColor Green
+    Write-Host "  - 目标程序: $targetExe" -ForegroundColor Gray
+    Write-Host "  - 工作目录: $workDir" -ForegroundColor Gray
+    Write-Host "  - 关联图标: $iconLocation" -ForegroundColor Gray
+    Write-Host "  - 版本描述: $description" -ForegroundColor Gray
+}
 
 [System.Runtime.Interopservices.Marshal]::ReleaseComObject($wsh) | Out-Null
 [System.GC]::Collect()
-
-Write-Host "✔ 快捷方式已成功写入: $shortcutPath" -ForegroundColor Green
-Write-Host "  - 目标程序: $targetExe" -ForegroundColor Gray
-Write-Host "  - 工作目录: $workDir" -ForegroundColor Gray
-Write-Host "  - 关联图标: $iconLocation" -ForegroundColor Gray
-Write-Host "  - 版本描述: $description" -ForegroundColor Gray
 
 # 3. 刷新 Windows 桌面 Shell 图标缓存
 try {
@@ -73,4 +93,4 @@ public class ShellNotifier {
     Write-Host "ℹ Windows Shell 刷新通知已跳过: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
-Write-Host "`n★ 交付验证通过：桌面快捷方式已升级为最新版！" -ForegroundColor Cyan
+Write-Host "`n★ 交付验证通过：桌面快捷方式已同步至 v$version！" -ForegroundColor Cyan
